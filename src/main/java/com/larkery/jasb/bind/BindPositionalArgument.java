@@ -1,12 +1,13 @@
-package com.larkery.jasb;
+package com.larkery.jasb.bind;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+
+@Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
-public @interface SElement {
-	public String value();
+public @interface BindPositionalArgument {
+	int position();
 }

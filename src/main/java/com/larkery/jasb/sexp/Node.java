@@ -1,6 +1,7 @@
 package com.larkery.jasb.sexp;
 
 
+
 public abstract class Node implements ISexpSource {
 	private final Location location;
 	

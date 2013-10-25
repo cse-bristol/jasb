@@ -86,4 +86,8 @@ public class Seq extends Node implements Iterable<Node> {
 	public static Builder builder(Location start) {
 		return new Builder(start);
 	}
+	
+	public List<Node> getNodes() {
+		return nodes;
+	}
 }
