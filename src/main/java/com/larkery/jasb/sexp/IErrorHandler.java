@@ -1,16 +1,19 @@
 package com.larkery.jasb.sexp;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public interface IErrorHandler {
-	public static final IErrorHandler STDERR = new IErrorHandler() {
-		
+	static final Logger log = LoggerFactory.getLogger(IErrorHandler.class);
+	public static final IErrorHandler SLF4J = new IErrorHandler() {
 		@Override
 		public void warning(Location location, String message) {
-			System.err.println(String.format("WARN %s: %s", location, message));
+			log.warn("{}: {}", location, message);
 		}
 		
 		@Override
 		public void error(Location location, String message) {
-			System.err.println(String.format(" ERR %s: %s", location, message));
+			log.error("{}: {}", location, message);
 		}
 	};
 	

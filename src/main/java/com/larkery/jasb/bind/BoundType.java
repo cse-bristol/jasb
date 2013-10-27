@@ -4,19 +4,27 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.Type;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.reflect.TypeToken;
 import com.larkery.jasb.sexp.IErrorHandler;
 import com.larkery.jasb.sexp.Invocation;
 import com.larkery.jasb.sexp.Node;
 import com.larkery.jasb.sexp.Seq;
 
 class BoundType<T> {
+	private static final Logger log = LoggerFactory.getLogger(BoundType.class);
 	private final String boundName;
 	private final Class<T> boundType;
 	
@@ -26,20 +34,37 @@ class BoundType<T> {
 	private final Method afterBinding;
 	private final Constructor<T> constructor;
 	
-	class BoundArgument<Q> {
+	static class BoundArgument<Q> {
+		private static final Type LIST_TYPE_ARGUMENT;
+		static {
+			try {
+				LIST_TYPE_ARGUMENT = List.class.getMethod("get", int.class).getGenericReturnType();
+			} catch (NoSuchMethodException | SecurityException e) {
+				throw new RuntimeException("Can't see List.get - this should really never happen.");
+			}
+		}
+		private final Method getter;
 		private final Method setter;
-		private final Class<Q> setterType;
+		private final TypeToken<Q> setterType;
 		private final boolean multiValue;
 		
 		@SuppressWarnings("unchecked")
-		public BoundArgument(final Method setter) {
+		public BoundArgument(final Method setter, final Method getter) {
 			this.setter = setter;
-			
+			this.getter = getter;
 			// handle list-valued parameters nicely here
-			
+			final TypeToken<?> token = TypeToken.of(setter.getGenericParameterTypes()[0]);
+			if (TypeToken.of(List.class).isAssignableFrom(token)) {
+				multiValue = true;
+				setterType = (TypeToken<Q>) token.resolveType(LIST_TYPE_ARGUMENT);
+			} else {
+				multiValue = false;
+				setterType = (TypeToken<Q>) token;
+			}
 		}
 
-		public void populate(Binder binder, T result, Node value, IErrorHandler errors) {
+		public void populate(Binder binder, Object result, Node value, IErrorHandler errors) {
+			log.debug("set from {}", value);
 			if (multiValue) {
 				if (value instanceof Seq) {
 					populateList(binder, result, ((Seq)value).getNodes(), errors);
@@ -48,17 +73,32 @@ class BoundType<T> {
 				}
 			} else {
 				final Q transformed = binder.read(value, setterType, errors);
-				try {
-					setter.invoke(result, transformed);
-				} catch (IllegalAccessException | IllegalArgumentException
-						| InvocationTargetException e) {
-					throw new RuntimeException(e);
+				if (transformed != null) {
+					try {
+						setter.invoke(result, transformed);
+					} catch (IllegalAccessException | IllegalArgumentException
+							| InvocationTargetException e) {
+						throw new RuntimeException(e.getMessage(), e);
+					}
 				}
 			}
 		}
 
-		public void populateList(Binder binder, T result, List<Node> remainder,IErrorHandler errors) {
+		@SuppressWarnings("unchecked")
+		public void populateList(Binder binder, Object result, List<Node> remainder, IErrorHandler errors) {
 			// convert each node and that.
+			try {
+				final List<Q> output = (List<Q>) getter.invoke(result);
+				for (final Node n : remainder) {
+					final Q read = binder.read(n, setterType, errors);
+					if (read != null) {
+						output.add(read);
+					}
+				}
+			} catch (IllegalAccessException | IllegalArgumentException
+					| InvocationTargetException e) {
+				throw new RuntimeException(e);
+			}
 		}
 	}
 	
@@ -76,7 +116,9 @@ class BoundType<T> {
 	}
 	
 	private void populate(final Binder binder, T result, Invocation invocation, IErrorHandler errors) {
+		log.debug("populate {}", boundName);
 		for (final Map.Entry<String, Node> arg : invocation.arguments.entrySet()) {
+			log.debug("{} named argument {}", boundName, arg.getKey());
 			if (namedArguments.containsKey(arg.getKey())) {
 				namedArguments.get(arg.getKey()).populate(binder, result, arg.getValue(), errors);
 			} else {
@@ -111,10 +153,10 @@ class BoundType<T> {
 		}
 	}
 
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings("rawtypes")
 	public BoundType(final Class<T> clazz) {
 		this.boundType = clazz;
-		this.boundName = clazz.getAnnotation(BindElement.class).value();
+		this.boundName = clazz.getAnnotation(Bind.class).value();
 		try {
 			this.constructor = boundType.getConstructor();
 		} catch (NoSuchMethodException | SecurityException e1) {
@@ -124,6 +166,7 @@ class BoundType<T> {
 		final ImmutableMap.Builder<Integer, BoundArgument<?>> posn = ImmutableMap.builder();
 		
 		Method remainder = null;
+		Method getRemainder = null;
 		Method after = null;
 		
 		for (final Method m : clazz.getMethods()) {
@@ -131,19 +174,20 @@ class BoundType<T> {
 			if (!Modifier.isPublic(m.getModifiers())) continue;
 			
 			if (m.getAnnotation(BindNamedArgument.class) != null) {
-				args.put(m.getAnnotation(BindNamedArgument.class).value(), new BoundArgument<>(setter(clazz, m)));
+				args.put(m.getAnnotation(BindNamedArgument.class).value(), new BoundArgument<>(setter(clazz, m), m));
 			} else if (m.getAnnotation(BindPositionalArgument.class) != null) {
 				posn.put(m.getAnnotation(BindPositionalArgument.class).position(), 
-						new BoundArgument<>(setter(clazz, m)));
+						new BoundArgument<>(setter(clazz, m), m));
 			} else if (m.getAnnotation(BindRemainingArguments.class) != null) {
 				remainder = setter(clazz, m);
-			} else if (m.getAnnotation(AfterBinding.class) != null) {
+				getRemainder = m;
+			} else if (m.getAnnotation(AfterReading.class) != null) {
 				after = m;
 			}
 		}
 		
 		this.afterBinding = after;
-		this.remainder = remainder == null ? null : new BoundArgument(remainder);
+		this.remainder = remainder == null ? null : new BoundArgument(remainder, getRemainder);
 		this.namedArguments = args.build();
 		
 		ImmutableMap<Integer, BoundArgument<?>> build = posn.build();
@@ -178,5 +222,23 @@ class BoundType<T> {
 		} catch (NoSuchMethodException | SecurityException e) {
 			throw new RuntimeException(String.format("%s.%s doesn't have an accessible setter", clazz.getSimpleName(), m.getName()));
 		}
+	}
+
+	public TypeToken<?> getBoundType() {
+		return TypeToken.of(boundType);
+	}
+
+	public String getName() {
+		return boundName;
+	}
+
+	public Set<BoundArgument<?>> getArguments() {
+		final ImmutableSet.Builder<BoundArgument<?>> b = ImmutableSet.builder();
+		b.addAll(this.sequencedArguments);
+		b.addAll(namedArguments.values());
+		if (remainder != null) {
+			b.add(remainder);
+		}
+		return b.build();
 	}
 }
