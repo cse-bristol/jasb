@@ -1,0 +1,15 @@
+* TODO Prevent recursive templates being used or defined
+* TODO Prevent recursive includes somehow
+* TODO Handle cross-references
+
+  Think about how containment is dealt with?
+
+  produce/consume owner mapping with read and write. winner.
+
+* TODO Add some more atom readers
+* TODO More helpful structure in error handler
+* TODO Post-read method
+* TODO Write methods
+* TODO Tidy method
+** Needs to be able to see comments
+* TODO Maybe some helpers for x->s transitions
