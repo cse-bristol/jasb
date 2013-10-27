@@ -2,6 +2,7 @@ package com.larkery.jasb.bind;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.Future;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,6 +55,8 @@ public class Binder {
 		}
 	}
 	
+	
+	
 	public <T> T read(final Node node, final TypeToken<T> output, final IErrorHandler errors) {
 		if (node instanceof Seq) {
 			// this could be an invocation
@@ -62,9 +65,6 @@ public class Binder {
 				return read(node, invocation, output, errors);
 			}
 		} else if (node instanceof Atom) {
-			// this maybe an ID; IDs need handling differently.
-			// we could say that refs are #thing
-			// we should return a future here I think
 			return readAtom((Atom)node, output, errors);
 		} else {
 			errors.error(node.getLocation(), "Unknown type of node");
