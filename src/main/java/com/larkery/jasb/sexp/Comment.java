@@ -15,4 +15,8 @@ public class Comment extends Node {
 		super.accept(visitor);
 		visitor.comment(text);
 	}
+	@Override
+	public void accept(INodeVisitor visitor) {
+		visitor.comment(this);;
+	}
 }

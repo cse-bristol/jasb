@@ -24,4 +24,6 @@ public abstract class Node implements ISexpSource {
 		source.accept(visitor);
 		return visitor.get();
 	}
+	
+	public abstract void accept(INodeVisitor visitor); 
 }

@@ -35,4 +35,9 @@ public class Atom extends Node {
 			return value;
 		}
 	}
+	
+	@Override
+	public void accept(INodeVisitor visitor) {
+		visitor.atom(this);
+	}
 }
