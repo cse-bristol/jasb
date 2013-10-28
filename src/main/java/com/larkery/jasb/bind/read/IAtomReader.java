@@ -13,4 +13,6 @@ public interface IAtomReader {
 					new DoubleAtomReader()
 					);
 	public <Out> Optional<Out> read(final String in, final TypeToken<Out> out);
+	
+	public <Out> Set<String> getLegalValues(final TypeToken<Out> out);
 }

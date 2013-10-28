@@ -28,10 +28,12 @@
 
   (thing)
 
-  we do require identity relationships for groups
+  we do require identity relationships for groups, so maybe the answer
+  is to do both things and explain the difference?
 
 * TODO Add some more atom readers
-  - [ ] enum
+  - [X] enum
+  - [ ] datetime
 * DONE More helpful structure in error handler
   CLOSED: [2013-10-28 Mon 13:13]
   :LOGBOOK:
@@ -42,3 +44,5 @@
 * TODO Tidy method
 ** Needs to be able to see comments
 * TODO Maybe some helpers for x->s transitions
+* TODO Pattern matcher?
+* TODO Errors for unmatched cross refs

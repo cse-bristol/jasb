@@ -1,5 +1,8 @@
 package com.larkery.jasb.bind.read;
 
+import java.util.Collections;
+import java.util.Set;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,9 +23,34 @@ public abstract class SimpleAtomReader<Q> implements IAtomReader {
 		}
 	}
 	
+	@Override
+	public <Out> Set<String> getLegalValues(TypeToken<Out> out) {
+		if (canConvert(out)) {
+			return getLegalValues();
+		} else {
+			return Collections.emptySet();
+		}
+	}
+	
+	protected abstract Set<String> getLegalValues();
+	
 	@SuppressWarnings("unchecked")
 	@Override
 	public <Out> Optional<Out> read(String in, TypeToken<Out> out) {
+		final boolean canConvert = canConvert(out);
+		
+		if (canConvert) {
+			log.trace("<{}> can convert to {}", myType, out);
+			return Optional.fromNullable(
+					(Out)
+					convert(in));
+		} else {
+			log.trace("<{}> cannot convert to {}", myType, out);
+			return Optional.absent();
+		}
+	}
+
+	private <Out> boolean canConvert(TypeToken<Out> out) {
 		final boolean canConvert;
 		
 		if (out.getRawType().isPrimitive()) {
@@ -49,16 +77,7 @@ public abstract class SimpleAtomReader<Q> implements IAtomReader {
 		} else {
 			canConvert = out.isAssignableFrom(myType);
 		}
-		
-		if (canConvert) {
-			log.trace("<{}> can convert to {}", myType, out);
-			return Optional.fromNullable(
-					(Out)
-					convert(in));
-		} else {
-			log.trace("<{}> cannot convert to {}", myType, out);
-			return Optional.absent();
-		}
+		return canConvert;
 	}
 
 	protected abstract Q convert(final String in);

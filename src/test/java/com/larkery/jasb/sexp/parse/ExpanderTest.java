@@ -4,8 +4,8 @@ import java.io.StringReader;
 
 import org.junit.Test;
 
-import com.larkery.jasb.sexp.IErrorHandler;
 import com.larkery.jasb.sexp.PrintVisitor;
+import com.larkery.jasb.sexp.errors.IErrorHandler;
 
 public class ExpanderTest {
 	@Test

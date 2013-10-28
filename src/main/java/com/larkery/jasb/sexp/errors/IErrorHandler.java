@@ -1,9 +1,12 @@
-package com.larkery.jasb.sexp;
+package com.larkery.jasb.sexp.errors;
 
 import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.larkery.jasb.sexp.Location;
+import com.larkery.jasb.sexp.Node;
 
 public interface IErrorHandler {
 	public interface IError {

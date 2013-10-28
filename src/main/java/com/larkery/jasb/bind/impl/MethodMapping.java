@@ -113,7 +113,7 @@ public class MethodMapping<Target, Val> {
 			@SuppressWarnings("unchecked")
 			final List<Val> current = (List<Val>) method.invoke(out);
 			for (final Node in : subList) {
-				final FutureCallback<Val> insert = Callback.insert(current, current.size());
+				final FutureCallback<Val> insert = Callback.insert(objectMapping.errors, current, current.size());
 				current.add(null);
 				objectMapping.binder.read(in, valueType, insert);
 			}
@@ -130,7 +130,7 @@ public class MethodMapping<Target, Val> {
 				setFromNodes(ImmutableList.of(value), out);
 			}
 		} else {
-			objectMapping.binder.read(value, valueType, Callback.<Val>set(out, method));
+			objectMapping.binder.read(value, valueType, Callback.<Val>set(objectMapping.errors, out, method));
 		}
 	}
 

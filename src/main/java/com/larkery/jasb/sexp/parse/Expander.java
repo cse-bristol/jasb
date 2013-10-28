@@ -11,8 +11,6 @@ import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.larkery.jasb.sexp.Atom;
-import com.larkery.jasb.sexp.BasicError;
-import com.larkery.jasb.sexp.IErrorHandler;
 import com.larkery.jasb.sexp.ISexpSource;
 import com.larkery.jasb.sexp.ISexpVisitor;
 import com.larkery.jasb.sexp.Invocation;
@@ -20,6 +18,8 @@ import com.larkery.jasb.sexp.Location;
 import com.larkery.jasb.sexp.Node;
 import com.larkery.jasb.sexp.NodeBuilder;
 import com.larkery.jasb.sexp.Seq;
+import com.larkery.jasb.sexp.errors.BasicError;
+import com.larkery.jasb.sexp.errors.IErrorHandler;
 
 public class Expander {
 	public static Node expand(final ISexpSource source, final IErrorHandler errors) {

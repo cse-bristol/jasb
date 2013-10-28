@@ -13,6 +13,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimap;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.FutureCallback;
+import com.larkery.jasb.sexp.Atom;
 
 public class Resolver implements IResolver {
 	static class Definition<Q> {
@@ -28,12 +29,14 @@ public class Resolver implements IResolver {
 	}
 	
 	static class Requirement<Q> {
+		public final Atom cause;
 		public final String id;
 		public final TypeToken<Q> type;
 		public final FutureCallback<Q> callback;
-		public Requirement(String id, TypeToken<Q> type,
+		public Requirement(final Atom cause, String id, TypeToken<Q> type,
 				FutureCallback<Q> callback) {
 			super();
+			this.cause = cause;
 			this.id = id;
 			this.type = type;
 			this.callback = callback;
@@ -113,6 +116,15 @@ public class Resolver implements IResolver {
 				child.retryResolving(id);
 			}
 		}
+
+		public void raiseExceptions() {
+			for (final Requirement<?> unresolved : outstanding.values()) {
+				unresolved.callback.onFailure(new UnresolvableIdentifierException(unresolved.cause));
+			}
+			for (final Block child : children) {
+				child.raiseExceptions();
+			}
+		}
 	}
 	
 	final Stack<Block> blockStack = new Stack<>();
@@ -123,10 +135,15 @@ public class Resolver implements IResolver {
 	
 	@Override
 	public <Q> void resolve(
+			final Atom cause,
 			final String id, 
 			final TypeToken<Q> type,
 			final FutureCallback<Q> callback) {
-		blockStack.peek().resolve(new Requirement<>(id, type, callback));
+		if (blockStack.isEmpty()) {
+			callback.onFailure(new UnresolvableIdentifierException(cause));
+		} else {
+			blockStack.peek().resolve(new Requirement<>(cause, id, type, callback));
+		}
 	}
 
 	@Override
@@ -136,7 +153,10 @@ public class Resolver implements IResolver {
 
 	@Override
 	public void popBlock() {
-		blockStack.pop();
+		final Block pop = blockStack.pop();
+		if (blockStack.isEmpty()) {
+			pop.raiseExceptions();
+		}
 	}
 
 	@Override
@@ -144,6 +164,8 @@ public class Resolver implements IResolver {
 			final String id, 
 			final TypeToken<Q> type, 
 			final Q value) {
-		blockStack.peek().define(new Definition<>(id, type, value));
+		if (!blockStack.isEmpty()) {
+			blockStack.peek().define(new Definition<>(id, type, value));
+		}
 	}
 }

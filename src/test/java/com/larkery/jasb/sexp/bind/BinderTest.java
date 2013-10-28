@@ -17,16 +17,23 @@ import com.larkery.jasb.bind.id.CreatesReferenceScope;
 import com.larkery.jasb.bind.id.Identity;
 import com.larkery.jasb.bind.impl.Binder;
 import com.larkery.jasb.bind.read.DoubleAtomReader;
+import com.larkery.jasb.bind.read.EnumAtomReader;
 import com.larkery.jasb.bind.read.StringAtomReader;
-import com.larkery.jasb.sexp.IErrorHandler;
 import com.larkery.jasb.sexp.Node;
+import com.larkery.jasb.sexp.bind.BinderTest.Scenario.Mode;
+import com.larkery.jasb.sexp.errors.IErrorHandler;
 import com.larkery.jasb.sexp.parse.Parser;
 
 public class BinderTest {
 	@Bind("scenario")
 	@CreatesReferenceScope("globals")
 	public static class Scenario {
+		public enum Mode {
+			One,
+			Two
+		}
 		private String name;
+		private Mode mode;
 		private double value;
 		
 		private List<Plus> plus = new ArrayList<>();
@@ -56,6 +63,14 @@ public class BinderTest {
 		}
 		public void setPlus(List<Plus> plus) {
 			this.plus = plus;
+		}
+		
+		@BindNamedArgument("mode")
+		public Mode getMode() {
+			return mode;
+		}
+		public void setMode(Mode mode) {
+			this.mode = mode;
 		}
 	}
 	
@@ -93,6 +108,7 @@ public class BinderTest {
 				Binder.builder()
 				.addAtomReader(new StringAtomReader())
 				.addAtomReader(new DoubleAtomReader())
+				.addAtomReader(new EnumAtomReader())
 				.addClass(Scenario.class)
 				.addClass(Plus.class).build();
 	}
@@ -101,7 +117,7 @@ public class BinderTest {
 	public void bindsScenario() {
 		final Node node = Node.copy(Parser.source(
 				"scenario test", 
-				new StringReader("(scenario name:jake value:10.3 plus:((+ name:foo 1 2 3) #foo))")
+				new StringReader("(scenario mode:one name:jake value:10.3 plus:((+ name:foo 1 2 3) #foo))")
 				, slf4j));
 		
 		final Scenario read = binder.read(node, TypeToken.of(Scenario.class));
@@ -111,6 +127,7 @@ public class BinderTest {
 		Assert.assertSame(read.getPlus().get(0), read.getPlus().get(1));
 		
 		Assert.assertEquals(ImmutableList.of(1d,2d,3d), read.getPlus().get(0).getValues());
+		Assert.assertEquals(Mode.One, read.getMode());
 	}
 	
 	@Test
@@ -122,5 +139,10 @@ public class BinderTest {
 		
 		final Plus read = binder.read(node, TypeToken.of(Plus.class));
 		Assert.assertEquals(ImmutableList.of(1d,2d,3d,4d,5d), read.getValues());
+	}
+	
+	@Test
+	public void dies() {
+		binder.read(Node.copy(Parser.source("die test", new StringReader("#thingy"), slf4j)), TypeToken.of(Object.class));
 	}
 }

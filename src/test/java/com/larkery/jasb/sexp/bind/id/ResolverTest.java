@@ -35,8 +35,8 @@ public class ResolverTest {
 		final Callback<Object> cb1 = new Callback<>();
 		final Callback<Object> cb2 = new Callback<>();
 		
-		res.resolve("first", TypeToken.of(Object.class), cb1);
-		res.resolve("second", TypeToken.of(Object.class), cb2);
+		res.resolve(null, "first", TypeToken.of(Object.class), cb1);
+		res.resolve(null, "second", TypeToken.of(Object.class), cb2);
 		
 		res.define("second", TypeToken.of(Object.class), o2);
 		
@@ -59,7 +59,7 @@ public class ResolverTest {
 		
 		final Object o1 = new Object();
 		
-		res.resolve("second", TypeToken.of(Object.class), cb1);
+		res.resolve(null, "second", TypeToken.of(Object.class), cb1);
 		
 		res.popBlock();
 		
@@ -69,7 +69,7 @@ public class ResolverTest {
 		
 		final Callback<Object> cb2 = new Callback<>();
 		
-		res.resolve("first", TypeToken.of(Object.class), cb2);
+		res.resolve(null, "first", TypeToken.of(Object.class), cb2);
 		
 		Assert.assertSame(o1, cb1.result.get());
 		Assert.assertEquals("World", cb2.result.get());

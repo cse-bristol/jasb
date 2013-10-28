@@ -1,6 +1,7 @@
 package com.larkery.jasb.bind.impl;
 
 import java.util.Set;
+import java.util.TreeSet;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,11 +16,12 @@ import com.larkery.jasb.bind.id.IResolver;
 import com.larkery.jasb.bind.id.Resolver;
 import com.larkery.jasb.bind.read.IAtomReader;
 import com.larkery.jasb.sexp.Atom;
-import com.larkery.jasb.sexp.BasicError;
-import com.larkery.jasb.sexp.IErrorHandler;
 import com.larkery.jasb.sexp.Invocation;
 import com.larkery.jasb.sexp.Node;
 import com.larkery.jasb.sexp.Seq;
+import com.larkery.jasb.sexp.errors.BasicError;
+import com.larkery.jasb.sexp.errors.IErrorHandler;
+import com.larkery.jasb.sexp.errors.UnexpectedTermError;
 
 /**
  * Not thread-safe.
@@ -81,37 +83,13 @@ public class Binder {
 	 * @param errors
 	 * @return
 	 */
+	@SuppressWarnings("unchecked")
 	public <T> T read(
 			final Node node, 
 			final TypeToken<T> output) {
-		final Out<T> out = new Out<>();
-		read(node, output, out);
-		return out.getResult();
-	}
-	
-	static class Out<A> implements FutureCallback<A> {
-		private Throwable error;
-		private A result;
-		
-		public A getResult() {
-			if (error instanceof RuntimeException) {
-				throw (RuntimeException) error;
-			} else if (error != null) {
-				throw new RuntimeException(error);
-			}
-			
-			return result;
-		}
-		
-		@Override
-		public void onSuccess(A result) {
-			this.result = result;
-		}
-
-		@Override
-		public void onFailure(Throwable t) {
-			this.error = t;
-		}
+		final Object[] result = new Object[1];
+		read(node, output, Callback.<T>store(errors, result));
+		return (T) result[0];
 	}
 	
 	protected <T> void read(final Node node, final TypeToken<T> output, final FutureCallback<T> result) {
@@ -145,7 +123,14 @@ public class Binder {
 			}
 		}
 		
-		errors.handle(BasicError.at(seq, "did not expect this term"));
+		final TreeSet<String> legalValues = new TreeSet<>();
+		for (final ObjectMapping<?> mapping : types.values()) {
+			if (output.isAssignableFrom(mapping.getBoundType())) {
+				legalValues.add(String.format("(%s)", mapping.getName()));
+			}
+		}
+		
+		errors.handle(new UnexpectedTermError(seq, legalValues, inv.name));
 	}
 	
 	private <T> void readAtom(
@@ -155,17 +140,26 @@ public class Binder {
 		if (atom.getValue().startsWith(XREF_PREFIX)) {
 			final String id = atom.getValue().substring(XREF_PREFIX.length());
 			
-			resolver.resolve(id, output, callback);
+			resolver.resolve(atom, id, output, callback);
 		} else {
 			log.debug("convert {} to {}", atom, output);
+			final TreeSet<String> legalValues = new TreeSet<String>();
 			for (final IAtomReader reader : atomReaders) {
 				final Optional<T> val = reader.read(atom.getValue(), output);
 				if (val.isPresent()) {
 					callback.onSuccess(val.get());
 					return;
+				} else {
+					legalValues.addAll(reader.getLegalValues(output));
 				}
 			}
 			log.warn("could not convert {} to {}", atom, output);
+			
+			// produce a meaningful error here
+			errors.handle(
+					new UnexpectedTermError(atom, 
+							legalValues, 
+							atom.getValue()));
 		}
 	}
 }

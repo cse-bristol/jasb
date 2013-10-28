@@ -7,9 +7,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -21,10 +18,10 @@ import com.larkery.jasb.bind.BindRemainingArguments;
 import com.larkery.jasb.bind.id.CreatesReferenceScope;
 import com.larkery.jasb.bind.id.Identity;
 import com.larkery.jasb.sexp.Atom;
-import com.larkery.jasb.sexp.BasicError;
-import com.larkery.jasb.sexp.IErrorHandler;
 import com.larkery.jasb.sexp.Invocation;
 import com.larkery.jasb.sexp.Node;
+import com.larkery.jasb.sexp.errors.BasicError;
+import com.larkery.jasb.sexp.errors.IErrorHandler;
 
 /**
  * Represents a class with {@link Bind} on it; handles constructing the class
@@ -35,7 +32,6 @@ import com.larkery.jasb.sexp.Node;
  * @param <T>
  */
 class ObjectMapping<T> {
-	private static final Logger log = LoggerFactory.getLogger(ObjectMapping.class);
 	/**
 	 * The name in the {@link Bind} on {@link #boundType}
 	 */
@@ -136,9 +132,19 @@ class ObjectMapping<T> {
 					if (identifier instanceof Atom) {
 						binder.resolver.define(((Atom) identifier).getValue(), TypeToken.of(boundType), result);
 					} else {
-						errors.handle(BasicError.at(identifier, "expected a string identifier"));
+						errors.handle(BasicError.at(identifier, "cross-referencing identities for elements should be strings"));
 					}
 				}
+			}
+			
+			if (afterBinding.isPresent()) {
+				// stuff. not sure what stuff
+				// I guess we want to be able to provide:
+				// invocation
+				// node
+				// path to node
+				// other stuff?
+				// could also have something to invoke after full resolution
 			}
 			
 			int counter = 0;

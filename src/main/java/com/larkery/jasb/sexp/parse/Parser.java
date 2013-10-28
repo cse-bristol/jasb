@@ -4,11 +4,11 @@ import java.io.IOException;
 import java.io.Reader;
 
 import com.google.common.base.CharMatcher;
-import com.larkery.jasb.sexp.BasicError;
-import com.larkery.jasb.sexp.IErrorHandler;
 import com.larkery.jasb.sexp.ISexpSource;
 import com.larkery.jasb.sexp.ISexpVisitor;
 import com.larkery.jasb.sexp.Location;
+import com.larkery.jasb.sexp.errors.BasicError;
+import com.larkery.jasb.sexp.errors.IErrorHandler;
 
 public class Parser {
 	private final StripComments reader;

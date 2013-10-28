@@ -1,5 +1,9 @@
 package com.larkery.jasb.bind.read;
 
+import java.util.Set;
+
+import com.google.common.collect.ImmutableSet;
+
 
 public class DoubleAtomReader extends SimpleAtomReader<Double> {
 	@Override
@@ -9,5 +13,10 @@ public class DoubleAtomReader extends SimpleAtomReader<Double> {
 		} catch (NumberFormatException nfe) {
 			return null;
 		}
+	}
+	
+	@Override
+	protected Set<String> getLegalValues() {
+		return ImmutableSet.of("a floating-point number");
 	}
 }
