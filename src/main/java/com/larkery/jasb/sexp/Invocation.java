@@ -24,7 +24,7 @@ public class Invocation {
 		if (node instanceof Seq) {
 			final Seq seq = (Seq) node;
 			if (seq.size() == 0) {
-				errors.error(node.getLocation(), "an empty list was not expected here");
+				errors.handle(BasicError.at(node, "an empty list was not expected here"));
 			} else {
 				final Node head = seq.getHead();
 				
@@ -51,14 +51,14 @@ public class Invocation {
 						
 						if (key == null && thisKey != null) {
 							if (inRest) {
-								errors.error(argument.getLocation(), "unexpected keyword " + argument);
+								errors.handle(BasicError.at(argument, "unexpected keyword " + argument));
 								return null;
 							} else {
 								key = thisKey;
 							}
 						} else if (key != null) {
 							if (seenArguments.contains(key)) {
-								errors.error(argument.getLocation(), "repeated keyboard " + key);
+								errors.handle(BasicError.at(argument, "repeated keyword " + key));
 								return null;
 							} else {
 								arguments.put(key, argument);
@@ -72,12 +72,12 @@ public class Invocation {
 					
 					return new Invocation(name.getValue(), arguments.build(), rest.build());
 				} else {
-					errors.error(head.getLocation(), "a word was expected here, not a list");
+					errors.handle(BasicError.at(head, "a word was expected here, not a list"));
 				}
 				
 			}
 		} else {
-			errors.error(node.getLocation(), "a list was expected here, not a word");
+			errors.handle(BasicError.at(node, "a list was expected here, not a singular word"));
 		}
 		return null;
 	}

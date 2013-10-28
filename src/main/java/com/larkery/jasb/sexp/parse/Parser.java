@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.Reader;
 
 import com.google.common.base.CharMatcher;
+import com.larkery.jasb.sexp.BasicError;
 import com.larkery.jasb.sexp.IErrorHandler;
 import com.larkery.jasb.sexp.ISexpSource;
 import com.larkery.jasb.sexp.ISexpVisitor;
@@ -76,7 +77,7 @@ public class Parser {
 					sendAtom(output);
 					output.locate(here);
 					if (depth == 0) {
-						errors.error(here, "Too many closing parentheses");
+						errors.handle(BasicError.at(here, "Too many closing parentheses"));
 						return;
 					}
 					depth--;
@@ -112,7 +113,7 @@ public class Parser {
 		sendAtom(output);
 		
 		if (depth != 0) {
-			errors.error(here, "Unclosed parentheses at end of input; expecting " + depth + " more.");
+			errors.handle(BasicError.at(here, "Unclosed parentheses at end of input; expecting " + depth + " more."));
 		}
 	}
 

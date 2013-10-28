@@ -6,8 +6,37 @@
 
   produce/consume owner mapping with read and write. winner.
 
+  Annoyingly, we can't do scoping rules here, because of:
+
+  (thing :name my-thing)
+
+  (let
+     values:((var name: "x" (house.energy-use)))
+	 #my-thing)
+
+  (elsewhere #my-thing)
+
+  in my-thing we can have issues with that.
+
+  interestingly, expanding a simple template does not have these
+  issues; we could simply disallow cross-references and always use
+  templating instead
+
+  then we could handle the scoping rules correctly
+
+  (template thing () my-measure)
+
+  (thing)
+
+  we do require identity relationships for groups
+
 * TODO Add some more atom readers
-* TODO More helpful structure in error handler
+  - [ ] enum
+* DONE More helpful structure in error handler
+  CLOSED: [2013-10-28 Mon 13:13]
+  :LOGBOOK:
+  - CLOSING NOTE [2013-10-28 Mon 13:13]
+  :END:
 * TODO Post-read method
 * TODO Write methods
 * TODO Tidy method

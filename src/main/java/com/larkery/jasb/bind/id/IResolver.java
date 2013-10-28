@@ -1,5 +1,7 @@
 package com.larkery.jasb.bind.id;
 
+import java.util.Set;
+
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.FutureCallback;
 
@@ -9,12 +11,12 @@ public interface IResolver {
 			final TypeToken<Q> type, 
 			final FutureCallback<Q> callback);
 	
-	public void pushDefinitionBlock(String type);
+	public void pushBlock(final Set<Class<?>> holds);
 	
-	public void popDefinitionBlock();
+	public void popBlock();
 	
-	public void defineInBlock(
-			final String type, 
+	public <Q> void define(
 			final String id, 
-			final Object value);
+			final TypeToken<Q> type,
+			final Q value);
 }

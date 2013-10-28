@@ -5,11 +5,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Stack;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.larkery.jasb.sexp.Atom;
+import com.larkery.jasb.sexp.BasicError;
 import com.larkery.jasb.sexp.IErrorHandler;
 import com.larkery.jasb.sexp.ISexpSource;
 import com.larkery.jasb.sexp.ISexpVisitor;
@@ -52,7 +54,7 @@ public class Expander {
 				error = true;
 			} else {
 				if (templates.containsKey(template.name)) {
-					errors.error(n.getLocation(), "template " + template.name + " is defined twice");
+					errors.handle(BasicError.at(n, "template " + template.name + " is defined twice"));
 					error = true;
 				} else {
 					templates.put(template.name, template);
@@ -60,17 +62,25 @@ public class Expander {
 			}
 		}
 		if (error) {
-			errors.warning(null, "Not expanding templates because of errors in macro definitions");
+			errors.handle(BasicError.nowhere("Not expanding templates because of errors in macro definitions"));
 			return node;
 		} else {
 			// process node
 			final NodeBuilder output = new NodeBuilder();
 			
+			final Stack<String> activeTemplates = new Stack<>();
+			
 			node.accept(new Cutout<NodeBuilder>(output) {
 				@Override
 				protected Optional<NodeBuilder> cut(String head) {
 					if (templates.containsKey(head)) {
-						return Optional.of(new NodeBuilder());
+						if (activeTemplates.contains(head)) {
+							errors.handle(BasicError.at(templates.get(head).definingNode, "template expands recursively"));
+							return Optional.absent();
+						} else {
+							activeTemplates.push(head);
+							return Optional.of(new NodeBuilder());
+						}
 					} else {
 						return Optional.absent();
 					}
@@ -84,6 +94,7 @@ public class Expander {
 					if (expand != null) {
 						expand.accept(this);
 					}
+					activeTemplates.pop();
 				}
 			});
 			
@@ -91,14 +102,14 @@ public class Expander {
 		}
 	}
 	
-	
-	
 	static class Template {
+		protected final Node definingNode;
 		private final String name;
 		private final ImmutableSet<String> parameters;
 		private final ImmutableSet<Node> templateContents;
 
-		public Template(String name, final ImmutableSet<String> parameters, final ImmutableSet<Node> templateContents) {
+		public Template(final Node definition, String name, final ImmutableSet<String> parameters, final ImmutableSet<Node> templateContents) {
+			this.definingNode = definition;
 			this.name = name;
 			this.parameters = parameters;
 			this.templateContents = templateContents;
@@ -109,7 +120,7 @@ public class Expander {
 			if (invocation == null) return null;
 			
 			if (!invocation.remainder.isEmpty()) {
-				errors.error(invocation.remainder.get(0).getLocation(), "Unexpected non-keyword template arguments");
+				errors.handle(BasicError.at(invocation.remainder.get(0), "Unexpected non-keyword template arguments"));
 				return null;
 			}
 			
@@ -118,7 +129,7 @@ public class Expander {
 			for (final Map.Entry<String, Node> value : invocation.arguments.entrySet()) {
 				final String withAt = "@"+value.getKey();
 				if (!parameters.contains(withAt)) {
-					errors.error(value.getValue().getLocation(), "Unknown template argument " + value.getKey() + " for " + name);
+					errors.handle(BasicError.at(value.getValue(), "Unknown template argument " + value.getKey() + " for " + name));
 					failed = true;
 				} else {
 					mapping.put(withAt, value.getValue());
@@ -126,7 +137,7 @@ public class Expander {
 			}
 			
 			for (final String s : Sets.difference(mapping.keySet(), parameters)) {
-				errors.error(top.getLocation(), "misssing template argument " + s);
+				errors.handle(BasicError.at(top, "misssing template argument " + s));
 				failed = true;
 			}
 			
@@ -186,7 +197,7 @@ public class Expander {
 				final Seq seq = (Seq) n;
 				
 				if (seq.size() < 3) {
-					errors.error(seq.getLocation(), "templates must have a list of template arguments");
+					errors.handle(BasicError.at(seq, "templates must have a list of template arguments"));
 					return null;
 				}
 				
@@ -200,7 +211,7 @@ public class Expander {
 				if (name instanceof Atom) {
 					nameValue = ((Atom) name).getValue();
 				} else {
-					errors.error(seq.getLocation(), "the first part of a template definition should be the name");
+					errors.handle(BasicError.at(seq, "the first part of a template definition should be the name"));
 					return null;
 				}
 				
@@ -216,11 +227,11 @@ public class Expander {
 							if (atom.getValue().startsWith("@")) {
 								templateParameters.add(atom.getValue());
 							} else {
-								errors.error(atom.getLocation(), "template parameters should start with @");
+								errors.handle(BasicError.at(atom, "template parameters should start with @"));
 								return null;
 							}
 						} else {
-							errors.error(parameter.getLocation(), "template parameters should be single words");
+							errors.handle(BasicError.at(parameter, "template parameters should be single words"));
 							return null;
 						}
 					}
@@ -234,13 +245,13 @@ public class Expander {
 						return null;
 					}
 					
-					return new Template(nameValue, templateParameters.build(), templateContents.build());
+					return new Template(n, nameValue, templateParameters.build(), templateContents.build());
 				} else {
-					errors.error(parameters.getLocation(), "template parameters should be a list");
+					errors.handle(BasicError.at(parameters, "template parameters should be a list"));
 					return null;
 				}
 			} else {
-				errors.error(n.getLocation(), "Template definition is not as expected");
+				errors.handle(BasicError.at(n, "Template definition is not as expected"));
 				return null;
 			}
 		}
@@ -271,7 +282,7 @@ public class Expander {
 		public void atom(String string) {
 			if (string.startsWith("@") && parameters.contains(string)==false) {
 				errors = true;
-				handler.error(location, string + " is not a parameter defined in this template");
+				handler.handle(BasicError.at(location, string + " is not a parameter defined in this template"));
 			}
 		}
 

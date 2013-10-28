@@ -13,4 +13,11 @@ public class ExpanderTest {
 		Expander.expand(Parser.source("test", new StringReader("(thing (template hello (@wang) @wang @wang) (hello wang:stuff))"), IErrorHandler.SLF4J), IErrorHandler.SLF4J)
 			.accept(new PrintVisitor(System.out));
 	}
+	
+	@Test
+	public void testNoRecursionPlease() {
+		Expander.expand(Parser.source("test", 
+				new StringReader("(thing (template hello (@wang) (hello @wang)) (hello wang:stuff))"), IErrorHandler.SLF4J), IErrorHandler.SLF4J)
+				.accept(new PrintVisitor(System.out));
+	}
 }

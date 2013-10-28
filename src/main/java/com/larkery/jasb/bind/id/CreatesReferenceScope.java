@@ -7,6 +7,7 @@ import java.lang.annotation.Target;
 
 @Target({ElementType.METHOD, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-public @interface IdentifierScope {
-	String value(); 
+public @interface CreatesReferenceScope {
+	Class<?>[] holds() default {Object.class};
+	String value() default "";
 }
