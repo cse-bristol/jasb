@@ -10,6 +10,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
+import com.google.common.collect.Sets.SetView;
 import com.google.common.reflect.TypeToken;
 import com.larkery.jasb.bind.Bind;
 import com.larkery.jasb.bind.BindNamedArgument;
@@ -22,6 +24,7 @@ import com.larkery.jasb.sexp.Invocation;
 import com.larkery.jasb.sexp.Node;
 import com.larkery.jasb.sexp.errors.BasicError;
 import com.larkery.jasb.sexp.errors.IErrorHandler;
+import com.larkery.jasb.sexp.errors.UnusedTermError;
 
 /**
  * Represents a class with {@link Bind} on it; handles constructing the class
@@ -154,13 +157,26 @@ class ObjectMapping<T> {
 					counter++;
 				}
 				
+				final ImmutableList.Builder<Node> processedNodes = ImmutableList.builder();
+				
 				for (final MethodMapping<T, ?> method : methods) {
 					if (method.isBlockDefinition()) {
 						binder.resolver.pushBlock(method.getBlockClasses());
 						counter++;	
 					}
 					
-					method.populate(invocation, result);
+					processedNodes.addAll(method.populate(invocation, result));
+				}
+				
+				final SetView<Node> missedNodes = Sets.difference(
+						ImmutableSet.copyOf(processedNodes.build()),
+						ImmutableSet.builder()
+							.addAll(invocation.remainder)
+							.addAll(invocation.arguments.entrySet())
+							.build());
+				
+				if (!missedNodes.isEmpty()) {
+					errors.handle(new UnusedTermError(ImmutableSet.copyOf(missedNodes)));
 				}
 			} finally {
 				while (counter > 0) {

@@ -123,14 +123,23 @@ public class Binder {
 			}
 		}
 		
+		errors.handle(new UnexpectedTermError(seq, getLegalValuesForType(output), inv.name));
+	}
+	
+	private Set<String> getLegalValuesForType(final TypeToken<?> output) {
 		final TreeSet<String> legalValues = new TreeSet<>();
+		
 		for (final ObjectMapping<?> mapping : types.values()) {
 			if (output.isAssignableFrom(mapping.getBoundType())) {
 				legalValues.add(String.format("(%s)", mapping.getName()));
 			}
 		}
 		
-		errors.handle(new UnexpectedTermError(seq, legalValues, inv.name));
+		for (final IAtomReader reader : atomReaders) {
+			legalValues.addAll(reader.getLegalValues(output));
+		}
+		
+		return legalValues;
 	}
 	
 	private <T> void readAtom(
@@ -143,14 +152,11 @@ public class Binder {
 			resolver.resolve(atom, id, output, callback);
 		} else {
 			log.debug("convert {} to {}", atom, output);
-			final TreeSet<String> legalValues = new TreeSet<String>();
 			for (final IAtomReader reader : atomReaders) {
 				final Optional<T> val = reader.read(atom.getValue(), output);
 				if (val.isPresent()) {
 					callback.onSuccess(val.get());
 					return;
-				} else {
-					legalValues.addAll(reader.getLegalValues(output));
 				}
 			}
 			log.warn("could not convert {} to {}", atom, output);
@@ -158,7 +164,7 @@ public class Binder {
 			// produce a meaningful error here
 			errors.handle(
 					new UnexpectedTermError(atom, 
-							legalValues, 
+							getLegalValuesForType(output), 
 							atom.getValue()));
 		}
 	}

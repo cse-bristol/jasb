@@ -6,7 +6,6 @@ import com.google.common.collect.ImmutableSet;
 import com.larkery.jasb.sexp.Location;
 import com.larkery.jasb.sexp.Node;
 import com.larkery.jasb.sexp.errors.IErrorHandler.IError;
-import com.larkery.jasb.sexp.errors.IErrorHandler.IError.Type;
 
 public class BasicError implements IError {
 	private final Set<Location> locations;

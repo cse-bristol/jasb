@@ -3,6 +3,7 @@ package com.larkery.jasb.bind.impl;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -88,24 +89,30 @@ public class MethodMapping<Target, Val> {
 		}
 	}
 
-	public void populate(final Invocation in, final Target out) {
+	public List<Node> populate(final Invocation in, final Target out) {
 		if (name.isPresent()) {
 			final Node value = in.arguments.get(name.get());
 			if (value != null) {
 				setFromNode(value, out);
 			}
+			return ImmutableList.of(value);
 		} else if (position.isPresent()) {
 			if (in.remainder.size() > position.get()) {
 				final Node value = in.remainder.get(position.get());
 				setFromNode(value, out);
+				return ImmutableList.of(value);
 			}
 		} else {
 			final int offset = positionalCount.get();
 			// process sublist
 			if (in.remainder.size() > offset) {
-				setFromNodes(in.remainder.subList(offset, in.remainder.size()), out);
+				final List<Node> remainder = in.remainder.subList(offset, in.remainder.size());
+				setFromNodes(remainder, out);
+				return remainder;
 			}
 		}
+		
+		return Collections.emptyList();
 	}
 	
 	private void setFromNodes(final List<Node> subList, Target out) {
