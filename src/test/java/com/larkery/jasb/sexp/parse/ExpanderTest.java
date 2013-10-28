@@ -1,23 +1,53 @@
 package com.larkery.jasb.sexp.parse;
 
-import java.io.StringReader;
-
 import org.junit.Test;
 
-import com.larkery.jasb.sexp.PrintVisitor;
-import com.larkery.jasb.sexp.errors.IErrorHandler;
+import com.google.common.collect.ImmutableSet;
+import com.larkery.jasb.sexp.ISexpSource;
+import com.larkery.jasb.sexp.errors.IErrorHandler.IError;
 
-public class ExpanderTest {
-	@Test
-	public void testExpandSimple() {
-		Expander.expand(Parser.source("test", new StringReader("(thing (template hello (@wang) @wang @wang) (hello wang:stuff))"), IErrorHandler.SLF4J), IErrorHandler.SLF4J)
-			.accept(new PrintVisitor(System.out));
+public class ExpanderTest extends ParserTest {
+	@Override
+	protected ISexpSource source(String name, String src) {
+		return Expander.expand(super.source(name, src), RECORD);
 	}
 	
 	@Test
-	public void testNoRecursionPlease() {
-		Expander.expand(Parser.source("test", 
-				new StringReader("(thing (template hello (@wang) (hello @wang)) (hello wang:stuff))"), IErrorHandler.SLF4J), IErrorHandler.SLF4J)
-				.accept(new PrintVisitor(System.out));
+	public void templateGetsCutOut() {
+		check("template cutout", "((template foo ()))", e("("), e(")"));
+	}
+	
+	@Test
+	public void templateGetsInserted() {
+		check("template cutout", "((template foo () pling) (foo))", e("("), e("pling"), e(")"));
+	}
+	
+	@Test
+	public void templatesArgumentsAreSubstituted() {
+		check("template cutout", "((template foo (@x) @x) (foo x:1))", e("("), e("1"), e(")"));
+	}
+	
+	@Test
+	public void templatesAreExpandedWithinTemplates() {
+		check("template cutout", "((template foo (@x) @x) " + 
+									"(template bar (@x) @x)"
+				+"(foo x:(bar x:y)))", e("("), e("y"), e(")"));
+	}
+	
+	@Test
+	public void moreTemplatesAreExpandedInsideOtherExpansions() {
+		check("template inside template", "((template foo (@x) @x) " + 
+									"(template bar (@x) (@x))"
+				+"(foo x:(bar x:y)))", e("("), e("("), e("y"), e(")"), e(")"));
+	}
+	
+	@Test
+	public void simplyRecursiveTemplatesCauseError() {
+		check("single recursion", "((template foo () (foo)) (foo))", ImmutableSet.<Class<? extends IError>>of(IError.class));
+	}
+	
+	@Test
+	public void mutuallyRecursiveTemplatesCauseError() {
+		check("mutual recursion", "((template foo () (bar)) (template bar () (foo)) (foo))", ImmutableSet.<Class<? extends IError>>of(IError.class));
 	}
 }

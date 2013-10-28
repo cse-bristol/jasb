@@ -2,6 +2,7 @@ package com.larkery.jasb.sexp;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 import com.google.common.collect.ImmutableList;
 
@@ -33,6 +34,9 @@ public class Seq extends Node implements Iterable<Node> {
 	}
 	
 	public Node getHead() {
+		if (nodes.isEmpty()) {
+			throw new NoSuchElementException("tried to get head element of empty s-expression");
+		}
 		return nodes.get(0);
 	}
 	

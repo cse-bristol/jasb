@@ -11,6 +11,7 @@ import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.larkery.jasb.sexp.Atom;
+import com.larkery.jasb.sexp.Comment;
 import com.larkery.jasb.sexp.ISexpSource;
 import com.larkery.jasb.sexp.ISexpVisitor;
 import com.larkery.jasb.sexp.Invocation;
@@ -184,6 +185,11 @@ public class Expander {
 					delegate.atom(string);
 				}
 			}
+			
+			@Override
+			public void comment(String text) {
+				delegate.comment(text);
+			}
 
 			@Override
 			public void close() {
@@ -222,6 +228,9 @@ public class Expander {
 					final Seq pseq = (Seq) parameters;
 					
 					for (final Node parameter : pseq) {
+						if (parameter instanceof Comment) {
+							continue;
+						}
 						if (parameter instanceof Atom) {
 							final Atom atom = (Atom) parameter;
 							if (atom.getValue().startsWith("@")) {
@@ -286,6 +295,9 @@ public class Expander {
 			}
 		}
 
+		@Override
+		public void comment(String text) {}
+		
 		@Override
 		public void close() {
 		}

@@ -11,23 +11,27 @@ import com.larkery.jasb.sexp.errors.BasicError;
 import com.larkery.jasb.sexp.errors.IErrorHandler;
 
 public class Parser {
-	private final StripComments reader;
+	private final Reader reader;
 	private StringBuffer atombuilder = null;
-	private Location atomlocation;
+	private StringBuffer commentbuilder = null;
+	private Location atomlocation, commentlocation;
 	private final String locationName;
 	private Location here;
 	int depth = 0;
+	private long offset, line, column;
 	
 	private Parser(final String location, final Reader reader) {
 		super();
 		this.locationName = location;
-		this.reader = new StripComments(reader);
+		this.reader = reader;
 	}
 
 	enum S {
 		Free,
 		InString,
-		Escaped
+		Escaped,
+		Semicolon,
+		Comment
 	}
 	
 	public static void parse(final String location, final Reader input, final ISexpVisitor output, final IErrorHandler errors) throws IOException {
@@ -55,13 +59,50 @@ public class Parser {
 	private void parse(final ISexpVisitor output, IErrorHandler errors) throws IOException {
 		int input;
 		
+		S previousState = S.Free;
 		S state = S.Free;
 		
 		here = location();
 		
 		while ((input = reader.read()) != -1) {
 			final char c = (char) input;
+			
+			offset++;
+			if (c == '\n') {
+				line++;
+				column = 0;
+			} else {
+				column++;
+			}
+			
+			// if we see a semicolon, we need to look at that and not worry about the rest
+			if (c == ';') {
+				if (state == S.Semicolon) {
+					sendAtom(output);
+					state = S.Comment;
+				} else {
+					previousState = state;
+					state = S.Semicolon;
+				}
+				continue;
+			}
+			// if we have seen a semicolon, we can play it out and go back to previous state
+			if (state == S.Semicolon) {
+				extendAtom(';');
+				state = previousState;
+			}
 			switch (state) {
+			case Semicolon:
+				break;
+			case Comment:
+				// append char to comment buffer
+				if (c == '\n') {
+					state = previousState;
+					sendComment(output);
+				} else {
+					extendComment(c);
+				}
+				break;
 			case Free:
 				if (CharMatcher.WHITESPACE.matches(c)) {
 					sendAtom(output);
@@ -109,7 +150,8 @@ public class Parser {
 			}
 			here = location();
 		}
-				
+		
+		sendComment(output);
 		sendAtom(output);
 		
 		if (depth != 0) {
@@ -136,8 +178,29 @@ public class Parser {
 			atombuilder = null;
 		}
 	}
+	
+	
+	private void startComment() {
+		if (commentbuilder == null) {
+			commentbuilder = new StringBuffer();
+			commentlocation = here;
+		}
+	}
+	
+	private void extendComment(char c) {
+		startComment();
+		commentbuilder.append(c);
+	}
+	
+	private void sendComment(ISexpVisitor output) {
+		if (commentbuilder != null) {
+			output.locate(commentlocation);
+			output.comment(commentbuilder.toString());
+			commentbuilder = null;
+		}
+	}
 
 	private Location location() {
-		return Location.of(locationName, reader.offset, reader.line, reader.column);
+		return Location.of(locationName, offset, line, column);
 	}
 }

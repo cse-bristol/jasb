@@ -45,4 +45,8 @@
 ** Needs to be able to see comments
 * TODO Maybe some helpers for x->s transitions
 * TODO Pattern matcher?
-* TODO Errors for unmatched cross refs
+* DONE Errors for unmatched cross refs
+  CLOSED: [2013-10-28 Mon 14:52]
+  :LOGBOOK:
+  - CLOSING NOTE [2013-10-28 Mon 14:52]
+  :END:

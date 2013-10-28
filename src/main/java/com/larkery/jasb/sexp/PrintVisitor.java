@@ -47,6 +47,13 @@ public class PrintVisitor implements ISexpVisitor {
 		out.println(string);
 		if (delegate != null) delegate.atom(string);
 	}
+	
+	@Override
+	public void comment(String text) {
+		tabs();
+		out.println(";;" + text);
+		if (delegate != null) delegate.comment(text);
+	}
 
 	@Override
 	public void close() {

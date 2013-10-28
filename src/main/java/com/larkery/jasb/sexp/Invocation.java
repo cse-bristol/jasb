@@ -39,6 +39,8 @@ public class Invocation {
 					boolean inRest = false;
 					String key = null;
 					for (final Node argument : tail) {
+						if (argument instanceof Comment) continue;
+						
 						final String thisKey;
 						if (argument instanceof Atom) {
 							final Atom a = (Atom) argument;

@@ -35,7 +35,15 @@ public class NodeBuilder implements ISexpVisitor {
 		inprogress.peek().add(new Atom(here, string));
 	}
 	
+	@Override
+	public void comment(String text) {
+		inprogress.peek().add(new Comment(here, text));		
+	}
+	
 	public Node get() {
+		if (inprogress.size() > 1) {
+			throw new UnsupportedOperationException("there are " + inprogress.size() + " elements left on the stack");
+		}
 		return top.build(null).getHead();
 	}
 }
