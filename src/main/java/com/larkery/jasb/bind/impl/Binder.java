@@ -116,6 +116,12 @@ public class Binder {
 	 */
 	@SuppressWarnings("unchecked")
 	private <T> void read(final Node seq , final Invocation inv, final TypeToken<T> output, final FutureCallback<T> result) {
+		if (output.isAssignableFrom(TypeToken.of(Node.class))) {
+			// return node directly
+			result.onSuccess((T) seq);
+			return;
+		}
+		
 		for (final ObjectMapping<?> type : types.get(inv.name)) {
 			if (output.isAssignableFrom(type.getBoundType())) {
 				result.onSuccess((T) type.construct(inv));
@@ -142,6 +148,7 @@ public class Binder {
 		return legalValues;
 	}
 	
+	@SuppressWarnings("unchecked")
 	private <T> void readAtom(
 			final Atom atom,
 			final TypeToken<T> output,
@@ -151,6 +158,12 @@ public class Binder {
 			
 			resolver.resolve(atom, id, output, callback);
 		} else {
+			if (output.isAssignableFrom(TypeToken.of(Node.class))) {
+				// return node directly
+				callback.onSuccess((T) atom);
+				return;
+			}
+			
 			log.debug("convert {} to {}", atom, output);
 			for (final IAtomReader reader : atomReaders) {
 				final Optional<T> val = reader.read(atom.getValue(), output);
