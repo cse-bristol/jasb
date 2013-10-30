@@ -16,6 +16,8 @@ import com.larkery.jasb.bind.id.IResolver;
 import com.larkery.jasb.bind.id.Resolver;
 import com.larkery.jasb.bind.read.IAtomReader;
 import com.larkery.jasb.sexp.Atom;
+import com.larkery.jasb.sexp.ISexpSource;
+import com.larkery.jasb.sexp.ISexpVisitor;
 import com.larkery.jasb.sexp.Invocation;
 import com.larkery.jasb.sexp.Node;
 import com.larkery.jasb.sexp.Seq;
@@ -90,6 +92,19 @@ public class Binder {
 		final Object[] result = new Object[1];
 		read(node, output, Callback.<T>store(errors, result));
 		return (T) result[0];
+	}
+	
+	public void write(final Object value, final ISexpVisitor visitor) {
+		
+	}
+	
+	public ISexpSource source(final Object value) {
+		return new ISexpSource() {
+			@Override
+			public void accept(final ISexpVisitor visitor) {
+				write(value, visitor);
+			}
+		};
 	}
 	
 	protected <T> void read(final Node node, final TypeToken<T> output, final FutureCallback<T> result) {
