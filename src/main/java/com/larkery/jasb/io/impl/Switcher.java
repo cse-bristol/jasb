@@ -56,7 +56,7 @@ class Switcher<T> implements IReader<T> {
 						atom,
 						atom.getValue().substring(CROSS_REFERENCE_PREFIX.length()));
 			} else {
-				return atoms.read(atom);
+				return atoms.read(context, atom);
 			}
 		} else {
 			return death("Unexpected node type " + node.getClass().getSimpleName());

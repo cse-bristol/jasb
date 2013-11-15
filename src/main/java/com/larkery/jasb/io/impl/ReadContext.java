@@ -54,53 +54,63 @@ public class ReadContext implements IReadContext {
 			try {
 				final Constructor<?> constructor = clazz.getConstructor();
 				
+				final Object o;
 				try {
-					final Object o = constructor.newInstance();
-					
-					final Set<JasbPropertyDescriptor> descriptors = JasbPropertyDescriptor.getDescriptors(clazz);
-					for (final JasbPropertyDescriptor pd : descriptors) {
-						if (pd.isMultiple) {
-							final Object initialValue = pd.readMethod.invoke(o);
-							if (initialValue instanceof List) {
-								try {
-									((List) initialValue).add(null);
-								} catch (final Throwable th) {
-									throw new IllegalArgumentException("Had an error adding a null to the list produced by " + pd + " in " + clazz, th);
-								}
-							} else {
-								throw new IllegalArgumentException(pd + " in " + clazz + " does not produce a list, but " + initialValue);
-							}
-						}
-						
-						boolean canRead = false;
-						for (final IAtomReader reader : atomReaders) {
-							if (reader.canReadTo(pd.boxedPropertyType)) {
-								canRead = true;
-								break;
-							}
-						}
-						
-						if (!canRead && pd.boxedPropertyType.isAnnotationPresent(Bind.class)) {
-							canRead = true;
-						}
-						
-						if (!canRead) {
-							for (final Class<?> possible : classes) {
-								if (pd.boxedPropertyType.isAssignableFrom(possible)) {
-									canRead = true;
-								}
-							}
-						}
-						
-						if (!canRead) {
-							throw new IllegalArgumentException(pd + " in " + clazz + 
-									" has no legal values in the set of input classes or supported atom types");
-						}
-					}
+					o = constructor.newInstance();
 				} catch (InstantiationException | IllegalAccessException
 						| IllegalArgumentException | InvocationTargetException e) {
-					throw new IllegalArgumentException("Constructing " + clazz + " causes an error", e);
+					throw new IllegalArgumentException("Constructing " + clazz
+							+ " causes an error", e);
 				}
+					
+				final Set<JasbPropertyDescriptor> descriptors = JasbPropertyDescriptor.getDescriptors(clazz);
+				for (final JasbPropertyDescriptor pd : descriptors) {
+					if (pd.isMultiple) {
+						Object initialValue;
+						try {
+							initialValue = pd.readMethod.invoke(o);
+						} catch (IllegalAccessException
+								| IllegalArgumentException
+								| InvocationTargetException e) {
+							throw new IllegalArgumentException("Invoking the read method for " + pd + " on clazz caused an error", e);
+						}
+						if (initialValue instanceof List) {
+							try {
+								((List) initialValue).add(null);
+							} catch (final Throwable th) {
+								throw new IllegalArgumentException("Had an error adding a null to the list produced by " + pd + " in " + clazz, th);
+							}
+						} else {
+							throw new IllegalArgumentException(pd + " in " + clazz + " does not produce a list, but " + initialValue);
+						}
+					}
+					
+					boolean canRead = false;
+					for (final IAtomReader reader : atomReaders) {
+						if (reader.canReadTo(pd.boxedPropertyType)) {
+							canRead = true;
+							break;
+						}
+					}
+					
+					if (!canRead && pd.boxedPropertyType.isAnnotationPresent(Bind.class)) {
+						canRead = true;
+					}
+					
+					if (!canRead) {
+						for (final Class<?> possible : classes) {
+							if (pd.boxedPropertyType.isAssignableFrom(possible)) {
+								canRead = true;
+							}
+						}
+					}
+					
+					if (!canRead) {
+						throw new IllegalArgumentException(pd + " in " + clazz + 
+								" has no legal values in the set of input classes or supported atom types");
+					}
+				}
+				
 				
 			} catch (NoSuchMethodException | SecurityException e) {
 				throw new IllegalArgumentException(clazz + " does not have an accessible no-args constructor");

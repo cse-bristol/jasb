@@ -14,6 +14,7 @@ import com.larkery.jasb.sexp.Invocation;
 import com.larkery.jasb.sexp.Node;
 import com.larkery.jasb.sexp.Seq;
 import com.larkery.jasb.sexp.errors.UnexpectedTermError;
+import com.larkery.jasb.sexp.errors.UnusedTermError;
 
 /**
  * This is an abstract base class for things which can read invocations;
@@ -44,6 +45,12 @@ public abstract class InvocationReader<T> {
 		for (final Map.Entry<String, Node> entry : invocation.arguments.entrySet()) {
 			if (expectedKeys.contains(entry.getKey())) continue;
 			context.handle(new UnexpectedTermError(entry.getValue(), expectedKeys, entry.getKey()));
+		}
+	}
+	
+	protected static final void warnOnUnusedPositions(final IReadContext context, final List<Node> remainder, final int offset) {
+		if (remainder.size() > offset) {
+			context.handle(new UnusedTermError(ImmutableSet.copyOf(remainder.subList(offset, remainder.size()))));
 		}
 	}
 	

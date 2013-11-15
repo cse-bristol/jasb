@@ -1,6 +1,7 @@
 package com.larkery.jasb.io.impl;
 
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Collection;
 import java.util.HashMap;
@@ -24,6 +25,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.larkery.jasb.bind.AfterReading;
 import com.larkery.jasb.bind.Bind;
 import com.larkery.jasb.io.IReadContext;
 import com.larkery.jasb.io.impl.JasbPropertyDescriptor.BoundTo;
@@ -361,6 +363,12 @@ class InvocationReaderLoader<T> extends ClassLoader implements Opcodes {
 	
 		// next we should invoke the special information method if there is one
 		
+		for (final Method method : typeToRead.getMethods()) {
+			if (method.isAnnotationPresent(AfterReading.class)) {
+				// what do we pass to this? the node which made it?
+			}
+		}
+		
 		// next we want to do all the bound properties; if one of these is an identity it will be handled in there
 		
 		final Set<JasbPropertyDescriptor> namedProperties = getPropertiesBoundTo(BoundTo.Name, properties);
@@ -466,6 +474,22 @@ class InvocationReaderLoader<T> extends ClassLoader implements Opcodes {
 				// S: future, callback
 				connectFutureToCallback(mv);
 				// S: 
+			} else {
+				// we need to check that there are no extra things
+				// beyond what we hoped
+				mv.visitVarInsn(ALOAD, CONTEXT_SLOT);
+				mv.visitVarInsn(ALOAD, remainder.position);
+				mv.visitIntInsn(BIPUSH, lastIndexed);
+				mv.visitMethodInsn(INVOKESTATIC, 
+						Type.getInternalName(InvocationReader.class), 
+						"warnOnUnusedPositions", 
+						Type.getMethodDescriptor(Type.getType(Void.TYPE), 
+								new Type[]{
+								Type.getType(IReadContext.class),
+								Type.getType(List.class),
+								Type.getType(int.class)
+							}
+						));
 			}
 			
 			mv.visitLabel(endIndexed);

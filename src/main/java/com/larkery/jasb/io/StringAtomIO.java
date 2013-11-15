@@ -1,6 +1,9 @@
 package com.larkery.jasb.io;
 
+import java.util.Set;
+
 import com.google.common.base.Optional;
+import com.google.common.collect.ImmutableSet;
 
 public class StringAtomIO implements IAtomReader, IAtomWriter {
 
@@ -24,4 +27,9 @@ public class StringAtomIO implements IAtomReader, IAtomWriter {
 		return (String) object;
 	}
 
+	
+	@Override
+	public Set<String> getLegalValues(final Class<?> output) {
+		return ImmutableSet.of("a string");
+	}
 }
