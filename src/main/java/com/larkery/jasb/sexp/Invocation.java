@@ -14,8 +14,8 @@ public class Invocation {
 	public final Map<String, Node> arguments;
 	public final List<Node> remainder;
 	
-	private Invocation(String name, Map<String, Node> arguments,
-			List<Node> remainder) {
+	public Invocation(final String name, final Map<String, Node> arguments,
+			final List<Node> remainder) {
 		super();
 		this.name = name;
 		this.arguments = arguments;
@@ -84,5 +84,9 @@ public class Invocation {
 			errors.handle(BasicError.at(node, "a list was expected here, not a singular word"));
 		}
 		return null;
+	}
+
+	public static boolean isInvocation(final Seq node) {
+		return false;
 	}
 }

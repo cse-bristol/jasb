@@ -1,8 +1,15 @@
 package com.larkery.jasb.sexp;
 
+import org.pojomatic.Pojomatic;
+import org.pojomatic.annotations.AutoDetectPolicy;
+import org.pojomatic.annotations.AutoProperty;
+import org.pojomatic.annotations.PojomaticPolicy;
+import org.pojomatic.annotations.Property;
+
+@AutoProperty(autoDetect=AutoDetectPolicy.NONE)
 public class Comment extends Node {
 	private final String text;
-	Comment(Location location, final String text) {
+	Comment(final Location location, final String text) {
 		super(location);
 		this.text = text;
 	}
@@ -11,12 +18,27 @@ public class Comment extends Node {
 		return String.format(" ;; %s\n", text);
 	}
 	@Override
-	public void accept(ISexpVisitor visitor) {
+	public void accept(final ISexpVisitor visitor) {
 		super.accept(visitor);
 		visitor.comment(text);
 	}
 	@Override
-	public void accept(INodeVisitor visitor) {
+	public void accept(final INodeVisitor visitor) {
 		visitor.comment(this);;
+	}
+	
+	@Property(policy=PojomaticPolicy.HASHCODE_EQUALS)
+	public String getText() {
+		return text;
+	}
+	
+	@Override
+	public boolean equals(final Object obj) {
+		return Pojomatic.equals(this, obj);
+	}
+	
+	@Override
+	public int hashCode() {
+		return Pojomatic.hashCode(this);
 	}
 }

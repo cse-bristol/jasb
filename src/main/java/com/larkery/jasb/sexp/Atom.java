@@ -1,18 +1,25 @@
 package com.larkery.jasb.sexp;
 
+import org.pojomatic.Pojomatic;
+import org.pojomatic.annotations.AutoDetectPolicy;
+import org.pojomatic.annotations.AutoProperty;
+import org.pojomatic.annotations.PojomaticPolicy;
+import org.pojomatic.annotations.Property;
+
 import com.google.common.base.CharMatcher;
 
+@AutoProperty(autoDetect=AutoDetectPolicy.NONE)
 public class Atom extends Node {
 	private final String value;
 	private final boolean quoted;
 
-	Atom(Location location, String value) {
+	Atom(final Location location, final String value) {
 		super(location);
 		this.value = value;
 		this.quoted = CharMatcher.WHITESPACE.matchesAnyOf(value);
 	}
 
-	
+	@Property(policy=PojomaticPolicy.HASHCODE_EQUALS)
 	public String getValue() {
 		return value;
 	}
@@ -22,7 +29,7 @@ public class Atom extends Node {
 	}
 	
 	@Override
-	public void accept(ISexpVisitor visitor) {
+	public void accept(final ISexpVisitor visitor) {
 		super.accept(visitor);
 		visitor.atom(value);
 	}
@@ -37,7 +44,17 @@ public class Atom extends Node {
 	}
 	
 	@Override
-	public void accept(INodeVisitor visitor) {
+	public void accept(final INodeVisitor visitor) {
 		visitor.atom(this);
+	}
+	
+	@Override
+	public boolean equals(final Object obj) {
+		return Pojomatic.equals(this, obj);
+	}
+	
+	@Override
+	public int hashCode() {
+		return Pojomatic.hashCode(this);
 	}
 }

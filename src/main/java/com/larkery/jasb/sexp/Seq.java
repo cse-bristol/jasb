@@ -4,20 +4,26 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 
+import org.pojomatic.Pojomatic;
+import org.pojomatic.annotations.AutoDetectPolicy;
+import org.pojomatic.annotations.AutoProperty;
+import org.pojomatic.annotations.PojomaticPolicy;
+import org.pojomatic.annotations.Property;
+
 import com.google.common.collect.ImmutableList;
 
-
+@AutoProperty(autoDetect=AutoDetectPolicy.NONE)
 public class Seq extends Node implements Iterable<Node> {
 	private final List<Node> nodes;
 	private final Location end;
 	
-	private Seq(Location location, Location end, List<Node> nodes) {
+	private Seq(final Location location, final Location end, final List<Node> nodes) {
 		super(location);
 		this.end = end;
 		this.nodes = ImmutableList.copyOf(nodes);
 	}
 
-	public Node get(int arg0) {
+	public Node get(final int arg0) {
 		return nodes.get(arg0);
 	}
 
@@ -25,6 +31,7 @@ public class Seq extends Node implements Iterable<Node> {
 		return nodes.isEmpty();
 	}
 
+	@Override
 	public Iterator<Node> iterator() {
 		return nodes.iterator();
 	}
@@ -73,7 +80,7 @@ public class Seq extends Node implements Iterable<Node> {
 		private final Location start;
 		private final ImmutableList.Builder<Node> builder = ImmutableList.builder();
 		
-		private Builder(Location start) {
+		private Builder(final Location start) {
 			super();
 			this.start = start;
 		}
@@ -87,17 +94,28 @@ public class Seq extends Node implements Iterable<Node> {
 		}
 	}
 	
-	public static Builder builder(Location start) {
+	public static Builder builder(final Location start) {
 		return new Builder(start);
 	}
 	
+	@Property(policy=PojomaticPolicy.HASHCODE_EQUALS)
 	public List<Node> getNodes() {
 		return nodes;
 	}
 	
 	@Override
-	public void accept(INodeVisitor visitor) {
+	public void accept(final INodeVisitor visitor) {
 		visitor.seq(this);
 		for (final Node n : nodes) n.accept(visitor);
+	}
+	
+	@Override
+	public boolean equals(final Object obj) {
+		return Pojomatic.equals(this, obj);
+	}
+	
+	@Override
+	public int hashCode() {
+		return Pojomatic.hashCode(this);
 	}
 }
