@@ -8,7 +8,7 @@ import org.joda.time.format.PeriodFormat;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableSet;
 
-public class PeriodAtomIO implements IAtomReader,IAtomWriter {
+public class PeriodAtomIO implements IAtomIO {
 
 	@Override
 	public boolean canWrite(final Object object) {

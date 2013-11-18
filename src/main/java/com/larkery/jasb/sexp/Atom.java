@@ -16,7 +16,7 @@ public class Atom extends Node {
 	Atom(final Location location, final String value) {
 		super(location);
 		this.value = value;
-		this.quoted = CharMatcher.WHITESPACE.matchesAnyOf(value);
+		this.quoted = CharMatcher.WHITESPACE.matchesAnyOf(value) || value.isEmpty();
 	}
 
 	@Property(policy=PojomaticPolicy.HASHCODE_EQUALS)

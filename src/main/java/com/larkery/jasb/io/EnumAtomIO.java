@@ -6,7 +6,7 @@ import java.util.Set;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableSet;
 
-public class EnumAtomIO implements IAtomReader,IAtomWriter {
+public class EnumAtomIO implements IAtomIO {
 
 	@Override
 	public boolean canWrite(final Object object) {
@@ -51,5 +51,4 @@ public class EnumAtomIO implements IAtomReader,IAtomWriter {
 			return Collections.emptySet();
 		}
 	}
-
 }

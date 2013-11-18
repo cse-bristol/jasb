@@ -105,8 +105,9 @@ public class Seq extends Node implements Iterable<Node> {
 	
 	@Override
 	public void accept(final INodeVisitor visitor) {
-		visitor.seq(this);
-		for (final Node n : nodes) n.accept(visitor);
+		if (visitor.seq(this)) {
+			for (final Node n : nodes) n.accept(visitor);
+		}
 	}
 	
 	@Override

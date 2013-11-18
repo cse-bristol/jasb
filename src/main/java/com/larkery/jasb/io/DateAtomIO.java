@@ -9,7 +9,7 @@ import org.joda.time.format.DateTimeFormatter;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableSet;
 
-public class DateAtomIO implements IAtomReader,IAtomWriter {
+public class DateAtomIO implements IAtomIO {
 	 private final DateTimeFormatter df =  DateTimeFormat.forPattern("dd/MM/yyyy");
 
 	@Override

@@ -1,5 +1,7 @@
 package com.larkery.jasb.io.impl;
 
+import java.beans.Introspector;
+import java.beans.PropertyDescriptor;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
@@ -7,18 +9,23 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 
+import com.google.common.base.Predicate;
+import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.larkery.jasb.bind.Bind;
+import com.larkery.jasb.bind.PointlessWrapper;
 import com.larkery.jasb.bind.id.IResolver;
 import com.larkery.jasb.bind.id.Resolver;
 import com.larkery.jasb.io.IAtomReader;
 import com.larkery.jasb.io.IReadContext;
 import com.larkery.jasb.sexp.Atom;
+import com.larkery.jasb.sexp.Invocation;
 import com.larkery.jasb.sexp.Node;
 import com.larkery.jasb.sexp.errors.IErrorHandler;
 
@@ -26,23 +33,32 @@ public class ReadContext implements IReadContext {
 	private final Map<Class<?>, Switcher<?>> switchers = new HashMap<>();
 	private final Map<Class<?>, InvocationReader<?>> specificReaders = new HashMap<>();
 	private final Set<Class<?>> boundClasses;
-	private final Set<IAtomReader> atomReaders;
+	private final Set<? extends IAtomReader> atomReaders;
 	private final IResolver resolver = new Resolver();
 	
-	public ReadContext(final Set<Class<?>> boundClasses, final Set<IAtomReader> atomReaders) {
+	public ReadContext(final Set<Class<?>> boundClasses, final Set<? extends IAtomReader> atomReaders) {
 		super();
-		checkConsistency(boundClasses, atomReaders);
+		
+		final Set<Class<?>> concrete = ImmutableSet.copyOf(Collections2.filter(boundClasses, 
+				new Predicate<Class<?>>() {
 
-		this.boundClasses = boundClasses;
+					@Override
+					public boolean apply(final Class<?> input) {
+						return !Modifier.isAbstract(input.getModifiers());
+					}
+				}
+				));
+		
+		checkConsistency(concrete, atomReaders);
+		
+		this.boundClasses = concrete;
 		this.atomReaders = atomReaders;
 	}
 
+
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	private static void checkConsistency(final Set<Class<?>> classes, final Set<IAtomReader> atomReaders) {
+	private static void checkConsistency(final Set<Class<?>> classes, final Set<? extends IAtomReader> atomReaders) {
 		for (final Class<?> clazz : classes) {
-			if (!clazz.isAnnotationPresent(Bind.class)) {
-				throw new IllegalArgumentException(clazz + " has no bind annotation");
-			}
 			if (Modifier.isAbstract(clazz.getModifiers())) {
 				throw new IllegalArgumentException(clazz + " cannot be unmarshalled from s-expressions as it is abstract");
 			}
@@ -50,6 +66,9 @@ public class ReadContext implements IReadContext {
 				if (!Modifier.isStatic(clazz.getModifiers())) {
 					throw new IllegalArgumentException(clazz + " cannot be unmarshalled from s-expressions as it is a non-static inner class");
 				}
+			}
+			if (!(clazz.isAnnotationPresent(Bind.class) || clazz.isAnnotationPresent(PointlessWrapper.class))) {
+				throw new IllegalArgumentException(clazz + " has no bind annotation");
 			}
 			try {
 				final Constructor<?> constructor = clazz.getConstructor();
@@ -101,6 +120,8 @@ public class ReadContext implements IReadContext {
 						for (final Class<?> possible : classes) {
 							if (pd.boxedPropertyType.isAssignableFrom(possible)) {
 								canRead = true;
+								//TODO check for stupid wrapper types here
+								break;
 							}
 						}
 					}
@@ -160,8 +181,54 @@ public class ReadContext implements IReadContext {
 	@SuppressWarnings("unchecked")
 	private <T> InvocationReader<T> getOrCreateInvocationReader(final Class<T> sub) {
 		if (!specificReaders.containsKey(sub)) {
-			final InvocationReader<T> reader = new InvocationReaderLoader<T>(sub).getReaderInstance();
-			specificReaders.put(sub, reader);
+			//TODO Handle pointless wrapper annotation here
+			if (sub.isAnnotationPresent(PointlessWrapper.class)) {
+				try {
+					for (final PropertyDescriptor pd : Introspector.getBeanInfo(sub).getPropertyDescriptors()) {
+						if (pd.getReadMethod().isAnnotationPresent(PointlessWrapper.class)) {
+							final InvocationReader<T> out = new InvocationReader<T>(sub, 
+									"", new String [0]
+									) {
+								@Override
+								protected T read(final IReadContext context, final Invocation invocation) {
+									final ListenableFuture<?> read = context.read(pd.getReadMethod().getReturnType(), invocation.node);
+									
+									try {
+										return wrap(read.get());
+									} catch (InterruptedException | ExecutionException e) {
+										throw new RuntimeException("could not read invocation as required type", e);
+									}
+								}
+	
+								private T wrap(final Object read) {
+									try {
+										final T result = sub.getConstructor().newInstance();
+										
+										pd.getWriteMethod().invoke(result, read);
+										
+										return result;
+									} catch (InstantiationException
+											| IllegalAccessException
+											| IllegalArgumentException
+											| InvocationTargetException
+											| NoSuchMethodException
+											| SecurityException e) {
+										throw new RuntimeException("Bad pointless-wrapper " + sub, e);
+									}
+								}
+							};
+							
+							specificReaders.put(sub, out);
+							break;
+						}
+					}
+				} catch (final Exception e) {
+					throw new RuntimeException("bad pointless-wrapper " + sub + "(" + e.getMessage() + ")", e);
+				}
+			} else {
+				final InvocationReader<T> reader = new InvocationReaderLoader<T>(sub).getReaderInstance();
+				specificReaders.put(sub, reader);
+			}
 		}
 		return (InvocationReader<T>) specificReaders.get(sub);
 	}

@@ -10,6 +10,7 @@ import org.junit.Before;
 import com.larkery.jasb.sexp.ISexpSource;
 import com.larkery.jasb.sexp.ISexpVisitor;
 import com.larkery.jasb.sexp.Location;
+import com.larkery.jasb.sexp.Location.Type;
 import com.larkery.jasb.sexp.NodeBuilder;
 import com.larkery.jasb.sexp.PrintVisitor;
 import com.larkery.jasb.sexp.errors.IErrorHandler;
@@ -18,7 +19,7 @@ import com.larkery.jasb.sexp.errors.IErrorHandler.IError;
 public class VisitingTest {
 	final IErrorHandler RECORD = new IErrorHandler() {
 		@Override
-		public void handle(IError error) {
+		public void handle(final IError error) {
 			errors.add(error);
 		}
 	};
@@ -37,14 +38,14 @@ public class VisitingTest {
 		}
 		final T type;
 		
-		private E(String value, T type) {
+		private E(final String value, final T type) {
 			super();
 			this.value = value;
 			this.type = type;
 		}
 
 		@Override
-		public void locate(Location loc) {}
+		public void locate(final Location loc) {}
 
 		@Override
 		public void open() {
@@ -52,13 +53,13 @@ public class VisitingTest {
 		}
 
 		@Override
-		public void atom(String string) {
+		public void atom(final String string) {
 			Assert.assertEquals(this.value, string);
 			Assert.assertEquals(T.Atom, this.type);
 		}
 
 		@Override
-		public void comment(String text) {
+		public void comment(final String text) {
 			Assert.assertEquals(this.value, text);
 			Assert.assertEquals(T.Comment, this.type);
 		}
@@ -69,7 +70,7 @@ public class VisitingTest {
 		}
 	}
 	
-	public static E e(String value) {
+	public static E e(final String value) {
 		switch (value) {
 		case "(":return new E(value, E.T.Open);
 		case ")":return new E(value, E.T.Close);
@@ -81,6 +82,7 @@ public class VisitingTest {
 	
 	protected ISexpSource source(final String name, final String src) {
 		return Parser.source(
+				Type.Normal,
 				name, 
 				new StringReader(src),
 				RECORD);
@@ -114,11 +116,11 @@ public class VisitingTest {
 					}
 					
 					@Override
-					public void locate(Location loc) {
+					public void locate(final Location loc) {
 					}
 					
 					@Override
-					public void comment(String text) {
+					public void comment(final String text) {
 						values[offset++].comment(text);
 					}
 					
@@ -128,12 +130,12 @@ public class VisitingTest {
 					}
 					
 					@Override
-					public void atom(String string) {
+					public void atom(final String string) {
 						values[offset++].atom(string);
 					}
 				});
-		} catch (Throwable e) {
-			Parser.source(name, new StringReader(src), IErrorHandler.SLF4J).accept(new PrintVisitor(System.out));
+		} catch (final Throwable e) {
+			Parser.source(Type.Normal, name, new StringReader(src), IErrorHandler.SLF4J).accept(new PrintVisitor(System.out));
 			throw e;
 		}
 	}

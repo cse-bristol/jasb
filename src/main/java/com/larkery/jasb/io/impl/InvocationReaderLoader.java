@@ -18,6 +18,7 @@ import net.sf.cglib.asm.MethodVisitor;
 import net.sf.cglib.asm.Opcodes;
 import net.sf.cglib.asm.Type;
 
+import com.google.common.base.CharMatcher;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -79,9 +80,16 @@ class InvocationReaderLoader<T> extends ClassLoader implements Opcodes {
 		this.typeToRead = typeToRead;
 		
 		final Bind bind = typeToRead.getAnnotation(Bind.class);
+		if (bind == null) {
+			throw new IllegalArgumentException(typeToRead + " has no Bind annotation");
+		}
 		this.name = bind.value();
 		
-		this.generatedClassName = "ReaderFor" + bind.value() + "A" + typeToRead.getSimpleName();
+		this.generatedClassName = "ReaderFor" + 
+		CharMatcher.JAVA_LETTER_OR_DIGIT.retainFrom(
+				bind.value() )
+		
+		+ "A" + typeToRead.getSimpleName();
 		this.generatedClassInternalName = 
 				getClass().getPackage().getName().replace('.', '/') +
 				"/" + generatedClassName;

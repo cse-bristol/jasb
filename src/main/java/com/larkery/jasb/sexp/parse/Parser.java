@@ -7,6 +7,7 @@ import com.google.common.base.CharMatcher;
 import com.larkery.jasb.sexp.ISexpSource;
 import com.larkery.jasb.sexp.ISexpVisitor;
 import com.larkery.jasb.sexp.Location;
+import com.larkery.jasb.sexp.Location.Type;
 import com.larkery.jasb.sexp.errors.BasicError;
 import com.larkery.jasb.sexp.errors.IErrorHandler;
 
@@ -19,9 +20,11 @@ public class Parser {
 	private Location here;
 	int depth = 0;
 	private long offset, line, column;
+	private final Type type;
 	
-	private Parser(final String location, final Reader reader) {
+	private Parser(final Type type, final String location, final Reader reader) {
 		super();
+		this.type = type;
 		this.locationName = location;
 		this.reader = reader;
 	}
@@ -34,17 +37,17 @@ public class Parser {
 		Comment
 	}
 	
-	public static void parse(final String location, final Reader input, final ISexpVisitor output, final IErrorHandler errors) throws IOException {
-		new Parser(location, input).parse(output, errors);
+	public static void parse(final Location.Type type, final String location, final Reader input, final ISexpVisitor output, final IErrorHandler errors) throws IOException {
+		new Parser(type, location, input).parse(output, errors);
 	}
 	
-	public static ISexpSource source(final String location, final Reader input, final IErrorHandler errors) {
+	public static ISexpSource source(final Location.Type type, final String location, final Reader input, final IErrorHandler errors) {
 		return new ISexpSource() {
 			@Override
-			public void accept(ISexpVisitor visitor) {
+			public void accept(final ISexpVisitor visitor) {
 				try {
-					parse(location, input, visitor, errors);
-				} catch (IOException e) {
+					parse(type, location, input, visitor, errors);
+				} catch (final IOException e) {
 					throw new RuntimeException(e);
 				}
 			}
@@ -56,7 +59,7 @@ public class Parser {
 		};
 	}
 	
-	private void parse(final ISexpVisitor output, IErrorHandler errors) throws IOException {
+	private void parse(final ISexpVisitor output, final IErrorHandler errors) throws IOException {
 		int input;
 		
 		S previousState = S.Free;
@@ -166,12 +169,12 @@ public class Parser {
 		}
 	}
 	
-	private void extendAtom(char c) {
+	private void extendAtom(final char c) {
 		startAtom();
 		atombuilder.append(c);
 	}
 	
-	private void sendAtom(ISexpVisitor output) {
+	private void sendAtom(final ISexpVisitor output) {
 		if (atombuilder != null) {
 			output.locate(atomlocation);
 			output.atom(atombuilder.toString());
@@ -187,12 +190,12 @@ public class Parser {
 		}
 	}
 	
-	private void extendComment(char c) {
+	private void extendComment(final char c) {
 		startComment();
 		commentbuilder.append(c);
 	}
 	
-	private void sendComment(ISexpVisitor output) {
+	private void sendComment(final ISexpVisitor output) {
 		if (commentbuilder != null) {
 			output.locate(commentlocation);
 			output.comment(commentbuilder.toString());
@@ -201,6 +204,6 @@ public class Parser {
 	}
 
 	private Location location() {
-		return Location.of(locationName, offset, line, column);
+		return Location.of(type, locationName, offset, line, column);
 	}
 }

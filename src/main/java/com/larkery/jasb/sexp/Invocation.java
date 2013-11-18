@@ -10,13 +10,15 @@ import com.larkery.jasb.sexp.errors.BasicError;
 import com.larkery.jasb.sexp.errors.IErrorHandler;
 
 public class Invocation {
+	public final Node node;
 	public final String name;
 	public final Map<String, Node> arguments;
 	public final List<Node> remainder;
 	
-	public Invocation(final String name, final Map<String, Node> arguments,
+	public Invocation(final Node node, final String name, final Map<String, Node> arguments,
 			final List<Node> remainder) {
 		super();
+		this.node = node;
 		this.name = name;
 		this.arguments = arguments;
 		this.remainder = remainder;
@@ -74,9 +76,13 @@ public class Invocation {
 						}
 					}
 					
-					return new Invocation(name.getValue(), arguments.build(), rest.build());
+					return new Invocation(node, name.getValue(), arguments.build(), rest.build());
 				} else {
-					errors.handle(BasicError.at(head, "a word was expected here, not a list"));
+					if (head == null) {
+						errors.handle(BasicError.at(node, "An empty list was not expected here"));
+					} else {
+						errors.handle(BasicError.at(head, "a word was expected here, not a list"));
+					}
 				}
 				
 			}

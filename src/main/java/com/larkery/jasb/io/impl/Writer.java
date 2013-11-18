@@ -1,6 +1,7 @@
 package com.larkery.jasb.io.impl;
 
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -9,41 +10,59 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.google.common.base.Function;
+import com.google.common.base.Optional;
 import com.larkery.jasb.bind.Bind;
+import com.larkery.jasb.bind.PointlessWrapper;
 import com.larkery.jasb.io.IAtomWriter;
 import com.larkery.jasb.io.impl.JasbPropertyDescriptor.BoundTo;
 import com.larkery.jasb.sexp.ISexpSource;
 import com.larkery.jasb.sexp.ISexpVisitor;
+import com.larkery.jasb.sexp.Location;
 
 public class Writer {
-	private final Set<IAtomWriter> atomWriters;
+	private final Set<? extends IAtomWriter> atomWriters;
 	
-	public Writer(final Set<IAtomWriter> atomWriters) {
+	public Writer(final Set<? extends IAtomWriter> atomWriters) {
 		super();
 		this.atomWriters = atomWriters;
 	}
 
-	public ISexpSource write(final Object object) {
-		return new WriteSource(object);
+	public ISexpSource write(final Object object, final Function<Object, Optional<Location>> locator) {
+		return new WriteSource(object, locator);
 	}
 	
 	class WriteSource implements ISexpSource {
 		private final Object object;
+		private final Function<Object, Optional<Location>> locator;
 
-		public WriteSource(final Object object) {
+		public WriteSource(final Object object, final Function<Object, Optional<Location>> locator) {
 			this.object = object;
+			this.locator = locator;
 		}
 
 		@Override
 		public void accept(final ISexpVisitor visitor) {
-			new WriteSession().accept(object, visitor);
+			new WriteSession(locator).accept(object, visitor);
 		}
 	}
 	
 	class WriteSession {
 		private final Map<Object, String> identities = new IdentityHashMap<>();
+		private final Function<Object, Optional<Location>> locator;
+		
+		public WriteSession(final Function<Object, Optional<Location>> locator) {
+			this.locator = locator;
+		}
+		
 		public void accept(final Object o, final ISexpVisitor visitor) {
 			// first try and write o as an atom
+			final Optional<Location> location = locator.apply(o);
+			if (location.isPresent()) {
+				final Location here = location.get();
+				visitor.locate(here);
+			}
+			
 			for (final IAtomWriter w : atomWriters) {
 				if (w.canWrite(o)) {
 					visitor.atom(w.write(o));
@@ -54,6 +73,26 @@ public class Writer {
 			if (identities.containsKey(o)) {
 				visitor.atom("#" + identities.get(o));
 				return;
+			}
+			
+			if (o.getClass().isAnnotationPresent(PointlessWrapper.class)) {
+				// this is a JAXB xml pointless wrapper thing
+				// which we want to throw away.
+				// it ought to contain a single property of interest
+				for (final Method m : o.getClass().getMethods()) {
+					if (m.isAnnotationPresent(PointlessWrapper.class)) {
+						try {
+							final Object o2 = m.invoke(o);
+							// transparently do o2 instead of this le
+							accept(o2, visitor);
+							return;
+						} catch (IllegalAccessException
+								| IllegalArgumentException
+								| InvocationTargetException e) {
+							throw new RuntimeException("Pointless wrapper should be on a getter", e);
+						}
+					}
+				}
 			}
 			
 			if (o.getClass().isAnnotationPresent(Bind.class)) {
@@ -69,7 +108,7 @@ public class Writer {
 					try {
 						final Object value = pd.readMethod.invoke(o);
 						
-						if (value != null) {
+						if (value != null && !(value instanceof List && ((List<?>) value).isEmpty())) {
 							if (pd.isIdentifier) {
 								identities.put(o, value + "");
 							}

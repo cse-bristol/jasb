@@ -59,6 +59,8 @@ class JasbPropertyDescriptor {
 			return out.build();
 		} catch (final IntrospectionException e) {
 			throw new RuntimeException("Could not get bean info for " +clazz);
+		} catch (final RuntimeException e) {
+			throw new RuntimeException("Whilst getting descriptor for " + clazz.getSimpleName() + ", " + e.getMessage(), e);
 		}
 	}
 	
