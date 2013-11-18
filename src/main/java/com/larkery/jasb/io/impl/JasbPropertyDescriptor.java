@@ -117,8 +117,10 @@ class JasbPropertyDescriptor {
 		name = pd.getName();
 		
 		if (readMethod.isAnnotationPresent(BindNamedArgument.class)) {
+			final BindNamedArgument annotation = readMethod.getAnnotation(BindNamedArgument.class);
+			
 			boundTo = BoundTo.Name;
-			key = Optional.of(readMethod.getAnnotation(BindNamedArgument.class).value());
+			key = Optional.of(annotation.value().startsWith("#") ? pd.getName() : annotation.value());
 			position = Optional.<Integer>absent();
 		} else if (readMethod.isAnnotationPresent(BindPositionalArgument.class)) {
 			boundTo = BoundTo.Position;
