@@ -58,6 +58,7 @@ public class Parser {
 				final IErrorHandler errors);
 		
 		public abstract void complete(
+				Location here,
 				ISExpressionVisitor output, 
 				IErrorHandler errors);
 		
@@ -80,7 +81,7 @@ public class Parser {
 			}
 			
 			@Override
-			public void complete(final ISExpressionVisitor output, final IErrorHandler errors) {
+			public void complete(final Location here, final ISExpressionVisitor output, final IErrorHandler errors) {
 				send(output);
 			}
 			
@@ -107,7 +108,7 @@ public class Parser {
 					final ISExpressionVisitor output, final IErrorHandler errors) {return this;}
 
 			@Override
-			public void complete(final ISExpressionVisitor output,
+			public void complete(final Location here, final ISExpressionVisitor output,
 					final IErrorHandler errors) {}
 			@Override
 			public boolean isError() {
@@ -175,7 +176,7 @@ public class Parser {
 			}
 
 			@Override
-			public void complete(final ISExpressionVisitor output, final IErrorHandler errors) {
+			public void complete(final Location here, final ISExpressionVisitor output, final IErrorHandler errors) {
 				send(output);
 			}
 			
@@ -217,7 +218,11 @@ public class Parser {
 			}
 
 			@Override
-			public void complete(final ISExpressionVisitor output, final IErrorHandler errors) {}
+			public void complete(final Location here, final ISExpressionVisitor output, final IErrorHandler errors) {
+				if (depth != 0) {
+					errors.handle(BasicError.at(here, "Expected " + depth + " more parentheses"));
+				}
+			}
 		}
 	}
 	
@@ -225,12 +230,20 @@ public class Parser {
 		int input;
 		
 		ParseState state = ParseState.start();
-		
+	
+		offset = line = column = 0;
+	
 		while ((input = reader.read()) != -1 && !state.isError()) {
 			state = state.next(location(), (char) input, output, errors);
+			offset++;
+			column++;
+			if (input == '\n' || input == '\r') {
+				line++;
+				column = 0;
+			}
 		}
 		
-		state.complete(output, errors);
+		state.complete(location(), output, errors);
 	}
 	
 	private Location location() {

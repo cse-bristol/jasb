@@ -93,6 +93,6 @@ public class Invocation {
 	}
 
 	public static boolean isInvocation(final Seq node) {
-		return false;
+		return of(node, IErrorHandler.NOP) != null;
 	}
 }

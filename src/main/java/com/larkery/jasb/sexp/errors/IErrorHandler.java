@@ -34,6 +34,11 @@ public interface IErrorHandler {
 			}
 		}
 	};
+
+	public static final IErrorHandler NOP = new IErrorHandler() {
+		@Override
+		public void handle(final IError error) {}
+	};
 	
 	public void handle(final IError error);
 }
