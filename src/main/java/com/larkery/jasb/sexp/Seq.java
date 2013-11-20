@@ -48,7 +48,7 @@ public class Seq extends Node implements Iterable<Node> {
 	}
 	
 	@Override
-	public void accept(final ISexpVisitor visitor) {
+	public void accept(final ISExpressionVisitor visitor) {
 		super.accept(visitor);
 		visitor.open();
 		for (final Node node : this) {
@@ -85,12 +85,32 @@ public class Seq extends Node implements Iterable<Node> {
 			this.start = start;
 		}
 
-		public void add(final Node node) {
+		public Builder add(final Node node) {
 			builder.add(node);
+			return this;
+		}
+		
+		public Builder add(final String atom) {
+			return add(Atom.create(atom));
+		}
+		
+		public Builder add(final String atom, final Node value) {
+			add(atom + ":");
+			return add(value);
+		}
+		
+		public Builder add(final String atom, final String value) {
+			add(atom+":");
+			return add(value);
 		}
 		
 		public Seq build(final Location end) {
 			return new Seq(start, end, this.builder.build());
+		}
+		
+		@Override
+		public String toString() {
+			return ""+builder.build();
 		}
 	}
 	

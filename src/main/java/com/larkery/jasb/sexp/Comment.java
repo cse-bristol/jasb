@@ -18,7 +18,7 @@ public class Comment extends Node {
 		return String.format(" ;; %s\n", text);
 	}
 	@Override
-	public void accept(final ISexpVisitor visitor) {
+	public void accept(final ISExpressionVisitor visitor) {
 		super.accept(visitor);
 		visitor.comment(text);
 	}

@@ -7,8 +7,8 @@ import java.util.Set;
 import org.junit.Assert;
 import org.junit.Before;
 
-import com.larkery.jasb.sexp.ISexpSource;
-import com.larkery.jasb.sexp.ISexpVisitor;
+import com.larkery.jasb.sexp.ISExpression;
+import com.larkery.jasb.sexp.ISExpressionVisitor;
 import com.larkery.jasb.sexp.Location;
 import com.larkery.jasb.sexp.Location.Type;
 import com.larkery.jasb.sexp.NodeBuilder;
@@ -31,7 +31,7 @@ public class VisitingTest {
 		 errors.clear();
 	}
 	
-	static class E implements ISexpVisitor {
+	static class E implements ISExpressionVisitor {
 		final String value;
 		enum T {
 			Open, Atom, Comment, Close
@@ -75,12 +75,12 @@ public class VisitingTest {
 		case "(":return new E(value, E.T.Open);
 		case ")":return new E(value, E.T.Close);
 		default:
-			if (value.startsWith(";;")) return new E(value.substring(2), E.T.Comment);
+			if (value.startsWith(";")) return new E(value.substring(1), E.T.Comment);
 			else return new E(value, E.T.Atom);
 		}
 	}
 	
-	protected ISexpSource source(final String name, final String src) {
+	protected ISExpression source(final String name, final String src) {
 		return Parser.source(
 				Type.Normal,
 				name, 
@@ -108,7 +108,7 @@ public class VisitingTest {
 	protected void check(final String name, final String src, final E... values) {
 		try {
 		source(name, src)
-				.accept(new ISexpVisitor() {
+				.accept(new ISExpressionVisitor() {
 					int offset = 0;
 					@Override
 					public void open() {

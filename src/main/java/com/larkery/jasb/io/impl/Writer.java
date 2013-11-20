@@ -16,8 +16,8 @@ import com.larkery.jasb.bind.Bind;
 import com.larkery.jasb.bind.PointlessWrapper;
 import com.larkery.jasb.io.IAtomWriter;
 import com.larkery.jasb.io.impl.JasbPropertyDescriptor.BoundTo;
-import com.larkery.jasb.sexp.ISexpSource;
-import com.larkery.jasb.sexp.ISexpVisitor;
+import com.larkery.jasb.sexp.ISExpression;
+import com.larkery.jasb.sexp.ISExpressionVisitor;
 import com.larkery.jasb.sexp.Location;
 
 public class Writer {
@@ -28,11 +28,11 @@ public class Writer {
 		this.atomWriters = atomWriters;
 	}
 
-	public ISexpSource write(final Object object, final Function<Object, Optional<Location>> locator) {
+	public ISExpression write(final Object object, final Function<Object, Optional<Location>> locator) {
 		return new WriteSource(object, locator);
 	}
 	
-	class WriteSource implements ISexpSource {
+	class WriteSource implements ISExpression {
 		private final Object object;
 		private final Function<Object, Optional<Location>> locator;
 
@@ -42,7 +42,7 @@ public class Writer {
 		}
 
 		@Override
-		public void accept(final ISexpVisitor visitor) {
+		public void accept(final ISExpressionVisitor visitor) {
 			new WriteSession(locator).accept(object, visitor);
 		}
 	}
@@ -55,7 +55,7 @@ public class Writer {
 			this.locator = locator;
 		}
 		
-		public void accept(final Object o, final ISexpVisitor visitor) {
+		public void accept(final Object o, final ISExpressionVisitor visitor) {
 			// first try and write o as an atom
 			final Optional<Location> location = locator.apply(o);
 			if (location.isPresent()) {

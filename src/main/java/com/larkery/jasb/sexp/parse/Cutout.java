@@ -5,10 +5,10 @@ import java.util.List;
 import java.util.Stack;
 
 import com.google.common.base.Optional;
-import com.larkery.jasb.sexp.ISexpVisitor;
+import com.larkery.jasb.sexp.ISExpressionVisitor;
 import com.larkery.jasb.sexp.Location;
 
-abstract class Cutout<Q extends ISexpVisitor> implements ISexpVisitor {
+abstract class Cutout<Q extends ISExpressionVisitor> implements ISExpressionVisitor {
 	private final Stack<BalancedVisitor> cutouts = new Stack<>();
 	
 	private boolean afterOpen = false;
@@ -17,15 +17,15 @@ abstract class Cutout<Q extends ISexpVisitor> implements ISexpVisitor {
 	private List<Location> commentLocationsAfterOpen = new ArrayList<>();
 	private List<String> commentsAfterOpen = new ArrayList<>();
 	
-	protected Cutout(final ISexpVisitor delegate) {
+	protected Cutout(final ISExpressionVisitor delegate) {
 		super();
 		cutouts.push(new BalancedVisitor(delegate));
 	}
 	
-	static class BalancedVisitor implements ISexpVisitor {
-		private final ISexpVisitor delegate;
+	static class BalancedVisitor implements ISExpressionVisitor {
+		private final ISExpressionVisitor delegate;
 		
-		BalancedVisitor(ISexpVisitor delegate) {
+		BalancedVisitor(ISExpressionVisitor delegate) {
 			super();
 			this.delegate = delegate;
 		}
@@ -68,7 +68,7 @@ abstract class Cutout<Q extends ISexpVisitor> implements ISexpVisitor {
 
 	private void shiftOpen() {
 		if (afterOpen) {
-			final ISexpVisitor peek = cutouts.peek();
+			final ISExpressionVisitor peek = cutouts.peek();
 			peek.locate(openLocation);
 			peek.open();
 			

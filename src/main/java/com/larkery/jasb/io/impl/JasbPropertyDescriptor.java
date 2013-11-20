@@ -13,7 +13,7 @@ import com.google.common.reflect.TypeToken;
 import com.larkery.jasb.bind.BindNamedArgument;
 import com.larkery.jasb.bind.BindPositionalArgument;
 import com.larkery.jasb.bind.BindRemainingArguments;
-import com.larkery.jasb.bind.id.Identity;
+import com.larkery.jasb.bind.Identity;
 
 class JasbPropertyDescriptor {
 	public final boolean isMultiple;
@@ -118,20 +118,38 @@ class JasbPropertyDescriptor {
 		writeMethod = pd.getWriteMethod();
 		name = pd.getName();
 		
-		if (readMethod.isAnnotationPresent(BindNamedArgument.class)) {
+		final boolean namedPresent = readMethod.isAnnotationPresent(BindNamedArgument.class);
+		final boolean positionPresent = readMethod.isAnnotationPresent(BindPositionalArgument.class);
+		final boolean remaining = readMethod.isAnnotationPresent(BindRemainingArguments.class);
+		
+		if (namedPresent) {
+			if (positionPresent || remaining) {
+				throw new IllegalArgumentException(pd + " has several binding annotations");
+			}
+
 			final BindNamedArgument annotation = readMethod.getAnnotation(BindNamedArgument.class);
 			
 			boundTo = BoundTo.Name;
 			key = Optional.of(annotation.value().startsWith("#") ? pd.getName() : annotation.value());
 			position = Optional.<Integer>absent();
-		} else if (readMethod.isAnnotationPresent(BindPositionalArgument.class)) {
+		} else if (positionPresent) {
+			if (namedPresent || remaining) {
+				throw new IllegalArgumentException(pd + " has several binding annotations");
+			}
+			
 			boundTo = BoundTo.Position;
 			key = Optional.<String>absent();
 			position = Optional.<Integer>of(readMethod.getAnnotation(BindPositionalArgument.class).value());
-		} else {
+		} else if (remaining) {
+			if (positionPresent || namedPresent) {
+				throw new IllegalArgumentException(pd + " has several binding annotations");
+			}
+
 			boundTo = BoundTo.Remainder;
 			key = Optional.<String>absent();
 			position = Optional.<Integer>absent();
+		} else {
+			throw new IllegalArgumentException(pd + " does not have any binding annotation, and should not have been used to make a property");
 		}
 		
 		checkConsistency();

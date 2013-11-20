@@ -23,7 +23,7 @@ public interface IErrorHandler {
 	static final Logger log = LoggerFactory.getLogger(IErrorHandler.class);
 	public static final IErrorHandler SLF4J = new IErrorHandler() {
 		@Override
-		public void handle(IError error) {
+		public void handle(final IError error) {
 			switch (error.getType()) {
 			case ERROR:
 				log.error("{} : {}", error.getLocations(), error.getMessage());

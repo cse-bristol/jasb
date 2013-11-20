@@ -2,7 +2,7 @@ package com.larkery.jasb.sexp;
 
 
 
-public abstract class Node implements ISexpSource {
+public abstract class Node implements ISExpression {
 	private final Location location;
 	
 	protected Node(Location location) {
@@ -15,11 +15,11 @@ public abstract class Node implements ISexpSource {
 	}
 	
 	@Override
-	public void accept(ISexpVisitor visitor) {
+	public void accept(ISExpressionVisitor visitor) {
 		visitor.locate(location);
 	}
 	
-	public static Node copy(final ISexpSource source) {
+	public static Node copy(final ISExpression source) {
 		final NodeBuilder visitor = new NodeBuilder();
 		source.accept(visitor);
 		return visitor.get();

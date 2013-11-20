@@ -2,18 +2,18 @@ package com.larkery.jasb.sexp;
 
 import java.io.PrintStream;
 
-public class PrintVisitor implements ISexpVisitor {
+public class PrintVisitor implements ISExpressionVisitor {
 	private final PrintStream out;
 	private Location location;
 	private int depth = 1;
-	private ISexpVisitor delegate;
+	private ISExpressionVisitor delegate;
 
 	public PrintVisitor(PrintStream out) {
 		super();
 		this.out = out;
 	}
 	
-	public PrintVisitor(PrintStream out, final ISexpVisitor delegate) {
+	public PrintVisitor(PrintStream out, final ISExpressionVisitor delegate) {
 		super();
 		this.out = out;
 		this.delegate = delegate;

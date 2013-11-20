@@ -1,4 +1,4 @@
-package com.larkery.jasb.bind.id;
+package com.larkery.jasb.io.impl;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -14,12 +14,12 @@ import com.larkery.jasb.sexp.Atom;
  * @author hinton
  *
  */
-public class Resolver implements IResolver {
+class Resolver  {
 	private final Map<String, SettableFuture<?>> futures = new HashMap<>();
 	private final Map<String, Class<?>> futureClasses = new HashMap<>();
 	
 	@SuppressWarnings("unchecked")
-	@Override
+
 	public <Q> ListenableFuture<Q> resolve(final Atom cause, final String id, final Class<Q> type) {
 		if (!futures.containsKey(id)) {
 			futures.put(id, SettableFuture.create());
@@ -34,7 +34,7 @@ public class Resolver implements IResolver {
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	@Override
+
 	public void define(final String result, final Object o) {
 		if (futures.containsKey(result)) {
 			if (futures.get(result).isDone()) {

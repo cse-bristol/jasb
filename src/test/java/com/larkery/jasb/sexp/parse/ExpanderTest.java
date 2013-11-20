@@ -3,12 +3,12 @@ package com.larkery.jasb.sexp.parse;
 import org.junit.Test;
 
 import com.google.common.collect.ImmutableSet;
-import com.larkery.jasb.sexp.ISexpSource;
+import com.larkery.jasb.sexp.ISExpression;
 import com.larkery.jasb.sexp.errors.IErrorHandler.IError;
 
 public class ExpanderTest extends ParserTest {
 	@Override
-	protected ISexpSource source(String name, String src) {
+	protected ISExpression source(String name, String src) {
 		return Expander.expand(super.source(name, src), RECORD);
 	}
 	

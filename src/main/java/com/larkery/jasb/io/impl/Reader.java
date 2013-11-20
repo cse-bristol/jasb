@@ -20,8 +20,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.larkery.jasb.bind.Bind;
 import com.larkery.jasb.bind.PointlessWrapper;
-import com.larkery.jasb.bind.id.IResolver;
-import com.larkery.jasb.bind.id.Resolver;
 import com.larkery.jasb.io.IAtomReader;
 import com.larkery.jasb.io.IReadContext;
 import com.larkery.jasb.sexp.Atom;
@@ -29,14 +27,14 @@ import com.larkery.jasb.sexp.Invocation;
 import com.larkery.jasb.sexp.Node;
 import com.larkery.jasb.sexp.errors.IErrorHandler;
 
-public class ReadContext implements IReadContext {
+public class Reader  {
 	private final Map<Class<?>, Switcher<?>> switchers = new HashMap<>();
 	private final Map<Class<?>, InvocationReader<?>> specificReaders = new HashMap<>();
 	private final Set<Class<?>> boundClasses;
 	private final Set<? extends IAtomReader> atomReaders;
-	private final IResolver resolver = new Resolver();
 	
-	public ReadContext(final Set<Class<?>> boundClasses, final Set<? extends IAtomReader> atomReaders) {
+	
+	public Reader(final Set<Class<?>> boundClasses, final Set<? extends IAtomReader> atomReaders) {
 		super();
 		
 		final Set<Class<?>> concrete = ImmutableSet.copyOf(Collections2.filter(boundClasses, 
@@ -54,7 +52,10 @@ public class ReadContext implements IReadContext {
 		this.boundClasses = concrete;
 		this.atomReaders = atomReaders;
 	}
-
+	
+	public IReadContext getContext(final IErrorHandler delegate) {
+		return new Context(delegate);
+	}
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private static void checkConsistency(final Set<Class<?>> classes, final Set<? extends IAtomReader> atomReaders) {
@@ -105,6 +106,11 @@ public class ReadContext implements IReadContext {
 					}
 					
 					boolean canRead = false;
+					
+					if (Node.class.isAssignableFrom(pd.boxedPropertyType)) {
+						canRead = true;
+					}
+					
 					for (final IAtomReader reader : atomReaders) {
 						if (reader.canReadTo(pd.boxedPropertyType)) {
 							canRead = true;
@@ -139,19 +145,55 @@ public class ReadContext implements IReadContext {
 		}
 	}
 
-	@Override
-	public void handle(final IError error) {
-		IErrorHandler.SLF4J.handle(error);
-	}
+	class Context implements IReadContext {
+		private final IErrorHandler delegateErrorHandler;
+		private final Resolver resolver = new Resolver();
+		
+		Context(final IErrorHandler delegateErrorHandler) {
+			super();
+			this.delegateErrorHandler = delegateErrorHandler;
+		}
 
-	@Override
-	public <T> ListenableFuture<T> getCrossReference(final Class<T> clazz, final Atom atom, final String id) {
-		return resolver.resolve(atom, id, clazz);
-	}
+		@Override
+		public void handle(final IError error) {
+			delegateErrorHandler.handle(error);
+		}
 
-	@Override
-	public <T> ListenableFuture<T> read(final Class<T> clazz, final Node node) {
-		return getSwitcher(clazz).read(this, node);
+		@Override
+		public <T> ListenableFuture<T> getCrossReference(final Class<T> clazz, final Atom where, final String identity) {
+			return resolver.resolve(where, identity, clazz);
+		}
+
+		@Override
+		public <T> ListenableFuture<T> read(final Class<T> clazz, final Node node) {
+			if (clazz.isInstance(node)) {
+				return Futures.immediateFuture(clazz.cast(node));
+			} else {
+				return Reader.this.getSwitcher(clazz).read(this, node);
+			}
+		}
+		
+		@Override
+		public <T> ListenableFuture<List<T>> readMany(final Class<T> clazz, final Iterable<Node> nodes) {
+			final ImmutableList.Builder<ListenableFuture<T>> futures = ImmutableList.builder();
+			for (final Node node : nodes) {
+				futures.add(read(clazz, node));
+			}
+			return Futures.allAsList(futures.build());
+		}
+		
+		@Override
+		public void registerIdentity(final Object o, final ListenableFuture<String> future) {
+			Futures.addCallback(future, new FutureCallback<String>() {
+				@Override
+				public void onSuccess(final String result) {
+					resolver.define(result, o);
+				}
+				
+				@Override
+				public void onFailure(final Throwable t) {}
+			});
+		}
 	}
 
 	private <T> Switcher<T> getSwitcher(final Class<T> clazz) {
@@ -241,27 +283,5 @@ public class ReadContext implements IReadContext {
 			}
 		}
 		return new MultiAtomReader<T>(clazz, readers.build());
-	}
-	
-	@Override
-	public <T> ListenableFuture<List<T>> readMany(final Class<T> clazz, final Iterable<Node> nodes) {
-		final ImmutableList.Builder<ListenableFuture<T>> futures = ImmutableList.builder();
-		for (final Node node : nodes) {
-			futures.add(read(clazz, node));
-		}
-		return Futures.allAsList(futures.build());
-	}
-	
-	@Override
-	public void registerIdentity(final Object o, final ListenableFuture<String> future) {
-		Futures.addCallback(future, new FutureCallback<String>() {
-			@Override
-			public void onSuccess(final String result) {
-				resolver.define(result, o);
-			}
-			
-			@Override
-			public void onFailure(final Throwable t) {}
-		});
 	}
 }

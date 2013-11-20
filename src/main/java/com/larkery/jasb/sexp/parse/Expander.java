@@ -12,8 +12,8 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.larkery.jasb.sexp.Atom;
 import com.larkery.jasb.sexp.Comment;
-import com.larkery.jasb.sexp.ISexpSource;
-import com.larkery.jasb.sexp.ISexpVisitor;
+import com.larkery.jasb.sexp.ISExpression;
+import com.larkery.jasb.sexp.ISExpressionVisitor;
 import com.larkery.jasb.sexp.Invocation;
 import com.larkery.jasb.sexp.Location;
 import com.larkery.jasb.sexp.Node;
@@ -23,7 +23,7 @@ import com.larkery.jasb.sexp.errors.BasicError;
 import com.larkery.jasb.sexp.errors.IErrorHandler;
 
 public class Expander {
-	public static Node expand(final ISexpSource source, final IErrorHandler errors) {
+	public static Node expand(final ISExpression source, final IErrorHandler errors) {
 		final NodeBuilder withoutMacros = new NodeBuilder();
 		final Set<Node> macros = new HashSet<>();
 		
@@ -91,7 +91,7 @@ public class Expander {
 				protected void paste(NodeBuilder q) {
 					final Node top = q.get();
 					final Seq seq = (Seq) top;
-					ISexpSource expand = templates.get(((Atom)seq.getHead()).getValue()).expand(top, errors);
+					ISExpression expand = templates.get(((Atom)seq.getHead()).getValue()).expand(top, errors);
 					if (expand != null) {
 						expand.accept(this);
 					}
@@ -116,7 +116,7 @@ public class Expander {
 			this.templateContents = templateContents;
 		}
 
-		public ISexpSource expand(final Node top, final IErrorHandler errors) {
+		public ISExpression expand(final Node top, final IErrorHandler errors) {
 			final Invocation invocation = Invocation.of(top, errors);
 			if (invocation == null) return null;
 			
@@ -143,9 +143,9 @@ public class Expander {
 			}
 			
 			if (!failed) {
-				return new ISexpSource() {
+				return new ISExpression() {
 					@Override
-					public void accept(final ISexpVisitor visitor) {
+					public void accept(final ISExpressionVisitor visitor) {
 						final ExpandingVisitor expander = new ExpandingVisitor(mapping, visitor);
 						for (final Node node : templateContents) {
 							node.accept(expander);
@@ -157,11 +157,11 @@ public class Expander {
 			return null;
 		}
 		
-		static class ExpandingVisitor implements ISexpVisitor {
-			final ISexpVisitor delegate;
+		static class ExpandingVisitor implements ISExpressionVisitor {
+			final ISExpressionVisitor delegate;
 			private Map<String, Node> mapping;
 			
-			private ExpandingVisitor(Map<String, Node> mapping, ISexpVisitor delegate) {
+			private ExpandingVisitor(Map<String, Node> mapping, ISExpressionVisitor delegate) {
 				super();
 				this.mapping = mapping;
 				this.delegate = delegate;
@@ -266,7 +266,7 @@ public class Expander {
 		}
 	}
 	
-	static class ParameterChecker implements ISexpVisitor {
+	static class ParameterChecker implements ISExpressionVisitor {
 		private Location location;
 		public boolean errors = false;
 		private final Set<String> parameters;

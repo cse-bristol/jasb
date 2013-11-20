@@ -29,7 +29,7 @@ public class Atom extends Node {
 	}
 	
 	@Override
-	public void accept(final ISexpVisitor visitor) {
+	public void accept(final ISExpressionVisitor visitor) {
 		super.accept(visitor);
 		visitor.atom(value);
 	}
@@ -56,5 +56,9 @@ public class Atom extends Node {
 	@Override
 	public int hashCode() {
 		return Pojomatic.hashCode(this);
+	}
+
+	public static Node create(final String string) {
+		return new Atom(null,string);
 	}
 }

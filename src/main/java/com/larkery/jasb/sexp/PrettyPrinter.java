@@ -1,114 +1,122 @@
 package com.larkery.jasb.sexp;
 
 import java.io.PrintWriter;
-import java.net.URI;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import com.google.common.base.Function;
 import com.larkery.jasb.sexp.errors.IErrorHandler;
 
 
 public class PrettyPrinter implements INodeVisitor {
-	private final IndentedWriter iw;
-	private final boolean makeIncludes;
+	private final Map<String, IndentedWriter> writers = new HashMap<>();
 	private final LinkedList<String> locations = new LinkedList<>();
+	private final Function<String, PrintWriter> writerSource;
+	private IndentedWriter iw;
 	
-	public PrettyPrinter(final PrintWriter out, final boolean makeIncludes) {
-		this.makeIncludes = makeIncludes;
-		iw = new IndentedWriter(out);
+	public PrettyPrinter(final Function<String, PrintWriter> writerSource) {
+		this.writerSource = writerSource;
 	}
 	
-	private boolean shouldPrint(final Node atom) {
-		if (!makeIncludes) return true;
+	private IndentedWriter writer() {
+		return writers.get(locations.peek());
+	}
+	
+	private void switchInclude(final Node node) {
+		final Location loc = node.getLocation();
+		if (loc == null) {
+			switchInclude("");
+		} else {
+			switchInclude(loc.name);
+		}
 		
-		final Location loc = atom.getLocation();
-		if (loc == null) return true;
-		
-		if (!loc.name.equals(locations.peek())) {
-			System.err.println(loc.name + " not current location");
-			if (locations.contains(loc.name)) {
-				System.err.println("popping back to it");
-				// pop up to that place (presuming no recursion)
-				while (!loc.name.equals(locations.pop()));
+		this.iw = writer();
+		if (this.iw == null) throw new UnsupportedOperationException("null");
+	}
+	
+	private void switchInclude(final String name) {
+		if (!name.equals(locations.peek())) {
+			if (locations.contains(name)) {
+				while (!name.equals(locations.pop()));
 			} else {
-				System.err.println("pushing it");
-				locations.push(loc.name);
-				if (locations.size() == 2) {
-					final URI top = URI.create(locations.get(0));
-					final URI bottom = URI.create(locations.get(1));
-					
-					iw.write(String.format("(include href:\"%s\")", bottom));
+				locations.push(name);
+				if (!writers.containsKey(name)) {
+					writers.put(name, new IndentedWriter(writerSource.apply(name)));
 				}
 			}
 		}
-		
-		return locations.size() <= 1;
 	}
-	
+
 	@Override
 	public boolean seq(final Seq seq) {
-		if (shouldPrint(seq)) {
-			final Invocation inv = Invocation.of(seq, IErrorHandler.SLF4J);
-			if (inv != null) {
-				iw.write("(" + inv.name);
-				iw.pushIndentation(inv.name.length() + 2);
-				
-				if (inv.arguments.size() == 1 && inv.remainder.isEmpty()) {
-					final Entry<String, Node> next = inv.arguments.entrySet().iterator().next();
-					iw.write(" " + next.getKey() + ": ");
-					iw.pushIndentation(next.getKey().length() + 3);
-					next.getValue().accept(this);
-					iw.popIndentation();
-				} else {
-					for (final Map.Entry<String, Node> e : inv.arguments.entrySet()) {
-						iw.write((iw.isAtSpace() ? "" : " ") + e.getKey() + ": ");
-						iw.pushIndentation(e.getKey().length()+2);
-						e.getValue().accept(this);
-						iw.popIndentation();
-						iw.write("\n");
-					}
-					
-					for (final Node n : inv.remainder) {
-						iw.write("\n");
-						n.accept(this);
-					}
-				}
+		switchInclude(seq);
+		
+		final Invocation inv = Invocation.of(seq, IErrorHandler.SLF4J);
+		if (inv != null) {
+			if (iw.isAtSpace() == false) iw.write(" ");
+			iw.write("(" + inv.name);
+			iw.pushIndentation(inv.name.length() + 2);
+			
+			if (inv.arguments.size() == 1 && inv.remainder.isEmpty()) {
+				final Entry<String, Node> next = inv.arguments.entrySet().iterator().next();
+				iw.write(" " + next.getKey() + ": ");
+				iw.pushIndentation(next.getKey().length() + 3);
+				next.getValue().accept(this);
 				iw.popIndentation();
-				iw.write(")\n");
+			} else if (inv.arguments.isEmpty() && inv.remainder.size() == 1) {
+				inv.remainder.iterator().next().accept(this);
 			} else {
-				iw.pushIndentation(3);
+				for (final Map.Entry<String, Node> e : inv.arguments.entrySet()) {
+					iw.write((iw.isAtSpace() ? "" : " ") + e.getKey() + ": ");
+					iw.pushIndentation(e.getKey().length()+2);
+					e.getValue().accept(this);
+					iw.popIndentation();
+					iw.write("\n");
+				}
 				
-				iw.write("(");
-				
-				for (final Node n : seq) {
+				for (final Node n : inv.remainder) {
+					iw.write("\n");
 					n.accept(this);
 				}
-				
-				iw.write(")");
-				
-				iw.popIndentation();
 			}
+			iw.popIndentation();
+			iw.write(")\n");
+		} else {
+			iw.pushIndentation(3);
+			
+			iw.write("(");
+			
+			for (final Node n : seq) {
+				n.accept(this);
+			}
+			
+			iw.write(")");
+			
+			iw.popIndentation();
 		}
+		
 		return false;
 	}
 
 	@Override
 	public void atom(final Atom atom) {
-		if (shouldPrint(atom)) {
+		switchInclude(atom);
+		
 			if (iw.getColumn() > 1000) {
 				iw.write("\n");
 			} else if (iw.isAtSpace() == false) {
 				iw.write(" ");
 			}
 			iw.write(atom.toString());
-		}
+		
 	}
 
 	@Override
 	public void comment(final Comment comment) {
-		if (shouldPrint(comment)) {
-			iw.write("\n ;; " + comment.getText() + "\n");
-		}
+		switchInclude(comment);
+		
+		iw.write("\n ;; " + comment.getText() + "\n");
 	}
 }

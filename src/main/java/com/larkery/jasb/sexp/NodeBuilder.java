@@ -4,10 +4,10 @@ import java.util.Stack;
 
 import com.larkery.jasb.sexp.Seq.Builder;
 
-public class NodeBuilder implements ISexpVisitor {
+public class NodeBuilder implements ISExpressionVisitor {
 	private Location here;
 	private final Stack<Seq.Builder> inprogress = new Stack<>();
-	private Builder top;
+	private final Builder top;
 	
 	public NodeBuilder() {
 		top = Seq.builder(null);
@@ -20,7 +20,7 @@ public class NodeBuilder implements ISexpVisitor {
 	}
 	
 	@Override
-	public void locate(Location loc) {
+	public void locate(final Location loc) {
 		here = loc;
 	}
 	
@@ -31,18 +31,18 @@ public class NodeBuilder implements ISexpVisitor {
 	}
 	
 	@Override
-	public void atom(String string) {
+	public void atom(final String string) {
 		inprogress.peek().add(new Atom(here, string));
 	}
 	
 	@Override
-	public void comment(String text) {
+	public void comment(final String text) {
 		inprogress.peek().add(new Comment(here, text));		
 	}
 	
 	public Node get() {
 		if (inprogress.size() > 1) {
-			throw new UnsupportedOperationException("there are " + inprogress.size() + " elements left on the stack");
+			throw new UnsupportedOperationException("there are " + inprogress.size() + " elements left on the stack (" +inprogress+ ")");
 		}
 		return top.build(null).getHead();
 	}

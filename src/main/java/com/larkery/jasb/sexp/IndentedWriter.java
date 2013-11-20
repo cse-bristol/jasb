@@ -14,6 +14,10 @@ class IndentedWriter {
 	private boolean isAtSpace = true;
 	private boolean isAtNewline = true;
 	
+	public PrintWriter getOut() {
+		return out;
+	}
+	
 	IndentedWriter(final PrintWriter out) {
 		super();
 		this.out = out;
