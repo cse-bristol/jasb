@@ -83,6 +83,7 @@ public class Parser {
 			@Override
 			public void complete(final Location here, final ISExpressionVisitor output, final IErrorHandler errors) {
 				send(output);
+				whitespace.complete(here, output, errors);
 			}
 			
 			private void send(final ISExpressionVisitor output) {
@@ -178,6 +179,7 @@ public class Parser {
 			@Override
 			public void complete(final Location here, final ISExpressionVisitor output, final IErrorHandler errors) {
 				send(output);
+				whitespace.complete(here, output, errors);
 			}
 			
 			private ParseState send(final ISExpressionVisitor output) {
