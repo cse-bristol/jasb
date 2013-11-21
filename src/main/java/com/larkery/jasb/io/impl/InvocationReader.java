@@ -39,6 +39,12 @@ public abstract class InvocationReader<T> {
 		this.expectedKeys = ImmutableSet.copyOf(expectedKeys);
 	}
 
+	/**
+	 * This is overridden in subclasses to do the actual work
+	 * @param context
+	 * @param invocation
+	 * @return
+	 */
 	protected abstract T read(final IReadContext context, final Invocation invocation);
 
 	protected final void warnOnUnusedKeys(final IReadContext context, final Invocation invocation) {

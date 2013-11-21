@@ -368,12 +368,32 @@ class InvocationReaderLoader<T> extends ClassLoader implements Opcodes {
 		final AtomicInteger localCounter = new AtomicInteger(RESULT_SLOT + 1);
 		final ImmutableList.Builder<Local> locals = ImmutableList.builder();
 		
-	
 		// next we should invoke the special information method if there is one
 		
 		for (final Method method : typeToRead.getMethods()) {
 			if (method.isAnnotationPresent(AfterReading.class)) {
 				// what do we pass to this? the node which made it?
+				// that seems reasonable.
+				mv.visitVarInsn(ALOAD, RESULT_SLOT);
+				// S: result
+				mv.visitVarInsn(ALOAD, INVOCATION_SLOT);
+				// S: result invocation
+				mv.visitFieldInsn(GETFIELD, 
+						Type.getInternalName(Invocation.class),
+						"node",
+						Type.getDescriptor(Node.class));
+				
+				// S: result invocation.node
+				mv.visitMethodInsn(
+						INVOKEVIRTUAL, 
+						Type.getInternalName(typeToRead),
+						method.getName(), 
+						Type.getMethodDescriptor(
+								Type.getType(Void.TYPE),
+								new Type[] {Type.getType(Node.class)}));
+				// S: empty
+				
+				break;
 			}
 		}
 		

@@ -9,6 +9,7 @@ import org.junit.Test;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.larkery.jasb.io.impl.Reader;
+import com.larkery.jasb.io.testmodel.Arithmetic;
 import com.larkery.jasb.io.testmodel.Div;
 import com.larkery.jasb.io.testmodel.GetNode;
 import com.larkery.jasb.io.testmodel.Plus;
@@ -36,8 +37,13 @@ public class TestSimpleExpressions {
 		final Node node = 
 				Node.copy(Parser.source(Type.Normal, "test case", new StringReader(s), IErrorHandler.SLF4J));
 		
-		return context.getContext(IErrorHandler.SLF4J).read(out, node).get();
+		final T result = context.getContext(IErrorHandler.SLF4J).read(out, node).get();
 		
+		if (result instanceof Arithmetic) {
+			Assert.assertSame(node, ((Arithmetic) result).node);
+		}
+		
+		return result;
 	}
 	
 	@Test

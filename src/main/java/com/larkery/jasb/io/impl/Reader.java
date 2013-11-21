@@ -4,6 +4,7 @@ import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.List;
@@ -18,6 +19,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.larkery.jasb.bind.AfterReading;
 import com.larkery.jasb.bind.Bind;
 import com.larkery.jasb.bind.PointlessWrapper;
 import com.larkery.jasb.io.IAtomReader;
@@ -39,7 +41,6 @@ public class Reader  {
 		
 		final Set<Class<?>> concrete = ImmutableSet.copyOf(Collections2.filter(boundClasses, 
 				new Predicate<Class<?>>() {
-
 					@Override
 					public boolean apply(final Class<?> input) {
 						return !Modifier.isAbstract(input.getModifiers());
@@ -82,7 +83,28 @@ public class Reader  {
 					throw new IllegalArgumentException("Constructing " + clazz
 							+ " causes an error", e);
 				}
-					
+				
+				for (final Method m : clazz.getMethods()) {
+					if (m.isAnnotationPresent(AfterReading.class)) {
+						if (m.getReturnType() != Void.TYPE) {
+							throw new IllegalArgumentException("AfterReading method " + m + " is not void");
+						}
+						if (m.getParameterTypes().length != 1
+								|| !m.getParameterTypes()[0].equals(Node.class)) {
+							throw new IllegalArgumentException("AfterReading method " + m + " should take a single Node as its argument");
+						}
+						if (!Modifier.isPublic(m.getModifiers())) {
+							throw new IllegalArgumentException("AfterReading method " + m + " is not public");
+						}
+						if (Modifier.isStatic(m.getModifiers())) {
+							throw new IllegalArgumentException("AfterReading method " + m + " is static");
+						}
+						if (m.getDeclaringClass().isInterface()) {
+							throw new IllegalArgumentException("AfterReading method " + m + " is in an interface");
+						}
+					}
+				}
+				
 				final Set<JasbPropertyDescriptor> descriptors = JasbPropertyDescriptor.getDescriptors(clazz);
 				for (final JasbPropertyDescriptor pd : descriptors) {
 					if (pd.isMultiple) {

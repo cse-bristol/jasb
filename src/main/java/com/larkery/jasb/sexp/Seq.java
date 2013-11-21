@@ -1,5 +1,6 @@
 package com.larkery.jasb.sexp;
 
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -111,6 +112,11 @@ public class Seq extends Node implements Iterable<Node> {
 		@Override
 		public String toString() {
 			return ""+builder.build();
+		}
+
+		public Builder addAll(final Collection<Node> nodes) {
+			builder.addAll(nodes);
+			return this;
 		}
 	}
 	
