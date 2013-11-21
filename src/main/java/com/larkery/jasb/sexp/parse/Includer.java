@@ -34,6 +34,22 @@ public class Includer {
 	public interface ILocationReader {
 		public Reader getReader();
 		public String getLocation();
+		
+		
+	}
+	
+	public static ILocationReader stringLocationReader(final String location, final String value) {
+		return new ILocationReader(){
+				@Override
+				public Reader getReader() {
+					return new StringReader(value);
+				}
+		
+				@Override
+				public String getLocation() {
+					return location;
+				}
+		};
 	}
 	
 	public interface IResolver {
