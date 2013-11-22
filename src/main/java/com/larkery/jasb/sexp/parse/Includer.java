@@ -1,6 +1,7 @@
 package com.larkery.jasb.sexp.parse;
 
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringReader;
 import java.net.URI;
@@ -34,8 +35,25 @@ public class Includer {
 	public interface ILocationReader {
 		public Reader getReader();
 		public String getLocation();
-		
-		
+	}
+	
+	public static ILocationReader fileLocationReader(final URI ref) {
+		return new ILocationReader(){
+
+			@Override
+			public Reader getReader() {
+				try {
+					return new InputStreamReader(ref.toURL().openStream());
+				} catch (final IOException e) {
+					throw new NoSuchElementException(e.getMessage());
+				}
+			}
+
+			@Override
+			public String getLocation() {
+				return "" + ref;
+			}
+		};
 	}
 	
 	public static ILocationReader stringLocationReader(final String location, final String value) {
