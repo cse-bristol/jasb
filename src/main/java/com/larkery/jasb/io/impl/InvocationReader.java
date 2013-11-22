@@ -79,7 +79,7 @@ public abstract class InvocationReader<T> {
 			return Futures.allAsList(ImmutableList.of(readValue));
 		} else if (node instanceof Seq) {
 			final Seq seq = (Seq) node;
-			if (Invocation.isInvocation(seq)) {
+			if (Invocation.isInvocation(seq) && context.hasInvocationNamed(seq.getHead())) {
 				final ListenableFuture<Q> readValue = context.read(type, seq);
 				return Futures.allAsList(ImmutableList.of(readValue));
 			} else {

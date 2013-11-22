@@ -28,7 +28,7 @@ public class PrettyPrinter implements INodeVisitor {
 	private void switchInclude(final Node node) {
 		final Location loc = node.getLocation();
 		if (loc == null) {
-			switchInclude(URI.create("nowhere:"));
+			switchInclude(URI.create("nowhere:nowhere"));
 		} else {
 			switchInclude(loc.name);
 		}

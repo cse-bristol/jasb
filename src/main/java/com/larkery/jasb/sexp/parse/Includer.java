@@ -83,6 +83,8 @@ public class Includer {
 		public ILocationReader resolve(final URI href, final IErrorHandler errors) throws NoSuchElementException;
 	}
 	
+	
+	
 	/**
 	 * Given a resolver and a root address, construct a map which contains all of the included
 	 * things by URI that were found in the root document or any of its includes, and so on.
@@ -211,5 +213,34 @@ public class Includer {
 				errors.handle(BasicError.at(q.get(), "Unable to resolve include - " + e.getMessage()));
 			}
 		}
+	}
+
+	private static final URI root = URI.create("root:root");
+	
+	/**
+	 * Recursively collect all the includes starting from the given root provided as a string 
+	 * @param scenarioService
+	 * @param scenarioXML
+	 * @param slf4j
+	 * @return
+	 */
+	public static Map<URI, String> collectFromRoot(
+			final IResolver resolver, 
+			final String scenarioXML,
+			final IErrorHandler errors) {
+		
+		return collect(new IResolver(){
+				@Override
+				public ILocationReader resolve(final URI href, final IErrorHandler errors)
+						throws NoSuchElementException {
+					if (href == root) return stringLocationReader(root, scenarioXML);
+					else return resolver.resolve(href, errors);
+				}
+		
+				@Override
+				public URI convert(final Seq include, final IErrorHandler errors) {
+					return resolver.convert(include, errors);
+				}
+		}, root, errors);
 	}
 }

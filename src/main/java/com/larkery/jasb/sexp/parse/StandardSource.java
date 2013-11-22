@@ -29,8 +29,7 @@ public class StandardSource implements ISExpressionSource {
 	
 	@Override
 	public ISExpression get(final URI address, final IErrorHandler errors) {
-		return /*Expander.expand(*/
-				Includer.source(resolver, address, errors)
-				/*, errors)*/;
+		return Expander.expand(
+				Includer.source(resolver, address, errors),errors);
 	}
 }

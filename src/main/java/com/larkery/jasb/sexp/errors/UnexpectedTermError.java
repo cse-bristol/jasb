@@ -1,10 +1,12 @@
 package com.larkery.jasb.sexp.errors;
 
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.Set;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
+import com.larkery.jasb.sexp.Location;
 import com.larkery.jasb.sexp.Node;
 
 public class UnexpectedTermError extends BasicError {
@@ -13,11 +15,11 @@ public class UnexpectedTermError extends BasicError {
 	
 	public UnexpectedTermError(
 			final Node node,
-			Set<String> legalValues,
-			String value
+			final Set<String> legalValues,
+			final String value
 			) {
 		
-		super(ImmutableSet.of(node.getLocation()), 
+		super(node.getLocation() == null ? Collections.<Location>emptySet() : ImmutableSet.of(node.getLocation()), 
 			  ImmutableSet.of(node), 
 			  createMessage(value, legalValues), 
 			  Type.ERROR);
@@ -26,11 +28,11 @@ public class UnexpectedTermError extends BasicError {
 		this.value = value;
 	}
 
-	private static String createMessage(String value, Set<String> legalValues) {
+	private static String createMessage(final String value, final Set<String> legalValues) {
 		final String expected;
 		
 		if (legalValues.isEmpty()) {
-			expected = "nothing";
+			expected = "nothing here";
 		} else if (legalValues.size() == 1) {
 			expected = Iterables.get(legalValues, 0);
 		} else if (legalValues.size() == 2) {

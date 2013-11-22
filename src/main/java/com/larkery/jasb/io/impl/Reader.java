@@ -34,7 +34,7 @@ public class Reader  {
 	private final Map<Class<?>, InvocationReader<?>> specificReaders = new HashMap<>();
 	private final Set<Class<?>> boundClasses;
 	private final Set<? extends IAtomReader> atomReaders;
-	
+	private final Set<String> allBoundNames;
 	
 	public Reader(final Set<Class<?>> boundClasses, final Set<? extends IAtomReader> atomReaders) {
 		super();
@@ -52,6 +52,14 @@ public class Reader  {
 		
 		this.boundClasses = concrete;
 		this.atomReaders = atomReaders;
+		
+		final ImmutableSet.Builder<String> strings = ImmutableSet.builder();
+		for (final Class<?> clazz : this.boundClasses) {
+			if (clazz.isAnnotationPresent(Bind.class)) {
+				strings.add(clazz.getAnnotation(Bind.class).value());
+			}
+		}
+		allBoundNames = strings.build();
 	}
 	
 	public IReadContext getContext(final IErrorHandler delegate) {
@@ -216,6 +224,16 @@ public class Reader  {
 				public void onFailure(final Throwable t) {}
 			});
 		}
+		
+		@Override
+		public boolean hasInvocationNamed(final Node head) {
+			if (head instanceof Atom) {
+				final String val = ((Atom) head).getValue();
+				return allBoundNames.contains(val);
+			} else {
+				return false;
+			}
+		}
 	}
 
 	private <T> Switcher<T> getSwitcher(final Class<T> clazz) {
@@ -249,6 +267,7 @@ public class Reader  {
 			if (sub.isAnnotationPresent(PointlessWrapper.class)) {
 				try {
 					for (final PropertyDescriptor pd : Introspector.getBeanInfo(sub).getPropertyDescriptors()) {
+						if (pd.getReadMethod() == null) continue;
 						if (pd.getReadMethod().isAnnotationPresent(PointlessWrapper.class)) {
 							final InvocationReader<T> out = new InvocationReader<T>(sub, 
 									"", new String [0]

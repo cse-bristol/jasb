@@ -72,7 +72,7 @@ class Switcher<T> implements IReader<T> {
 			return Futures.immediateFuture(clazz.cast(readersByName.get(invocation.name).read(context, invocation)));
 		} else {
 			context.handle(new UnexpectedTermError(node, readersByName.keySet(), invocation.name));
-			return death("Expected " + readersByName.keySet() + ", not " + invocation.name);
+			return death("Expected " + readersByName.keySet() + ", not " + invocation.name +" - maybe your Bind annotated class is not in the set presented to the Reader?");
 		}
 	}
 }

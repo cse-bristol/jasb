@@ -13,6 +13,7 @@ import com.larkery.jasb.io.impl.Reader;
 import com.larkery.jasb.io.testmodel.Arithmetic;
 import com.larkery.jasb.io.testmodel.Div;
 import com.larkery.jasb.io.testmodel.GetNode;
+import com.larkery.jasb.io.testmodel.ListOfStrings;
 import com.larkery.jasb.io.testmodel.Plus;
 import com.larkery.jasb.io.testmodel.Times;
 import com.larkery.jasb.io.testmodel.Value;
@@ -29,6 +30,7 @@ public class TestSimpleExpressions {
 								GetNode.class,
 								Div.class,
 								Plus.class,
+								ListOfStrings.class,
 								Times.class,
 								Value.class),
 						ImmutableSet.of(
@@ -92,5 +94,14 @@ public class TestSimpleExpressions {
 	public void readsNodeWithoutBinding() throws InterruptedException, ExecutionException {
 		final GetNode node = read("(get (+ (value of: 1) (value of: 2)))", GetNode.class);
 		Assert.assertEquals("(+ (value of: 1) (value of: 2))", node.node.toString());
+	}
+	
+	@Test
+	public void readsListOfAtoms() throws InterruptedException, ExecutionException {
+		final ListOfStrings node = read("(strings values: hello)", ListOfStrings.class);
+		Assert.assertEquals(ImmutableList.of("hello"), node.getStrings());
+		
+		final ListOfStrings node2 = read("(strings values: (hello world))", ListOfStrings.class);
+		Assert.assertEquals(ImmutableList.of("hello", "world"), node2.getStrings());
 	}
 }

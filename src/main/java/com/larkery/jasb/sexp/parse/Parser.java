@@ -234,7 +234,7 @@ public class Parser {
 		
 		ParseState state = ParseState.start();
 	
-		offset = line = column = 0;
+		offset = line = column = 1;
 	
 		while ((input = reader.read()) != -1 && !state.isError()) {
 			state = state.next(location(), (char) input, output, errors);

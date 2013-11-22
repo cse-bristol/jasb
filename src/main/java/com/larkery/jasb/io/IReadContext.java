@@ -13,4 +13,5 @@ public interface IReadContext extends IErrorHandler {
 	<T> ListenableFuture<List<T>> readMany(final Class<T> clazz, final Iterable<Node> nodes);
 	
 	void registerIdentity(final Object o, final ListenableFuture<String> future);
+	boolean hasInvocationNamed(Node head);
 }
