@@ -1,5 +1,7 @@
 package com.larkery.jasb.sexp;
 
+import java.net.URI;
+
 public class Location {
 	public enum Type {
 		Normal,
@@ -7,13 +9,13 @@ public class Location {
 		Template
 	}
 	
-	public final String name;
+	public final URI name;
 	public final long offset;
 	public final long line;
 	public final long column;
 	public final Type type;
 	
-	private Location(final Type type, final String name, final long offset, final long line, final long column) {
+	private Location(final Type type, final URI name, final long offset, final long line, final long column) {
 		super();
 		this.type = type;
 		this.name = name;
@@ -22,7 +24,7 @@ public class Location {
 		this.column = column;
 	}
 	
-	public static Location of(final Type type, final String locationName, final long offset, final long line, final long column) {
+	public static Location of(final Type type, final URI locationName, final long offset, final long line, final long column) {
 		return new Location(type, locationName, offset, line, column);
 	}
 

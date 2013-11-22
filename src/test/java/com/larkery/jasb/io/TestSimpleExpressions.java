@@ -1,6 +1,7 @@
 package com.larkery.jasb.io;
 
 import java.io.StringReader;
+import java.net.URI;
 import java.util.concurrent.ExecutionException;
 
 import org.junit.Assert;
@@ -35,7 +36,7 @@ public class TestSimpleExpressions {
 								new NumberAtomIO()));
 		
 		final Node node = 
-				Node.copy(Parser.source(Type.Normal, "test case", new StringReader(s), IErrorHandler.SLF4J));
+				Node.copy(Parser.source(Type.Normal, URI.create("test"), new StringReader(s), IErrorHandler.SLF4J));
 		
 		final T result = context.getContext(IErrorHandler.SLF4J).read(out, node).get();
 		

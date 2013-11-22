@@ -1,6 +1,8 @@
 package com.larkery.jasb.sexp.parse;
 
 import java.io.StringReader;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -83,7 +85,7 @@ public class VisitingTest {
 	protected ISExpression source(final String name, final String src) {
 		return Parser.source(
 				Type.Normal,
-				name, 
+				createTestURI(name),
 				new StringReader(src),
 				RECORD);
 	}
@@ -135,8 +137,18 @@ public class VisitingTest {
 					}
 				});
 		} catch (final Throwable e) {
-			Parser.source(Type.Normal, name, new StringReader(src), IErrorHandler.SLF4J).accept(new PrintVisitor(System.out));
+				Parser.source(Type.Normal, createTestURI(name), new StringReader(src), IErrorHandler.SLF4J).accept(new PrintVisitor(System.out));
+			
 			throw e;
 		}
+	}
+
+	private URI createTestURI(final String name)  {
+		try {
+			
+		return new URI("test", name, null);
+	} catch (final URISyntaxException e1) {
+		throw new IllegalArgumentException(e1.getMessage(), e1);
+	}
 	}
 }
