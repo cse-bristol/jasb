@@ -8,10 +8,10 @@ import com.larkery.jasb.sexp.Node;
 
 public class UnusedTermError extends BasicError {
 	public UnusedTermError(final Set<Node> nodes) {
-		super(locations(nodes), nodes, "Unexpected terms", Type.ERROR);
+		super(locations(nodes), nodes, "Unexpected terms " + nodes, Type.ERROR);
 	}
 
-	private static Set<Location> locations(Set<Node> nodes) {
+	private static Set<Location> locations(final Set<Node> nodes) {
 		final ImmutableSet.Builder<Location> locations = ImmutableSet.builder();
 		for (final Node node : nodes) {
 			locations.add(node.getLocation());

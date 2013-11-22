@@ -1,6 +1,7 @@
 package com.larkery.jasb.sexp;
 
 import java.io.PrintWriter;
+import java.net.URI;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
@@ -11,12 +12,12 @@ import com.larkery.jasb.sexp.errors.IErrorHandler;
 
 
 public class PrettyPrinter implements INodeVisitor {
-	private final Map<String, IndentedWriter> writers = new HashMap<>();
-	private final LinkedList<String> locations = new LinkedList<>();
-	private final Function<String, PrintWriter> writerSource;
+	private final Map<URI, IndentedWriter> writers = new HashMap<>();
+	private final LinkedList<URI> locations = new LinkedList<>();
+	private final Function<URI, PrintWriter> writerSource;
 	private IndentedWriter iw;
 	
-	public PrettyPrinter(final Function<String, PrintWriter> writerSource) {
+	public PrettyPrinter(final Function<URI, PrintWriter> writerSource) {
 		this.writerSource = writerSource;
 	}
 	
@@ -27,7 +28,7 @@ public class PrettyPrinter implements INodeVisitor {
 	private void switchInclude(final Node node) {
 		final Location loc = node.getLocation();
 		if (loc == null) {
-			switchInclude("");
+			switchInclude(URI.create("nowhere:"));
 		} else {
 			switchInclude(loc.name);
 		}
@@ -36,7 +37,7 @@ public class PrettyPrinter implements INodeVisitor {
 		if (this.iw == null) throw new UnsupportedOperationException("null");
 	}
 	
-	private void switchInclude(final String name) {
+	private void switchInclude(final URI name) {
 		if (!name.equals(locations.peek())) {
 			if (locations.contains(name)) {
 				while (!name.equals(locations.pop()));

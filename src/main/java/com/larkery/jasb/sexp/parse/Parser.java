@@ -2,6 +2,7 @@ package com.larkery.jasb.sexp.parse;
 
 import java.io.IOException;
 import java.io.Reader;
+import java.net.URI;
 
 import com.google.common.base.CharMatcher;
 import com.larkery.jasb.sexp.ISExpression;
@@ -14,23 +15,23 @@ import com.larkery.jasb.sexp.errors.IErrorHandler;
 public class Parser {
 	private final Reader reader;
 	
-	private final String locationName;
+	private final URI locationName;
 	
 	private long offset, line, column;
 	private final Type type;
 	
-	private Parser(final Type type, final String location, final Reader reader) {
+	private Parser(final Type type, final URI location, final Reader reader) {
 		super();
 		this.type = type;
 		this.locationName = location;
 		this.reader = reader;
 	}
 	
-	public static void parse(final Location.Type type, final String location, final Reader input, final ISExpressionVisitor output, final IErrorHandler errors) throws IOException {
+	public static void parse(final Location.Type type, final URI location, final Reader input, final ISExpressionVisitor output, final IErrorHandler errors) throws IOException {
 		new Parser(type, location, input).parse(output, errors);
 	}
 	
-	public static ISExpression source(final Location.Type type, final String location, final Reader input, final IErrorHandler errors) {
+	public static ISExpression source(final Location.Type type, final URI location, final Reader input, final IErrorHandler errors) {
 		return new ISExpression() {
 			@Override
 			public void accept(final ISExpressionVisitor visitor) {
@@ -43,7 +44,7 @@ public class Parser {
 			
 			@Override
 			public String toString() {
-				return location;
+				return location.toString();
 			}
 		};
 	}

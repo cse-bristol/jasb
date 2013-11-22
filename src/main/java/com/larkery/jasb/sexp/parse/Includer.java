@@ -34,7 +34,7 @@ public class Includer {
 	
 	public interface ILocationReader {
 		public Reader getReader();
-		public String getLocation();
+		public URI getLocation();
 	}
 	
 	public static ILocationReader fileLocationReader(final URI ref) {
@@ -50,31 +50,68 @@ public class Includer {
 			}
 
 			@Override
-			public String getLocation() {
-				return "" + ref;
+			public URI getLocation() {
+				return ref;
 			}
 		};
 	}
 	
-	public static ILocationReader stringLocationReader(final String location, final String value) {
+	/**
+	 * A convenience method for making an {@link ILocationReader} which just reads from a string.
+	 * @param location
+	 * @param value
+	 * @return
+	 */
+	public static ILocationReader stringLocationReader(final URI location, final String value) {
 		return new ILocationReader(){
-				@Override
-				public Reader getReader() {
-					return new StringReader(value);
-				}
-		
-				@Override
-				public String getLocation() {
-					return location;
-				}
+			@Override
+			public Reader getReader() {
+				return new StringReader(value);
+			}
+	
+			@Override
+			public URI getLocation() {
+				return location;
+			}
 		};
 	}
 	
 	public interface IResolver {
+		/**
+		 * This will be called with an expression starting with include, so for example
+		 * 
+		 * (include name: my-scenario version: 1)
+		 * 
+		 * Might become
+		 * 
+		 * nhm://name/my-scenario#1
+		 * 
+		 * @param include
+		 * @param errors
+		 * @return
+		 */
 		public URI convert(final Seq include, final IErrorHandler errors);
+		
+		/**
+		 * Get the content pointed to by a URI produced by {@link #convert(Seq, IErrorHandler)}
+		 * 
+		 * @param href
+		 * @param errors
+		 * @return
+		 * @throws NoSuchElementException
+		 */
 		public ILocationReader resolve(final URI href, final IErrorHandler errors) throws NoSuchElementException;
 	}
 	
+	/**
+	 * Given a resolver and a root address, construct a map which contains all of the included
+	 * things by URI that were found in the root document or any of its includes, and so on.
+	 * 
+	 * @param resolver
+	 * @param root
+	 * @param errors
+	 * @return
+	 */
 	public static Map<URI, String> collect(final IResolver resolver, final URI root, final IErrorHandler errors) {
 		final HashMap<URI, String> builder = new HashMap<>();
 		
@@ -132,6 +169,13 @@ public class Includer {
 		return ImmutableMap.copyOf(builder);
 	}
 	
+	/**
+	 * Given a resolver and a root address, make an S-Expression by following all the includes.
+	 * @param resolver
+	 * @param root
+	 * @param errors
+	 * @return
+	 */
 	public static ISExpression source(final IResolver resolver, final URI root, final IErrorHandler errors) {
 		return new ISExpression() {
 			@Override
