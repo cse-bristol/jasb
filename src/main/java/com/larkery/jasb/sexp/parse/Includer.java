@@ -223,11 +223,15 @@ public class Includer {
 		protected void paste(final NodeBuilder q) {
 			log.debug("pasting completed include");
 			try {
+				final Seq include = (Seq) q.get();
 				final ILocationReader reader = resolver.resolve(
-						resolver.convert((Seq) q.get(), errors), errors);
+						resolver.convert(include, errors), errors);
 				final ISExpression real = Parser.source(
 						Type.Include, reader.getLocation(), reader.getReader(), errors);
+				
 				real.accept(this);
+				
+				locate(include.getEndLocation());
 			} catch (final NoSuchElementException e) {
 				log.error("Error resolving a scenario from {}", q.get(), e);
 				errors.handle(BasicError.at(q.get(), "Unable to resolve include - " + e.getMessage()));

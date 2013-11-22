@@ -59,6 +59,10 @@ public class Seq extends Node implements Iterable<Node> {
 		visitor.close();
 	}
 	
+	public Location getEndLocation() {
+		return end;
+	}
+	
 	public int size() {
 		return nodes.size();
 	}
