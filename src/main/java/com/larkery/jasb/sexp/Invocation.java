@@ -57,14 +57,14 @@ public class Invocation {
 						
 						if (key == null && thisKey != null) {
 							if (inRest) {
-								errors.handle(BasicError.at(argument, "unexpected keyword " + argument));
+								errors.handle(BasicError.at(argument, "unexpected keyword " + argument + " in " + name.getValue() + " - keyword arguments are not allowed after non-keyword arguments have started"));
 								return null;
 							} else {
 								key = thisKey;
 							}
 						} else if (key != null) {
 							if (seenArguments.contains(key)) {
-								errors.handle(BasicError.at(argument, "repeated keyword " + key));
+								errors.handle(BasicError.at(argument, "repeated keyword " + key +" in " +name.getValue()));
 								return null;
 							} else {
 								arguments.put(key, argument);
@@ -75,7 +75,9 @@ public class Invocation {
 							rest.add(argument);
 						}
 					}
-					
+					if (key != null) {
+						errors.handle(BasicError.at(node, "unused keyword " + key +" at end of " +name.getValue()));
+					}
 					return new Invocation(node, name.getValue(), arguments.build(), rest.build());
 				} else {
 					if (head == null) {
