@@ -19,7 +19,6 @@ class Resolver  {
 	private final Map<String, Class<?>> futureClasses = new HashMap<>();
 	
 	@SuppressWarnings("unchecked")
-
 	public <Q> ListenableFuture<Q> resolve(final Atom cause, final String id, final Class<Q> type) {
 		if (!futures.containsKey(id)) {
 			futures.put(id, SettableFuture.create());
@@ -34,7 +33,6 @@ class Resolver  {
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-
 	public void define(final String result, final Object o) {
 		if (futures.containsKey(result)) {
 			if (futures.get(result).isDone()) {

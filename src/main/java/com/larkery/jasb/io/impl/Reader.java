@@ -6,12 +6,15 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
+import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableList;
@@ -25,11 +28,13 @@ import com.larkery.jasb.bind.PointlessWrapper;
 import com.larkery.jasb.io.IAtomReader;
 import com.larkery.jasb.io.IReadContext;
 import com.larkery.jasb.sexp.Atom;
+import com.larkery.jasb.sexp.ISExpression;
 import com.larkery.jasb.sexp.Invocation;
 import com.larkery.jasb.sexp.Node;
+import com.larkery.jasb.sexp.errors.BasicError;
 import com.larkery.jasb.sexp.errors.IErrorHandler;
 
-public class Reader  {
+public class Reader {
 	private final Map<Class<?>, Switcher<?>> switchers = new HashMap<>();
 	private final Map<Class<?>, InvocationReader<?>> specificReaders = new HashMap<>();
 	private final Set<Class<?>> boundClasses;
@@ -66,6 +71,26 @@ public class Reader  {
 		return new Context(delegate);
 	}
 
+	public <T> Optional<T> read(final Class<T> output, final ISExpression input, final IErrorHandler errors) {
+		final Context context = new Context(errors);
+		
+		final ListenableFuture<T> read = context.read(output, Node.copy(input));
+		
+		for (final Atom atom : context.unresolved) {
+			errors.handle(BasicError.at(atom, "The name " + atom + " could not be resolved"));
+		}
+		
+		if (read.isDone()) {
+			try {
+				return Optional.fromNullable(read.get());
+			} catch (InterruptedException | ExecutionException e) {
+				return Optional.absent();
+			}
+		} else {
+			return Optional.absent();
+		}
+	}
+	
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private static void checkConsistency(final Set<Class<?>> classes, final Set<? extends IAtomReader> atomReaders) {
 		for (final Class<?> clazz : classes) {
@@ -178,6 +203,7 @@ public class Reader  {
 	class Context implements IReadContext {
 		private final IErrorHandler delegateErrorHandler;
 		private final Resolver resolver = new Resolver();
+		private final Set<Atom> unresolved = Collections.newSetFromMap(new IdentityHashMap<Atom, Boolean>());
 		
 		Context(final IErrorHandler delegateErrorHandler) {
 			super();
@@ -191,7 +217,23 @@ public class Reader  {
 
 		@Override
 		public <T> ListenableFuture<T> getCrossReference(final Class<T> clazz, final Atom where, final String identity) {
-			return resolver.resolve(where, identity, clazz);
+			final ListenableFuture<T> resolve = resolver.resolve(where, identity, clazz);
+			
+			unresolved.add(where);
+			
+			Futures.addCallback(resolve, new FutureCallback<T>() {
+				@Override
+				public void onSuccess(final T result) {
+					unresolved.remove(where);
+				}
+
+				@Override
+				public void onFailure(final Throwable t) {
+					handle(BasicError.at(where, t.getMessage()));
+				}
+			});
+			
+			return resolve;
 		}
 
 		@Override
