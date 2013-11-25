@@ -204,6 +204,7 @@ public class Parser {
 					case ';': return new Comment(this, here);
 					case '(':
 						depth++;
+						output.locate(here);
 						output.open();
 						return this;
 					case ')':
@@ -212,6 +213,7 @@ public class Parser {
 							errors.handle(BasicError.at(here, "Too many closing parentheses"));
 							return new Error();
 						}
+						output.locate(here);
 						output.close();
 						return this;
 					default:
