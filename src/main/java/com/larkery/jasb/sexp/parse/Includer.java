@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Stack;
 
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
@@ -202,6 +203,7 @@ public class Includer {
 	static class IncludingVisitor extends Cutout<NodeBuilder> {
 		private final IResolver resolver;
 		private final IErrorHandler errors;
+		private final Stack<URI> stack = new Stack<>();
 		
 		private IncludingVisitor(final IResolver resolver, final ISExpressionVisitor visitor, final IErrorHandler errors) {
 			super(visitor);
@@ -224,14 +226,21 @@ public class Includer {
 			log.debug("pasting completed include");
 			try {
 				final Seq include = (Seq) q.get();
-				final ILocationReader reader = resolver.resolve(
-						resolver.convert(include, errors), errors);
-				final ISExpression real = Parser.source(
-						Type.Include, reader.getLocation(), reader.getReader(), errors);
+				final URI uri = resolver.convert(include, errors);
 				
-				real.accept(this);
-				
+				if (stack.contains(uri)) {
+					errors.handle(BasicError.at(include, uri + " recursively includes itself"));
+				} else {
+					final ILocationReader reader = resolver.resolve(
+							uri, errors);
+					final ISExpression real = Parser.source(
+							Type.Include, reader.getLocation(), reader.getReader(), errors);
+					stack.push(uri);
+					real.accept(this);
+					stack.pop();
+				}
 				locate(include.getEndLocation());
+				
 			} catch (final NoSuchElementException e) {
 				log.error("Error resolving a scenario from {}", q.get(), e);
 				errors.handle(BasicError.at(q.get(), "Unable to resolve include - " + e.getMessage()));
