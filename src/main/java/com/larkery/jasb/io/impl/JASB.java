@@ -5,7 +5,10 @@ import java.util.Set;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
+import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Multimap;
+import com.larkery.jasb.bind.Bind;
 import com.larkery.jasb.io.IAtomIO;
 import com.larkery.jasb.io.IModel;
 import com.larkery.jasb.io.IReader;
@@ -18,8 +21,12 @@ public class JASB {
 	private final IReader reader;
 	private final IWriter writer;
 	private final Model model;
-
+	private final Multimap<String, Class<?>> classesByName; 
+	
 	JASB(final Set<Class<?>> classes, final Set<IAtomIO> atoms) {
+		final ImmutableMultimap.Builder<String, Class<?>> classesByName = 
+				ImmutableMultimap.builder();
+		
 		final Set<Class<?>> concrete = ImmutableSet.copyOf(Collections2.filter(classes, 
 				new Predicate<Class<?>>() {
 					@Override
@@ -32,6 +39,17 @@ public class JASB {
 		this.reader = new Reader(concrete, atoms);
 		this.model = new Model(concrete, atoms);
 		this.writer = new Writer(atoms);
+		
+		for (final Class<?> clazz : concrete) {
+			if (clazz.isAnnotationPresent(Bind.class)) {
+				classesByName.put(clazz.getAnnotation(Bind.class).value(), clazz);
+			}
+		}
+		this.classesByName = classesByName.build();
+	}
+	
+	public Set<Class<?>> getClassesBoundTo(final String name) {
+		return ImmutableSet.copyOf(classesByName.get(name));
 	}
 
 	public IWriter getWriter() {
@@ -48,5 +66,9 @@ public class JASB {
 
 	public static JASB of(final Set<Class<?>> classes, final Set<IAtomIO> atoms) {
 		return new JASB(classes, atoms);
+	}
+	
+	public static IWriter writer(final Set<IAtomIO> atoms) {
+		return new Writer(atoms);
 	}
 }

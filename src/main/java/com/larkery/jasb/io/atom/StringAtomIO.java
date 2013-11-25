@@ -33,4 +33,9 @@ public class StringAtomIO implements IAtomIO {
 	public Set<String> getLegalValues(final Class<?> output) {
 		return ImmutableSet.of("a string");
 	}
+	
+	@Override
+	public String getDisplayName(final Class<?> javaType) {
+		return "Text";
+	}
 }

@@ -30,7 +30,11 @@ public class BooleanAtomIO implements IAtomIO {
 
 	@Override
 	public Set<String> getLegalValues(final Class<?> output) {
-		return ImmutableSet.of("true or false");
+		return ImmutableSet.of("true", "false");
 	}
 
+	@Override
+	public String getDisplayName(final Class<?> javaType) {
+		return "Boolean";
+	}
 }

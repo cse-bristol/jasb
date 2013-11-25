@@ -1,8 +1,10 @@
 package com.larkery.jasb.io.atom;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Set;
 
+import com.google.common.base.Joiner;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableSet;
 import com.larkery.jasb.io.IAtomIO;
@@ -51,5 +53,20 @@ public class EnumAtomIO implements IAtomIO {
 		} else {
 			return Collections.emptySet();
 		}
+	}
+	
+	@Override
+	public String getDisplayName(final Class<?> javaType) {
+		return getNiceEnumName(javaType);
+	}
+	
+	private String getNiceEnumName(final Class<?> enumClass) {
+		String[] parts = enumClass.getSimpleName().split("(?=\\p{Upper})");
+		
+		if (parts[0].trim().equals("X")) {
+			parts = Arrays.copyOfRange(parts, 1, parts.length);
+		}
+		
+		return Joiner.on(' ').join(parts);
 	}
 }

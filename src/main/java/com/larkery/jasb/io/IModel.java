@@ -1,19 +1,25 @@
 package com.larkery.jasb.io;
 
+import java.lang.reflect.Method;
 import java.util.Set;
 
 import com.google.common.base.Optional;
 
 public interface IModel {
 	public Set<IElement> getElements();
+	public Set<IInvocationModel> getInvocations();
+	public Set<IAtomModel> getAtoms();
 	
-	public interface IElement {
+	public interface IElement extends Comparable<IElement> {
+		public String getName();
 		public Class<?> getJavaType();
 	}
 	
 	public interface IInvocationModel extends IElement {
-		public String getName();
 		public Set<IArgument> getArguments();
+		public Set<IArgument> getNamedArguments();
+		public Set<IArgument> getPositionalArguments();
+		public Optional<IArgument> getRemainderArgument();
 	}
 	
 	public interface IAtomModel extends IElement {
@@ -28,6 +34,7 @@ public interface IModel {
 		public boolean isRemainderArgument();
 		public Class<?> getJavaType();
 		public boolean isMultiple();
+		public Method getReadMethod();
 		
 		public Set<IElement> getLegalValues();
 	}

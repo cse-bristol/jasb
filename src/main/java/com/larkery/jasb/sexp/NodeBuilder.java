@@ -8,9 +8,10 @@ public class NodeBuilder implements ISExpressionVisitor {
 	private Location here;
 	private final Stack<Seq.Builder> inprogress = new Stack<>();
 	private final Builder top;
+	private Node lastNode;
 	private final boolean includeComments;
 	
-	private NodeBuilder(final boolean includeComments) {
+	protected NodeBuilder(final boolean includeComments) {
 		this.includeComments = includeComments;
 		top = Seq.builder(null);
 		inprogress.push(top);
@@ -37,18 +38,23 @@ public class NodeBuilder implements ISExpressionVisitor {
 	@Override
 	public void close() {
 		final Seq seq = inprogress.pop().build(here);
+		push(seq);
+	}
+
+	private void push(final Node seq) {
 		inprogress.peek().add(seq);
+		lastNode = seq;
 	}
 	
 	@Override
 	public void atom(final String string) {
-		inprogress.peek().add(new Atom(here, string));
+		push(new Atom(here, string));
 	}
 	
 	@Override
 	public void comment(final String text) {
 		if (includeComments) {
-			inprogress.peek().add(new Comment(here, text));
+			push(new Comment(here, text));
 		}
 	}
 	
@@ -57,5 +63,12 @@ public class NodeBuilder implements ISExpressionVisitor {
 			throw new UnsupportedOperationException("there are " + inprogress.size() + " elements left on the stack (" +inprogress+ ")");
 		}
 		return top.build(null).getHead();
+	}
+
+	/**
+	 * @return the last node created by an event this saw
+	 */
+	public Node getLastNode() {
+		return lastNode;
 	}
 }

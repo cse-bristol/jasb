@@ -14,8 +14,8 @@ abstract class Cutout<Q extends ISExpressionVisitor> implements ISExpressionVisi
 	private boolean afterOpen = false;
 	private Location openLocation;
 	private Location location;
-	private List<Location> commentLocationsAfterOpen = new ArrayList<>();
-	private List<String> commentsAfterOpen = new ArrayList<>();
+	private final List<Location> commentLocationsAfterOpen = new ArrayList<>();
+	private final List<String> commentsAfterOpen = new ArrayList<>();
 	
 	protected Cutout(final ISExpressionVisitor delegate) {
 		super();
@@ -25,14 +25,14 @@ abstract class Cutout<Q extends ISExpressionVisitor> implements ISExpressionVisi
 	static class BalancedVisitor implements ISExpressionVisitor {
 		private final ISExpressionVisitor delegate;
 		
-		BalancedVisitor(ISExpressionVisitor delegate) {
+		BalancedVisitor(final ISExpressionVisitor delegate) {
 			super();
 			this.delegate = delegate;
 		}
 
 		private int depth = 0;
 		@Override
-		public void locate(Location loc) {
+		public void locate(final Location loc) {
 			delegate.locate(loc);
 		}
 
@@ -43,12 +43,12 @@ abstract class Cutout<Q extends ISExpressionVisitor> implements ISExpressionVisi
 		}
 
 		@Override
-		public void atom(String string) {
+		public void atom(final String string) {
 			delegate.atom(string);
 		}
 
 		@Override
-		public void comment(String text) {
+		public void comment(final String text) {
 			delegate.comment(text);
 		}
 
@@ -62,7 +62,8 @@ abstract class Cutout<Q extends ISExpressionVisitor> implements ISExpressionVisi
 	protected abstract Optional<Q> cut(final String head);
 	protected abstract void paste(final Q q);
 	
-	public void locate(Location loc) {
+	@Override
+	public void locate(final Location loc) {
 		this.location = loc;
 	}
 
@@ -84,12 +85,14 @@ abstract class Cutout<Q extends ISExpressionVisitor> implements ISExpressionVisi
 		}
 	}
 	
+	@Override
 	public void open() {
 		shiftOpen();
 		afterOpen = true;
 		openLocation = location;
 	}
 
+	@Override
 	public void atom(final String string) {
 		if (afterOpen) {
 			final Optional<Q> cutter = cut(string);
@@ -106,7 +109,7 @@ abstract class Cutout<Q extends ISExpressionVisitor> implements ISExpressionVisi
 	}
 	
 	@Override
-	public void comment(String text) {
+	public void comment(final String text) {
 		if (afterOpen) {
 			commentLocationsAfterOpen.add(location);
 			commentsAfterOpen.add(text);
@@ -116,6 +119,7 @@ abstract class Cutout<Q extends ISExpressionVisitor> implements ISExpressionVisi
 		}
 	}
 
+	@Override
 	@SuppressWarnings("unchecked")
 	public void close() {
 		shiftOpen();

@@ -1,6 +1,7 @@
 package com.larkery.jasb.sexp;
 
 import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -119,5 +120,19 @@ public class PrettyPrinter implements INodeVisitor {
 		switchInclude(comment);
 		
 		iw.write("\n ;; " + comment.getText() + "\n");
+	}
+
+	public static String print(final Node eg) {
+		final StringWriter stringWriter = new StringWriter();
+		final PrintWriter out = new PrintWriter(stringWriter);
+		final PrettyPrinter pp = new PrettyPrinter(new Function<URI, PrintWriter>(){
+			@Override
+			public PrintWriter apply(final URI input) {
+				return out;
+			}
+		});
+		eg.accept(pp);
+		out.flush();
+		return stringWriter.toString();
 	}
 }

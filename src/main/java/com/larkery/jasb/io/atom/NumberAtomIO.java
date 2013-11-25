@@ -62,4 +62,14 @@ public class NumberAtomIO implements IAtomIO {
 		}
 	}
 
+	@Override
+	public String getDisplayName(final Class<?> out) {
+		if (out == Double.class || out == Float.class) {
+			return "Real Number";
+		} else if (out == Integer.class || out == Long.class) {
+			return "Whole Number";
+		} else {
+			return "";
+		}
+	}
 }

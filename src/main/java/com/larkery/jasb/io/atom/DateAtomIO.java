@@ -44,4 +44,8 @@ public class DateAtomIO implements IAtomIO {
 		return ImmutableSet.of("a date (dd/MM/yyyy)");
 	}
 
+	@Override
+	public String getDisplayName(final Class<?> javaType) {
+		return "Date";
+	}
 }

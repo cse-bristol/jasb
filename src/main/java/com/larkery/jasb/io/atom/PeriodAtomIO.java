@@ -40,4 +40,9 @@ public class PeriodAtomIO implements IAtomIO {
 	public Set<String> getLegalValues(final Class<?> output) {
 		return ImmutableSet.of("a period (1 year, 2 days, etc)");
 	}
+	
+	@Override
+	public String getDisplayName(final Class<?> javaType) {
+		return "Period of time";
+	}
 }
