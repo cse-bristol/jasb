@@ -15,8 +15,6 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
 import com.google.common.base.Optional;
-import com.google.common.base.Predicate;
-import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.FutureCallback;
@@ -27,6 +25,7 @@ import com.larkery.jasb.bind.Bind;
 import com.larkery.jasb.bind.PointlessWrapper;
 import com.larkery.jasb.io.IAtomReader;
 import com.larkery.jasb.io.IReadContext;
+import com.larkery.jasb.io.IReader;
 import com.larkery.jasb.sexp.Atom;
 import com.larkery.jasb.sexp.ISExpression;
 import com.larkery.jasb.sexp.Invocation;
@@ -34,24 +33,15 @@ import com.larkery.jasb.sexp.Node;
 import com.larkery.jasb.sexp.errors.BasicError;
 import com.larkery.jasb.sexp.errors.IErrorHandler;
 
-public class Reader {
+class Reader implements IReader {
 	private final Map<Class<?>, Switcher<?>> switchers = new HashMap<>();
 	private final Map<Class<?>, InvocationReader<?>> specificReaders = new HashMap<>();
 	private final Set<Class<?>> boundClasses;
 	private final Set<? extends IAtomReader> atomReaders;
 	private final Set<String> allBoundNames;
 	
-	public Reader(final Set<Class<?>> boundClasses, final Set<? extends IAtomReader> atomReaders) {
+	public Reader(final Set<Class<?>> concrete, final Set<? extends IAtomReader> atomReaders) {
 		super();
-		
-		final Set<Class<?>> concrete = ImmutableSet.copyOf(Collections2.filter(boundClasses, 
-				new Predicate<Class<?>>() {
-					@Override
-					public boolean apply(final Class<?> input) {
-						return !Modifier.isAbstract(input.getModifiers());
-					}
-				}
-				));
 		
 		checkConsistency(concrete, atomReaders);
 		
@@ -71,10 +61,42 @@ public class Reader {
 		return new Context(delegate);
 	}
 
-	public <T> Optional<T> read(final Class<T> output, final ISExpression input, final IErrorHandler errors) {
+	private static class Result<T> implements IResult<T> {
+		private final Node node;
+		private final Optional<T> value;
+		
+		public Result(final Node node, final Optional<T> value) {
+			super();
+			this.node = node;
+			this.value = value;
+		}
+
+		@Override
+		public Node getNode() {
+			return node;
+		}
+		
+		@Override
+		public Optional<T> getValue() {
+			return value;
+		}
+	}
+	
+	/* (non-Javadoc)
+	 * @see com.larkery.jasb.io.impl.IReader#read(java.lang.Class, com.larkery.jasb.sexp.ISExpression, com.larkery.jasb.sexp.errors.IErrorHandler)
+	 */
+	@Override
+	public <T> IResult<T> read(final Class<T> output, final ISExpression input, final IErrorHandler errors) {
+		final Node node = Node.copyStructure(input);
+		return new Result<T>(node, readNode(output, node, errors));
+	}
+	
+	@Override
+	public <T> Optional<T> readNode(final Class<T> output, final Node input,
+			final IErrorHandler errors) {
 		final Context context = new Context(errors);
 		
-		final ListenableFuture<T> read = context.read(output, Node.copy(input));
+		final ListenableFuture<T> read = context.read(output, input);
 		
 		for (final Atom atom : context.unresolved) {
 			errors.handle(BasicError.at(atom, "The name " + atom + " could not be resolved"));

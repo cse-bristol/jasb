@@ -24,21 +24,21 @@ import com.larkery.jasb.sexp.errors.IErrorHandler;
 
 public class Expander {
 	public static Node expand(final ISExpression source, final IErrorHandler errors) {
-		final NodeBuilder withoutMacros = new NodeBuilder();
+		final NodeBuilder withoutMacros = NodeBuilder.create();
 		final Set<Node> macros = new HashSet<>();
 		
 		source.accept(new Cutout<NodeBuilder>(withoutMacros) {
 			@Override
-			protected Optional<NodeBuilder> cut(String head) {
+			protected Optional<NodeBuilder> cut(final String head) {
 				if (head.equals("template")) {
-					return Optional.of(new NodeBuilder());
+					return Optional.of(NodeBuilder.create());
 				} else {
 					return Optional.absent();
 				}
 			}
 
 			@Override
-			protected void paste(NodeBuilder q) {
+			protected void paste(final NodeBuilder q) {
 				macros.add(q.get());
 			}
 		});
@@ -67,20 +67,20 @@ public class Expander {
 			return node;
 		} else {
 			// process node
-			final NodeBuilder output = new NodeBuilder();
+			final NodeBuilder output = NodeBuilder.create();
 			
 			final Stack<String> activeTemplates = new Stack<>();
 			
 			node.accept(new Cutout<NodeBuilder>(output) {
 				@Override
-				protected Optional<NodeBuilder> cut(String head) {
+				protected Optional<NodeBuilder> cut(final String head) {
 					if (templates.containsKey(head)) {
 						if (activeTemplates.contains(head)) {
 							errors.handle(BasicError.at(templates.get(head).definingNode, "template expands recursively"));
 							return Optional.absent();
 						} else {
 							activeTemplates.push(head);
-							return Optional.of(new NodeBuilder());
+							return Optional.of(NodeBuilder.create());
 						}
 					} else {
 						return Optional.absent();
@@ -88,10 +88,10 @@ public class Expander {
 				}
 
 				@Override
-				protected void paste(NodeBuilder q) {
+				protected void paste(final NodeBuilder q) {
 					final Node top = q.get();
 					final Seq seq = (Seq) top;
-					ISExpression expand = templates.get(((Atom)seq.getHead()).getValue()).expand(top, errors);
+					final ISExpression expand = templates.get(((Atom)seq.getHead()).getValue()).expand(top, errors);
 					if (expand != null) {
 						expand.accept(this);
 					}
@@ -109,7 +109,7 @@ public class Expander {
 		private final ImmutableSet<String> parameters;
 		private final ImmutableSet<Node> templateContents;
 
-		public Template(final Node definition, String name, final ImmutableSet<String> parameters, final ImmutableSet<Node> templateContents) {
+		public Template(final Node definition, final String name, final ImmutableSet<String> parameters, final ImmutableSet<Node> templateContents) {
 			this.definingNode = definition;
 			this.name = name;
 			this.parameters = parameters;
@@ -159,16 +159,16 @@ public class Expander {
 		
 		static class ExpandingVisitor implements ISExpressionVisitor {
 			final ISExpressionVisitor delegate;
-			private Map<String, Node> mapping;
+			private final Map<String, Node> mapping;
 			
-			private ExpandingVisitor(Map<String, Node> mapping, ISExpressionVisitor delegate) {
+			private ExpandingVisitor(final Map<String, Node> mapping, final ISExpressionVisitor delegate) {
 				super();
 				this.mapping = mapping;
 				this.delegate = delegate;
 			}
 
 			@Override
-			public void locate(Location loc) {
+			public void locate(final Location loc) {
 				delegate.locate(loc);
 			}
 
@@ -178,7 +178,7 @@ public class Expander {
 			}
 
 			@Override
-			public void atom(String string) {
+			public void atom(final String string) {
 				if (mapping.containsKey(string)) {
 					mapping.get(string).accept(delegate);
 				} else {
@@ -187,7 +187,7 @@ public class Expander {
 			}
 			
 			@Override
-			public void comment(String text) {
+			public void comment(final String text) {
 				delegate.comment(text);
 			}
 
@@ -198,7 +198,7 @@ public class Expander {
 			
 		}
 
-		public static Template from(Node n, IErrorHandler errors) {
+		public static Template from(final Node n, final IErrorHandler errors) {
 			if (n instanceof Seq) {
 				final Seq seq = (Seq) n;
 				
@@ -270,16 +270,16 @@ public class Expander {
 		private Location location;
 		public boolean errors = false;
 		private final Set<String> parameters;
-		private IErrorHandler handler;
+		private final IErrorHandler handler;
 		
-		private ParameterChecker(Set<String> parameters, final IErrorHandler handler) {
+		private ParameterChecker(final Set<String> parameters, final IErrorHandler handler) {
 			super();
 			this.parameters = parameters;
 			this.handler = handler;
 		}
 		
 		@Override
-		public void locate(Location loc) {
+		public void locate(final Location loc) {
 			this.location = loc;
 		}
 
@@ -288,7 +288,7 @@ public class Expander {
 		}
 
 		@Override
-		public void atom(String string) {
+		public void atom(final String string) {
 			if (string.startsWith("@") && parameters.contains(string)==false) {
 				errors = true;
 				handler.handle(BasicError.at(location, string + " is not a parameter defined in this template"));
@@ -296,7 +296,7 @@ public class Expander {
 		}
 
 		@Override
-		public void comment(String text) {}
+		public void comment(final String text) {}
 		
 		@Override
 		public void close() {

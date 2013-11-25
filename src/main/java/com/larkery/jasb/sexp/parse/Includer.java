@@ -213,7 +213,7 @@ public class Includer {
 		protected Optional<NodeBuilder> cut(final String head) {
 			if (head.equals("include")) {
 				log.debug("cutting out include");
-				return Optional.of(new NodeBuilder());
+				return Optional.of(NodeBuilder.create());
 			} else {
 				return Optional.absent();
 			}

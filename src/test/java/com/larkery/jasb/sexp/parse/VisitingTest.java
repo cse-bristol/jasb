@@ -92,7 +92,7 @@ public class VisitingTest {
 	
 	protected void check(final String name, final String src, final Set<Class<? extends IError>> errorTypes) {
 		try {
-			source(name, src).accept(new NodeBuilder());
+			source(name, src).accept(NodeBuilder.create());
 		} finally {
 			outer:
 			for (final Class<? extends IError> e : errorTypes) {

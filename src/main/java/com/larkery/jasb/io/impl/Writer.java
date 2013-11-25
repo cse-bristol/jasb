@@ -15,12 +15,13 @@ import com.google.common.base.Optional;
 import com.larkery.jasb.bind.Bind;
 import com.larkery.jasb.bind.PointlessWrapper;
 import com.larkery.jasb.io.IAtomWriter;
+import com.larkery.jasb.io.IWriter;
 import com.larkery.jasb.io.impl.JasbPropertyDescriptor.BoundTo;
 import com.larkery.jasb.sexp.ISExpression;
 import com.larkery.jasb.sexp.ISExpressionVisitor;
 import com.larkery.jasb.sexp.Location;
 
-public class Writer {
+class Writer implements IWriter {
 	private final Set<? extends IAtomWriter> atomWriters;
 	
 	public Writer(final Set<? extends IAtomWriter> atomWriters) {
@@ -28,6 +29,10 @@ public class Writer {
 		this.atomWriters = atomWriters;
 	}
 
+	/* (non-Javadoc)
+	 * @see com.larkery.jasb.io.impl.IWriter#write(java.lang.Object, com.google.common.base.Function)
+	 */
+	@Override
 	public ISExpression write(final Object object, final Function<Object, Optional<Location>> locator) {
 		return new WriteSource(object, locator);
 	}

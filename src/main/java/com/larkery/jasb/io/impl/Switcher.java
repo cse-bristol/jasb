@@ -7,7 +7,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.larkery.jasb.io.IReadContext;
-import com.larkery.jasb.io.IReader;
+import com.larkery.jasb.io.INodeReader;
 import com.larkery.jasb.sexp.Atom;
 import com.larkery.jasb.sexp.Invocation;
 import com.larkery.jasb.sexp.Node;
@@ -21,7 +21,7 @@ import com.larkery.jasb.sexp.errors.UnexpectedTermError;
  *
  * @param <T>
  */
-class Switcher<T> implements IReader<T> {
+class Switcher<T> implements INodeReader<T> {
 	private static final String CROSS_REFERENCE_PREFIX = "#";
 	private final Map<String, InvocationReader<? extends T>> readersByName;
 	private final Class<T> clazz;

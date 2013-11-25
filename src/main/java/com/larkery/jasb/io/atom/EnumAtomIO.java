@@ -1,10 +1,11 @@
-package com.larkery.jasb.io;
+package com.larkery.jasb.io.atom;
 
 import java.util.Collections;
 import java.util.Set;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableSet;
+import com.larkery.jasb.io.IAtomIO;
 
 public class EnumAtomIO implements IAtomIO {
 

@@ -9,7 +9,9 @@ import org.junit.Test;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.larkery.jasb.io.impl.Reader;
+import com.larkery.jasb.io.atom.NumberAtomIO;
+import com.larkery.jasb.io.atom.StringAtomIO;
+import com.larkery.jasb.io.impl.JASB;
 import com.larkery.jasb.io.testmodel.Arithmetic;
 import com.larkery.jasb.io.testmodel.Div;
 import com.larkery.jasb.io.testmodel.GetNode;
@@ -24,8 +26,8 @@ import com.larkery.jasb.sexp.parse.Parser;
 
 public class TestSimpleExpressions {
 	public <T> T read(final String s, final Class<T> out) throws InterruptedException, ExecutionException {
-		final Reader context = 
-				new Reader(
+		final IReader context = 
+				JASB.of(
 						ImmutableSet.<Class<?>>of(
 								GetNode.class,
 								Div.class,
@@ -35,12 +37,12 @@ public class TestSimpleExpressions {
 								Value.class),
 						ImmutableSet.of(
 								new StringAtomIO(),
-								new NumberAtomIO()));
+								new NumberAtomIO())).getReader();
 		
 		final Node node = 
 				Node.copy(Parser.source(Type.Normal, URI.create("test"), new StringReader(s), IErrorHandler.SLF4J));
 		
-		final T result = context.getContext(IErrorHandler.SLF4J).read(out, node).get();
+		final T result = context.readNode(out, node, IErrorHandler.SLF4J).get();
 		
 		if (result instanceof Arithmetic) {
 			Assert.assertSame(node, ((Arithmetic) result).node);

@@ -8,10 +8,20 @@ public class NodeBuilder implements ISExpressionVisitor {
 	private Location here;
 	private final Stack<Seq.Builder> inprogress = new Stack<>();
 	private final Builder top;
+	private final boolean includeComments;
 	
-	public NodeBuilder() {
+	private NodeBuilder(final boolean includeComments) {
+		this.includeComments = includeComments;
 		top = Seq.builder(null);
 		inprogress.push(top);
+	}
+	
+	public static NodeBuilder create() {
+		return new NodeBuilder(true);
+	}
+	
+	public static NodeBuilder withoutComments() {
+		return new NodeBuilder(true);
 	}
 	
 	@Override
@@ -37,7 +47,9 @@ public class NodeBuilder implements ISExpressionVisitor {
 	
 	@Override
 	public void comment(final String text) {
-		inprogress.peek().add(new Comment(here, text));		
+		if (includeComments) {
+			inprogress.peek().add(new Comment(here, text));
+		}
 	}
 	
 	public Node get() {
