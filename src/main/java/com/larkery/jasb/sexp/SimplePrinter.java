@@ -2,6 +2,7 @@ package com.larkery.jasb.sexp;
 
 public class SimplePrinter implements ISExpressionVisitor {
 	private final StringBuffer buffer = new StringBuffer();
+	
 	public String getString() {
 		return buffer.toString();
 	}

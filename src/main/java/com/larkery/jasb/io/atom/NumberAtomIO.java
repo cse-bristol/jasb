@@ -25,30 +25,48 @@ public class NumberAtomIO implements IAtomIO {
 	}
 
 	@Override
-	public <T> Optional<T> read(final String in, final Class<T> out) {
+	public <T> Optional<T> read(String in, final Class<T> out) {
+		final boolean percent;
+		if (in.endsWith("%") && in.length() > 1) {
+			in = in.substring(0, in.length()-2);
+			percent = true;
+		} else {
+			percent = false;
+		}
+		Object result = null;
+		
 		if (out == Double.class) {
 			try {
 				final double parsed = Double.parseDouble(in);
-				return Optional.of(out.cast(parsed));
+				if (percent) result = parsed / 100d;
+				else result = parsed;
 			} catch (final NumberFormatException nfe) {}	
 		} else if (out == Integer.class) {
 			try {
 				final int parsed = Integer.parseInt(in);
-				return Optional.of(out.cast(parsed));
+				if (percent) result = parsed / 100;
+				else result = parsed;
 			} catch (final NumberFormatException nfe) {}	
 		} else if (out == Float.class) {
 			try {
 				final float parsed = Float.parseFloat(in);
-				return Optional.of(out.cast(parsed));
+				if (percent) result = parsed / 100f;
+				else result = parsed;
 			} catch (final NumberFormatException nfe) {}	
 		} else if (out == Long.class) {
 			try {
 				final long parsed = Long.parseLong(in);
-				return Optional.of(out.cast(parsed));
+				if (percent) result = parsed / 100;
+				else result = parsed;
 			} catch (final NumberFormatException nfe) {}	
 		}
 
-		return Optional.absent();
+		if (result == null) {			
+			return Optional.absent();
+		} else {
+			return Optional.of(out.cast(result));
+		}
+		
 	}
 
 	@Override

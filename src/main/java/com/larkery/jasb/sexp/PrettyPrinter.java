@@ -1,138 +1,121 @@
 package com.larkery.jasb.sexp;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.net.URI;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.Map.Entry;
+import java.util.Stack;
 
-import com.google.common.base.Function;
-import com.larkery.jasb.sexp.errors.IErrorHandler;
+import com.google.common.base.CharMatcher;
 
 
-public class PrettyPrinter implements INodeVisitor {
-	private final Map<URI, IndentedWriter> writers = new HashMap<>();
-	private final LinkedList<URI> locations = new LinkedList<>();
-	private final Function<URI, PrintWriter> writerSource;
-	private IndentedWriter iw;
+public class PrettyPrinter implements ISExpressionVisitor {
+	int maxWidth = 100;
+	String tabs = "  ";
+	Stack<IndentedBuffer> stack = new Stack<>();
 	
-	public PrettyPrinter(final Function<URI, PrintWriter> writerSource) {
-		this.writerSource = writerSource;
-	}
-	
-	private IndentedWriter writer() {
-		return writers.get(locations.peek());
-	}
-	
-	private void switchInclude(final Node node) {
-		final Location loc = node.getLocation();
-		if (loc == null) {
-			switchInclude(URI.create("nowhere:nowhere"));
-		} else {
-			switchInclude(loc.name);
+	class IndentedBuffer {
+		private final StringBuffer theBuffer = new StringBuffer();
+		private final int indentation;
+		private int lineWidth = 0;
+		private int kwShift = 0;
+		
+		IndentedBuffer(final int indentation) {
+			super();
+			this.indentation = indentation;
 		}
 		
-		this.iw = writer();
-		if (this.iw == null) throw new UnsupportedOperationException("null");
-	}
-	
-	private void switchInclude(final URI name) {
-		if (!name.equals(locations.peek())) {
-			if (locations.contains(name)) {
-				while (!name.equals(locations.pop()));
+		public void append(String string) {
+			// append with wrapping
+			if (!string.equals(")") && kwShift == 2) {
+				theBuffer.append("\n");
+				lineWidth = tabs.length() * (indentation);
+			}
+			if (lineWidth + string.length() > maxWidth) {
+				theBuffer.append(tabs);
+				theBuffer.append("\n");
+				lineWidth = string.length() + (tabs.length() * (indentation+1));
+				theBuffer.append(string);
 			} else {
-				locations.push(name);
-				if (!writers.containsKey(name)) {
-					writers.put(name, new IndentedWriter(writerSource.apply(name)));
+				lineWidth += string.length();
+				if (!string.equals(")") && pad()) {
+					string = " " + string;
 				}
+				theBuffer.append(string);
 			}
-		}
-	}
-
-	@Override
-	public boolean seq(final Seq seq) {
-		switchInclude(seq);
-		
-		final Invocation inv = Invocation.of(seq, IErrorHandler.SLF4J);
-		if (inv != null) {
-			if (iw.isAtSpace() == false) iw.write(" ");
-			iw.write("(" + inv.name);
-			iw.pushIndentation(inv.name.length() + 2);
-			
-			if (inv.arguments.size() == 1 && inv.remainder.isEmpty()) {
-				final Entry<String, Node> next = inv.arguments.entrySet().iterator().next();
-				iw.write(" " + next.getKey() + ": ");
-				iw.pushIndentation(next.getKey().length() + 3);
-				next.getValue().accept(this);
-				iw.popIndentation();
-			} else if (inv.arguments.isEmpty() && inv.remainder.size() == 1) {
-				inv.remainder.iterator().next().accept(this);
+			if (string.endsWith(":")) {
+				kwShift = 1;
+			} else if (kwShift == 1) {
+				kwShift = 2;
 			} else {
-				for (final Map.Entry<String, Node> e : inv.arguments.entrySet()) {
-					iw.write((iw.isAtSpace() ? "" : " ") + e.getKey() + ": ");
-					iw.pushIndentation(e.getKey().length()+2);
-					e.getValue().accept(this);
-					iw.popIndentation();
-					iw.write("\n");
-				}
-				
-				for (final Node n : inv.remainder) {
-					iw.write("\n");
-					n.accept(this);
-				}
+				kwShift = 0;
 			}
-			iw.popIndentation();
-			iw.write(")\n");
-		} else {
-			iw.pushIndentation(3);
-			
-			iw.write("(");
-			
-			for (final Node n : seq) {
-				n.accept(this);
-			}
-			
-			iw.write(")");
-			
-			iw.popIndentation();
+		}
+
+		private boolean pad() {
+			if (theBuffer.length() == 0) return false;
+			final char end = theBuffer.charAt(theBuffer.length()-1);
+			if (end == '(') return false;
+			if (end == ')') return false;
+			if (CharMatcher.WHITESPACE.matches(end)) return false;
+			return true;
+		}
+
+		public void appendNL(final String string) {
+			append(string);
+			theBuffer.append("\n");
+			theBuffer.append(tabs);
+			lineWidth = tabs.length() * (indentation+1);
 		}
 		
-		return false;
+		@Override
+		public String toString() {
+			final String manyTabs = new String(new char[tabs.length() * indentation]).replace("\0", tabs);
+			return theBuffer.toString().replace("\n", "\n"+manyTabs);
+		}
+	}
+	
+	public PrettyPrinter() {
+		stack.push(new IndentedBuffer(0));
+	}
+	
+	@Override
+	public void locate(final Location loc) {
+		
 	}
 
 	@Override
-	public void atom(final Atom atom) {
-		switchInclude(atom);
-		
-			if (iw.getColumn() > 1000) {
-				iw.write("\n");
-			} else if (iw.isAtSpace() == false) {
-				iw.write(" ");
-			}
-			iw.write(atom.toString());
+	public void open() {
+		final IndentedBuffer buffer = new IndentedBuffer(stack.size());
+		buffer.append("(");
+		stack.push(buffer);
+	}
+
+	@Override
+	public void atom(String string) {
+		if (CharMatcher.WHITESPACE.matchesAnyOf(string)) {
+			string = "\"" + string.replace("\"", "\\\"") + "\"";
+		}
+		stack.peek().append(string);
+	}
+
+	@Override
+	public void comment(final String text) {
+		stack.peek().appendNL("; " + text);
 		
 	}
 
 	@Override
-	public void comment(final Comment comment) {
-		switchInclude(comment);
-		
-		iw.write("\n ;; " + comment.getText() + "\n");
+	public void close() {
+		final IndentedBuffer pop = stack.pop();
+		pop.append(")");
+		stack.peek().append(pop.toString());
 	}
-
-	public static String print(final Node eg) {
-		final StringWriter stringWriter = new StringWriter();
-		final PrintWriter out = new PrintWriter(stringWriter);
-		final PrettyPrinter pp = new PrettyPrinter(new Function<URI, PrintWriter>(){
-			@Override
-			public PrintWriter apply(final URI input) {
-				return out;
-			}
-		});
-		eg.accept(pp);
-		out.flush();
-		return stringWriter.toString();
+	
+	@Override
+	public String toString() {
+		return stack.peek().toString();
+	}
+	
+	public static String toString(final ISExpression expression) {
+		final PrettyPrinter pp = new PrettyPrinter();
+		expression.accept(pp);
+		return pp.toString();
 	}
 }
