@@ -11,11 +11,11 @@ public class Location {
 	
 	public final URI name;
 	public final long offset;
-	public final long line;
-	public final long column;
+	public final int line;
+	public final int column;
 	public final Type type;
 	
-	private Location(final Type type, final URI name, final long offset, final long line, final long column) {
+	private Location(final Type type, final URI name, final long offset, final int line, final int column) {
 		super();
 		this.type = type;
 		this.name = name;
@@ -24,7 +24,7 @@ public class Location {
 		this.column = column;
 	}
 	
-	public static Location of(final Type type, final URI locationName, final long offset, final long line, final long column) {
+	public static Location of(final Type type, final URI locationName, final long offset, final int line, final int column) {
 		return new Location(type, locationName, offset, line, column);
 	}
 

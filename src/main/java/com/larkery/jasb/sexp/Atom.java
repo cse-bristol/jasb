@@ -19,6 +19,10 @@ public class Atom extends Node {
 		this.quoted = CharMatcher.WHITESPACE.matchesAnyOf(value) || value.isEmpty();
 	}
 
+	public static String escape(final String s) {
+		return new Atom(null, s).toString();
+	}
+	
 	@Property(policy=PojomaticPolicy.HASHCODE_EQUALS)
 	public String getValue() {
 		return value;

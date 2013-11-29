@@ -17,7 +17,8 @@ public class Parser {
 	
 	private final URI locationName;
 	
-	private long offset, line, column;
+	private long offset;
+	private int line, column;
 	private final Type type;
 	
 	private Parser(final Type type, final URI location, final Reader reader) {
@@ -239,13 +240,13 @@ public class Parser {
 		offset = line = column = 1;
 	
 		while ((input = reader.read()) != -1 && !state.isError()) {
-			state = state.next(location(), (char) input, output, errors);
 			offset++;
 			column++;
 			if (input == '\n' || input == '\r') {
 				line++;
 				column = 0;
 			}
+			state = state.next(location(), (char) input, output, errors);
 		}
 		
 		state.complete(location(), output, errors);

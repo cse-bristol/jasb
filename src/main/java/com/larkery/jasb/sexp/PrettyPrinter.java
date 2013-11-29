@@ -1,80 +1,113 @@
 package com.larkery.jasb.sexp;
 
-import java.util.Stack;
+import java.io.StringWriter;
+import java.util.Deque;
+import java.util.LinkedList;
+
+import org.apache.commons.lang.WordUtils;
 
 import com.google.common.base.CharMatcher;
 
-
 public class PrettyPrinter implements ISExpressionVisitor {
-	int maxWidth = 100;
-	String tabs = "  ";
-	Stack<IndentedBuffer> stack = new Stack<>();
+	int maxWidth = 80;
 	
-	class IndentedBuffer {
-		private final StringBuffer theBuffer = new StringBuffer();
-		private final int indentation;
-		private int lineWidth = 0;
-		private int kwShift = 0;
+	class W {
+		final StringWriter o = new StringWriter();
+		final StringBuffer line = new StringBuffer();
 		
-		IndentedBuffer(final int indentation) {
-			super();
-			this.indentation = indentation;
+		final Deque<String> indents = new LinkedList<>();
+		final StringBuffer comments = new StringBuffer();
+		
+		int indentation = 0;
+		
+		public void push(final String tab) {
+			indentation+=tab.length();
+			indents.push(tab);
 		}
 		
-		public void append(String string) {
-			// append with wrapping
-			if (!string.equals(")") && kwShift == 2) {
-				theBuffer.append("\n");
-				lineWidth = tabs.length() * (indentation);
-			}
-			if (lineWidth + string.length() > maxWidth) {
-				theBuffer.append(tabs);
-				theBuffer.append("\n");
-				lineWidth = string.length() + (tabs.length() * (indentation+1));
-				theBuffer.append(string);
-			} else {
-				lineWidth += string.length();
-				if (!string.equals(")") && pad()) {
-					string = " " + string;
-				}
-				theBuffer.append(string);
-			}
-			if (string.endsWith(":")) {
-				kwShift = 1;
-			} else if (kwShift == 1) {
-				kwShift = 2;
-			} else {
-				kwShift = 0;
-			}
+		public void pop() {
+			indentation-=indents.pop().length();
 		}
-
-		private boolean pad() {
-			if (theBuffer.length() == 0) return false;
-			final char end = theBuffer.charAt(theBuffer.length()-1);
-			if (end == '(') return false;
-			if (end == ')') return false;
-			if (CharMatcher.WHITESPACE.matches(end)) return false;
+		
+		public void writeWord(final String string) {
+			flushComments();
+			if (line.length() > maxWidth) {
+				newline();
+			} else if (needSpace(string)) {
+				line.append(" ");
+			} 
+			if (line.length() == 0) {
+				for (final String s : indents) line.append(s);
+			}
+			line.append(string);
+		}
+		
+		public void newline() {
+			o.append('\n');
+			o.append(line);
+			line.setLength(0);
+		}
+		
+		private boolean needSpace(final String put) {
+			if (")".equals(put)) return false;
+			
+			if (line.length() == 0) return false;
+			final char c = line.charAt(line.length()-1);
+			
+			if (c == '(') return false;
+			
+			if (CharMatcher.WHITESPACE.matches(c)) return false;
+			
 			return true;
 		}
 
-		public void appendNL(final String string) {
-			append(string);
-			theBuffer.append("\n");
-			theBuffer.append(tabs);
-			lineWidth = tabs.length() * (indentation+1);
+		public void flushComments() {
+			if (comments.length() > 0) {
+				writeComment(comments.toString());
+				comments.setLength(0);
+			}
 		}
 		
-		@Override
-		public String toString() {
-			final String manyTabs = new String(new char[tabs.length() * indentation]).replace("\0", tabs);
-			return theBuffer.toString().replace("\n", "\n"+manyTabs);
+		public void writeComment(final String string) {
+			final StringBuffer tabs = new StringBuffer();
+			for (final String s : indents) tabs.append(s);
+			newline();
+			line.append(WordUtils.wrap(string.trim(), Math.max(30, maxWidth-indentation))
+					.replaceAll("(?m)^", tabs.toString() + "; "));
+			newline();
+		}
+		
+		public void addComment(final String string) {
+			if (comments.length() > 0 && !CharMatcher.WHITESPACE.matches(comments.charAt(comments.length()-1))) {
+				comments.append(" ");
+			}
+			comments.append(string);
+		}
+		
+		public void flush() {
+			flushComments();
+			newline();
 		}
 	}
 	
-	public PrettyPrinter() {
-		stack.push(new IndentedBuffer(0));
+	final W w = new W();
+	
+	enum Head {
+		TOP, EXPECT_NAME, EXPECT_KEY, EXPECT_VAL, EXPECT_REST
 	}
 	
+	final Deque<Head> state = new LinkedList<>();
+	
+	public PrettyPrinter() {
+		state.push(Head.TOP);
+	}
+	
+	public static String print(final ISExpression expression) {
+		final PrettyPrinter pp = new PrettyPrinter();
+		expression.accept(pp);
+		return pp.toString();
+	}
+
 	@Override
 	public void locate(final Location loc) {
 		
@@ -82,40 +115,93 @@ public class PrettyPrinter implements ISExpressionVisitor {
 
 	@Override
 	public void open() {
-		final IndentedBuffer buffer = new IndentedBuffer(stack.size());
-		buffer.append("(");
-		stack.push(buffer);
+		switch (state.pop()) {
+		case EXPECT_KEY:
+			state.push(Head.EXPECT_REST);
+			w.newline();
+			break;
+		case EXPECT_NAME:
+			state.push(Head.EXPECT_REST);
+			break;
+		case EXPECT_REST:
+			state.push(Head.EXPECT_REST);
+			w.newline();
+			break;
+		case EXPECT_VAL:
+			state.push(Head.EXPECT_KEY);
+			break;
+		case TOP:
+			state.push(Head.TOP);
+			break;
+		default:
+			break;
+		
+		}
+		state.push(Head.EXPECT_NAME);
+		w.writeWord("(");
+		w.push("   ");
 	}
 
 	@Override
-	public void atom(String string) {
-		if (CharMatcher.WHITESPACE.matchesAnyOf(string)) {
-			string = "\"" + string.replace("\"", "\\\"") + "\"";
+	public void atom(final String atom) {
+		final String string = Atom.escape(atom);
+		boolean pushKeyWidth = false;
+		boolean popKeyWidth = false;
+		final boolean isKey = string.endsWith(":");
+		switch (state.pop()) {
+		case EXPECT_KEY:
+			if (isKey) {
+				w.newline();
+				state.push(Head.EXPECT_VAL);
+				pushKeyWidth = true;
+			} else {
+				state.push(Head.EXPECT_REST);
+			}
+			break;
+		case EXPECT_NAME:
+			state.push(Head.EXPECT_KEY);
+			w.push("");
+			break;
+		case EXPECT_REST:
+			state.push(Head.EXPECT_REST);
+			break;
+		case EXPECT_VAL:
+			state.push(Head.EXPECT_KEY);
+			popKeyWidth = true;
+			break;
+		case TOP:
+			state.push(Head.TOP);
+			break;
+		default:
+			break;
 		}
-		stack.peek().append(string);
+		w.writeWord(string);
+		if (pushKeyWidth) {
+			w.push(new String(new char[string.length()+2]).replace('\0', ' '));
+		} else if (popKeyWidth) {
+			w.pop();
+		}
 	}
 
 	@Override
 	public void comment(final String text) {
-		stack.peek().appendNL("; " + text);
-		
+		w.addComment(text);
 	}
 
 	@Override
 	public void close() {
-		final IndentedBuffer pop = stack.pop();
-		pop.append(")");
-		stack.peek().append(pop.toString());
+		w.writeWord(")");
+		w.pop();
+		w.pop();
+		state.pop();
+		if (state.peek() == Head.EXPECT_KEY) {
+			w.pop();
+		}
 	}
 	
 	@Override
 	public String toString() {
-		return stack.peek().toString();
-	}
-	
-	public static String toString(final ISExpression expression) {
-		final PrettyPrinter pp = new PrettyPrinter();
-		expression.accept(pp);
-		return pp.toString();
+		w.flush();
+		return w.o.toString();
 	}
 }
