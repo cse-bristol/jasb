@@ -7,6 +7,8 @@ import com.larkery.jasb.sexp.Location;
 
 public interface IWriter {
 
+	public abstract ISExpression write(Object object);
+	
 	public abstract ISExpression write(Object object,
 			Function<Object, Optional<Location>> locator);
 

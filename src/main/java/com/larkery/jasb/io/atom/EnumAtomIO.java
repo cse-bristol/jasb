@@ -1,8 +1,9 @@
 package com.larkery.jasb.io.atom;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Set;
+
+import org.apache.commons.lang.StringUtils;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Optional;
@@ -61,12 +62,9 @@ public class EnumAtomIO implements IAtomIO {
 	}
 	
 	private String getNiceEnumName(final Class<?> enumClass) {
-		String[] parts = enumClass.getSimpleName().split("(?=\\p{Upper})");
-		
-		if (parts[0].trim().equals("X")) {
-			parts = Arrays.copyOfRange(parts, 1, parts.length);
-		}
-		
-		return Joiner.on(' ').join(parts);
+		return Joiner.on(' ').join(
+				StringUtils.splitByCharacterTypeCamelCase(
+						enumClass.getSimpleName()));
+
 	}
 }

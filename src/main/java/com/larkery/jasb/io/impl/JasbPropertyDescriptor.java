@@ -36,7 +36,7 @@ class JasbPropertyDescriptor {
 	
 	@Override
 	public String toString() {
-		return "\"" + name + "\"";
+		return "\"" + name + "\" in " + readMethod.getDeclaringClass();
 	}
 	
 	public static Set<JasbPropertyDescriptor> getPropertiesBoundTo(final JasbPropertyDescriptor.BoundTo t, final Iterable<JasbPropertyDescriptor> properties) {

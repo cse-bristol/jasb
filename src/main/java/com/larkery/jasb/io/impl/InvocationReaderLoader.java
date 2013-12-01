@@ -77,6 +77,7 @@ class InvocationReaderLoader<T> extends ClassLoader implements Opcodes {
 	
 	@SuppressWarnings("unchecked")
 	public InvocationReaderLoader(final Class<T> typeToRead) {
+		super(typeToRead.getClassLoader());
 		this.typeToRead = typeToRead;
 		
 		final Bind bind = typeToRead.getAnnotation(Bind.class);

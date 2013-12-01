@@ -26,6 +26,9 @@ public class PrettyPrinter implements ISExpressionVisitor {
 		}
 		
 		public void pop() {
+			if (indents.isEmpty()) {
+				return;
+			}
 			indentation-=indents.pop().length();
 		}
 		

@@ -35,6 +35,9 @@ public interface IModel {
 		public Class<?> getJavaType();
 		public boolean isMultiple();
 		public Method getReadMethod();
+		public boolean isIdentity();
+		
+		public Optional<Object> getDefaultValue();
 		
 		public Set<IElement> getLegalValues();
 	}

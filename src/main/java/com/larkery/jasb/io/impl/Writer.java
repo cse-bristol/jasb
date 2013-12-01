@@ -1,7 +1,6 @@
 package com.larkery.jasb.io.impl;
 
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -11,9 +10,9 @@ import java.util.Map;
 import java.util.Set;
 
 import com.google.common.base.Function;
+import com.google.common.base.Functions;
 import com.google.common.base.Optional;
 import com.larkery.jasb.bind.Bind;
-import com.larkery.jasb.bind.PointlessWrapper;
 import com.larkery.jasb.io.IAtomWriter;
 import com.larkery.jasb.io.IWriter;
 import com.larkery.jasb.io.impl.JasbPropertyDescriptor.BoundTo;
@@ -35,6 +34,11 @@ class Writer implements IWriter {
 	@Override
 	public ISExpression write(final Object object, final Function<Object, Optional<Location>> locator) {
 		return new WriteSource(object, locator);
+	}
+	
+	@Override
+	public ISExpression write(final Object object) {
+		return write(object, Functions.constant(Optional.<Location>absent()));
 	}
 	
 	class WriteSource implements ISExpression {
@@ -78,26 +82,6 @@ class Writer implements IWriter {
 			if (identities.containsKey(o)) {
 				visitor.atom("#" + identities.get(o));
 				return;
-			}
-			
-			if (o.getClass().isAnnotationPresent(PointlessWrapper.class)) {
-				// this is a JAXB xml pointless wrapper thing
-				// which we want to throw away.
-				// it ought to contain a single property of interest
-				for (final Method m : o.getClass().getMethods()) {
-					if (m.isAnnotationPresent(PointlessWrapper.class)) {
-						try {
-							final Object o2 = m.invoke(o);
-							// transparently do o2 instead of this le
-							accept(o2, visitor);
-							return;
-						} catch (IllegalAccessException
-								| IllegalArgumentException
-								| InvocationTargetException e) {
-							throw new RuntimeException("Pointless wrapper should be on a getter", e);
-						}
-					}
-				}
 			}
 			
 			if (o.getClass().isAnnotationPresent(Bind.class)) {

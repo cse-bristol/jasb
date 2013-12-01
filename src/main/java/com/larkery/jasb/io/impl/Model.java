@@ -1,5 +1,6 @@
 package com.larkery.jasb.io.impl;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashSet;
 import java.util.Set;
@@ -64,9 +65,29 @@ public class Model implements IModel {
 	class Argument implements IArgument {
 		private final JasbPropertyDescriptor pd;
 		private Set<IElement> legalValues;
-
-		public Argument(final JasbPropertyDescriptor pd) {
+		private Optional<Object> defaultValue;
+		
+		public Argument(final Object val, final JasbPropertyDescriptor pd) {
 			this.pd = pd;
+			try {
+				this.defaultValue = 
+					Optional.fromNullable(
+							pd.isMultiple ? null : 
+								pd.readMethod.invoke(val));
+			} catch (IllegalAccessException | IllegalArgumentException
+					| InvocationTargetException e) {
+				throw new IllegalArgumentException("Couldn't get default value for " + pd);
+			}
+		}
+		
+		@Override
+		public boolean isIdentity() {
+			return pd.isIdentifier;
+		}
+		
+		@Override
+		public Optional<Object> getDefaultValue() {
+			return defaultValue;
 		}
 
 		@Override
@@ -139,6 +160,13 @@ public class Model implements IModel {
 			if (!clazz.isAnnotationPresent(Bind.class)) {
 				throw new IllegalArgumentException(""+clazz);
 			}
+			final Object val;
+			try {
+				val = clazz.newInstance();
+			} catch (InstantiationException | IllegalAccessException e) {
+				throw new IllegalArgumentException(clazz.getCanonicalName() + " couldn't be constructed", e);
+			}
+			
 			this.name = clazz.getAnnotation(Bind.class).value();
 			
 			final ImmutableSet.Builder<IArgument> arguments = 
@@ -152,7 +180,7 @@ public class Model implements IModel {
 			
 			IArgument remainder = null;
 			for (final JasbPropertyDescriptor pd : JasbPropertyDescriptor.getDescriptors(javaType)) {
-				final Argument argument = new Argument(pd);
+				final Argument argument = new Argument(val, pd);
 				arguments.add(argument);
 				if (argument.isNamedArgument()) named.add(argument);
 				if (argument.isPositionalArgument()) positional.add(argument);

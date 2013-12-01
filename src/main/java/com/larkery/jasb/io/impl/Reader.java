@@ -1,7 +1,5 @@
 package com.larkery.jasb.io.impl;
 
-import java.beans.Introspector;
-import java.beans.PropertyDescriptor;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -22,13 +20,11 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.larkery.jasb.bind.AfterReading;
 import com.larkery.jasb.bind.Bind;
-import com.larkery.jasb.bind.PointlessWrapper;
 import com.larkery.jasb.io.IAtomReader;
 import com.larkery.jasb.io.IReadContext;
 import com.larkery.jasb.io.IReader;
 import com.larkery.jasb.sexp.Atom;
 import com.larkery.jasb.sexp.ISExpression;
-import com.larkery.jasb.sexp.Invocation;
 import com.larkery.jasb.sexp.Node;
 import com.larkery.jasb.sexp.errors.BasicError;
 import com.larkery.jasb.sexp.errors.IErrorHandler;
@@ -124,7 +120,7 @@ class Reader implements IReader {
 					throw new IllegalArgumentException(clazz + " cannot be unmarshalled from s-expressions as it is a non-static inner class");
 				}
 			}
-			if (!(clazz.isAnnotationPresent(Bind.class) || clazz.isAnnotationPresent(PointlessWrapper.class))) {
+			if (!(clazz.isAnnotationPresent(Bind.class))) {
 				throw new IllegalArgumentException(clazz + " has no bind annotation");
 			}
 			try {
@@ -327,55 +323,8 @@ class Reader implements IReader {
 	@SuppressWarnings("unchecked")
 	private <T> InvocationReader<T> getOrCreateInvocationReader(final Class<T> sub) {
 		if (!specificReaders.containsKey(sub)) {
-			//TODO Handle pointless wrapper annotation here
-			if (sub.isAnnotationPresent(PointlessWrapper.class)) {
-				try {
-					for (final PropertyDescriptor pd : Introspector.getBeanInfo(sub).getPropertyDescriptors()) {
-						if (pd.getReadMethod() == null) continue;
-						if (pd.getReadMethod().isAnnotationPresent(PointlessWrapper.class)) {
-							final InvocationReader<T> out = new InvocationReader<T>(sub, 
-									"", new String [0]
-									) {
-								@Override
-								protected T read(final IReadContext context, final Invocation invocation) {
-									final ListenableFuture<?> read = context.read(pd.getReadMethod().getReturnType(), invocation.node);
-									
-									try {
-										return wrap(read.get());
-									} catch (InterruptedException | ExecutionException e) {
-										throw new RuntimeException("could not read invocation as required type", e);
-									}
-								}
-	
-								private T wrap(final Object read) {
-									try {
-										final T result = sub.getConstructor().newInstance();
-										
-										pd.getWriteMethod().invoke(result, read);
-										
-										return result;
-									} catch (InstantiationException
-											| IllegalAccessException
-											| IllegalArgumentException
-											| InvocationTargetException
-											| NoSuchMethodException
-											| SecurityException e) {
-										throw new RuntimeException("Bad pointless-wrapper " + sub, e);
-									}
-								}
-							};
-							
-							specificReaders.put(sub, out);
-							break;
-						}
-					}
-				} catch (final Exception e) {
-					throw new RuntimeException("bad pointless-wrapper " + sub + "(" + e.getMessage() + ")", e);
-				}
-			} else {
-				final InvocationReader<T> reader = new InvocationReaderLoader<T>(sub).getReaderInstance();
-				specificReaders.put(sub, reader);
-			}
+			final InvocationReader<T> reader = new InvocationReaderLoader<T>(sub).getReaderInstance();
+			specificReaders.put(sub, reader);
 		}
 		return (InvocationReader<T>) specificReaders.get(sub);
 	}
