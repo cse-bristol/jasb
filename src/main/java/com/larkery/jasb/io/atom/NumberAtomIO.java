@@ -8,7 +8,6 @@ import com.google.common.collect.ImmutableSet;
 import com.larkery.jasb.io.IAtomIO;
 
 public class NumberAtomIO implements IAtomIO {
-
 	@Override
 	public boolean canWrite(final Object object) {
 		return object instanceof Number;

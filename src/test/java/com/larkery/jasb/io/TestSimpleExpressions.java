@@ -22,6 +22,7 @@ import com.larkery.jasb.io.testmodel.Value;
 import com.larkery.jasb.sexp.Location.Type;
 import com.larkery.jasb.sexp.Node;
 import com.larkery.jasb.sexp.errors.IErrorHandler;
+import com.larkery.jasb.sexp.errors.UnfinishedExpressionException;
 import com.larkery.jasb.sexp.parse.Parser;
 
 public class TestSimpleExpressions {
@@ -39,8 +40,12 @@ public class TestSimpleExpressions {
 								new StringAtomIO(),
 								new NumberAtomIO())).getReader();
 		
-		final Node node = 
-				Node.copy(Parser.source(Type.Normal, URI.create("test"), new StringReader(s), IErrorHandler.SLF4J));
+		Node node;
+		try {
+			node = Node.copy(Parser.source(Type.Normal, URI.create("test"), new StringReader(s), IErrorHandler.SLF4J));
+		} catch (final UnfinishedExpressionException e) {
+			throw new RuntimeException(e);
+		}
 		
 		final T result = context.readNode(out, node, IErrorHandler.SLF4J).get();
 		

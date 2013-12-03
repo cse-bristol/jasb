@@ -28,6 +28,7 @@ import com.larkery.jasb.sexp.ISExpression;
 import com.larkery.jasb.sexp.Node;
 import com.larkery.jasb.sexp.errors.BasicError;
 import com.larkery.jasb.sexp.errors.IErrorHandler;
+import com.larkery.jasb.sexp.errors.UnfinishedExpressionException;
 
 class Reader implements IReader {
 	private final Map<Class<?>, Switcher<?>> switchers = new HashMap<>();
@@ -83,13 +84,19 @@ class Reader implements IReader {
 	 */
 	@Override
 	public <T> IResult<T> read(final Class<T> output, final ISExpression input, final IErrorHandler errors) {
-		final Node node = Node.copyStructure(input);
+		Node node = null;
+		try {
+			node = Node.copyStructure(input);
+		} catch (final UnfinishedExpressionException e) {
+		}
 		return new Result<T>(node, readNode(output, node, errors));
 	}
 	
 	@Override
 	public <T> Optional<T> readNode(final Class<T> output, final Node input,
 			final IErrorHandler errors) {
+		if (input == null) return Optional.absent();
+		
 		final Context context = new Context(errors);
 		
 		final ListenableFuture<T> read = context.read(output, input);

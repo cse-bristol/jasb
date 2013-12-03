@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.Stack;
 
@@ -21,6 +22,7 @@ import com.larkery.jasb.sexp.NodeBuilder;
 import com.larkery.jasb.sexp.Seq;
 import com.larkery.jasb.sexp.errors.BasicError;
 import com.larkery.jasb.sexp.errors.IErrorHandler;
+import com.larkery.jasb.sexp.errors.UnfinishedExpressionException;
 
 public class Expander {
 	public static Node expand(final ISExpression source, final IErrorHandler errors) {
@@ -39,11 +41,19 @@ public class Expander {
 
 			@Override
 			protected void paste(final NodeBuilder q) {
-				macros.add(q.get());
+				try {
+					final Node node = q.get();
+					macros.add(node);
+				} catch (final UnfinishedExpressionException e) {
+				}
 			}
 		});
 		
-		return substitute(macros, withoutMacros.get(), errors);
+		try {
+			return substitute(macros, withoutMacros.getBestEffort(), errors);
+		} catch (final NoSuchElementException | UnsupportedOperationException nse) {
+			return Seq.builder(null).build(null);
+		}
 	}
 
 	private static Node substitute(final Set<Node> macros, final Node node, final IErrorHandler errors) {
@@ -89,17 +99,21 @@ public class Expander {
 
 				@Override
 				protected void paste(final NodeBuilder q) {
-					final Node top = q.get();
-					final Seq seq = (Seq) top;
-					final ISExpression expand = templates.get(((Atom)seq.getHead()).getValue()).expand(top, errors);
-					if (expand != null) {
-						expand.accept(this);
+					final Node top = q.getBestEffort();
+					
+					if (top instanceof Seq) {
+						final Seq seq = (Seq) top;
+						final ISExpression expand = templates.get(((Atom)seq.getHead()).getValue()).expand(top, errors);
+						if (expand != null) {
+							expand.accept(this);
+						}
 					}
+					
 					activeTemplates.pop();
 				}
 			});
 			
-			return output.get();
+			return output.getBestEffort();
 		}
 	}
 	

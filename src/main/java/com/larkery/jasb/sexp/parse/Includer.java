@@ -29,6 +29,8 @@ import com.larkery.jasb.sexp.NodeBuilder;
 import com.larkery.jasb.sexp.Seq;
 import com.larkery.jasb.sexp.errors.BasicError;
 import com.larkery.jasb.sexp.errors.IErrorHandler;
+import com.larkery.jasb.sexp.errors.ResolutionException;
+import com.larkery.jasb.sexp.errors.UnfinishedExpressionException;
 
 public class Includer {
 	private static final Logger log = LoggerFactory.getLogger(Includer.class);
@@ -101,7 +103,7 @@ public class Includer {
 		 * @return
 		 * @throws NoSuchElementException
 		 */
-		public ILocationReader resolve(final URI href, final IErrorHandler errors) throws NoSuchElementException;
+		public ILocationReader resolve(final URI href, final IErrorHandler errors) throws ResolutionException;
 	}
 	
 	
@@ -154,18 +156,22 @@ public class Includer {
 		
 		Type type = Type.Normal;
 		while ((addr = addrs.poll()) != null) {
+			try {
 			final ILocationReader loc = resolver.resolve(addr, errors);
 			String stringValue;
-			try {
 				stringValue = IOUtils.toString(loc.getReader());
+				builder.put(addr, stringValue);
+			
 				final Node node = Node.copy(Parser.source(type, loc.getLocation(), new StringReader(stringValue), errors));
+				
 				type = Type.Include;
 				if (node != null) {
-					builder.put(addr, stringValue);
 					node.accept(addressCollector);
 				}
 			} catch (final IOException e) {
-				
+			} catch (final ResolutionException re) {
+			} catch (final UnsupportedOperationException e) {
+			} catch (final UnfinishedExpressionException e) {
 			}
 		}
 		
@@ -187,7 +193,7 @@ public class Includer {
 					final ILocationReader reader = resolver.resolve(root, errors);
 					final ISExpression real = Parser.source(Type.Normal, reader.getLocation(), reader.getReader(), errors);
 					real.accept(new IncludingVisitor(resolver, visitor, errors));
-				} catch (final NoSuchElementException nse) {
+				} catch (final ResolutionException nse) {
 					log.error("Error resolving a scenario from {}", root, nse);
 					errors.handle(BasicError.nowhere("Unable to resolve" + root + " (" + nse.getMessage() + ")"));
 				}
@@ -224,31 +230,32 @@ public class Includer {
 		@Override
 		protected void paste(final NodeBuilder q) {
 			log.debug("pasting completed include");
+			final Node node = q.getBestEffort();
 			try {
-				final Seq include = (Seq) q.get();
-				final URI uri = resolver.convert(include, errors);
-				
-				if (stack.contains(uri)) {
-					errors.handle(BasicError.at(include, uri + " recursively includes itself"));
-				} else {
-					final ILocationReader reader = resolver.resolve(
-							uri, errors);
-					final ISExpression real = Parser.source(
-							Type.Include, reader.getLocation(), reader.getReader(), errors);
-					stack.push(uri);
-					real.accept(this);
-					stack.pop();
+				if (node instanceof Seq) {
+					final Seq include = (Seq) node;
+					final URI uri = resolver.convert(include, errors);
+					
+					if (stack.contains(uri)) {
+						errors.handle(BasicError.at(include, uri + " recursively includes itself"));
+					} else {
+						final ILocationReader reader = resolver.resolve(uri, errors);
+						final ISExpression real = Parser.source(
+								Type.Include, reader.getLocation(), reader.getReader(), errors);
+						stack.push(uri);
+						real.accept(this);
+						stack.pop();
+					}
+					locate(include.getEndLocation());
 				}
-				locate(include.getEndLocation());
-				
-			} catch (final NoSuchElementException e) {
-				log.error("Error resolving a scenario from {}", q.get(), e);
-				errors.handle(BasicError.at(q.get(), "Unable to resolve include - " + e.getMessage()));
+			} catch (final ResolutionException e) {
+				log.error("Error resolving a scenario from {}", node, e);
+				errors.handle(BasicError.at(node, "Unable to resolve include - " + e.getMessage()));
 			}
 		}
 	}
 
-	private static final URI root = URI.create("root:root");
+	public static final URI root = URI.create("root:root");
 	
 	/**
 	 * Recursively collect all the includes starting from the given root provided as a string 
@@ -265,7 +272,7 @@ public class Includer {
 		return collect(new IResolver(){
 				@Override
 				public ILocationReader resolve(final URI href, final IErrorHandler errors)
-						throws NoSuchElementException {
+						throws ResolutionException {
 					if (href == root) return stringLocationReader(root, scenarioXML);
 					else return resolver.resolve(href, errors);
 				}

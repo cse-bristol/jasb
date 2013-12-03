@@ -3,6 +3,7 @@ package com.larkery.jasb.sexp;
 import java.util.Stack;
 
 import com.larkery.jasb.sexp.Seq.Builder;
+import com.larkery.jasb.sexp.errors.UnfinishedExpressionException;
 
 public class NodeBuilder implements ISExpressionVisitor {
 	private Location here;
@@ -58,11 +59,27 @@ public class NodeBuilder implements ISExpressionVisitor {
 		}
 	}
 	
-	public Node get() {
+	public Node get() throws UnfinishedExpressionException {
 		if (inprogress.size() > 1) {
-			throw new UnsupportedOperationException("there are " + inprogress.size() + " elements left on the stack (" +inprogress+ ")");
+			while (inprogress.size() > 1){
+				close();
+			}
+			final Seq build = top.build(null);
+			throw new UnfinishedExpressionException(build.isEmpty() ? build : build.getHead());
 		}
-		return top.build(null).getHead();
+		final Seq build = top.build(null);
+		if (build.isEmpty()) {
+			throw new UnfinishedExpressionException(build);
+		}
+		return build.getHead();
+	}
+	
+	public Node getBestEffort() {
+		try {
+			return get();
+		} catch (final UnfinishedExpressionException e) {
+			return e.getBestEffort();
+		}
 	}
 
 	/**

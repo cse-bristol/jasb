@@ -41,4 +41,7 @@ public class Comment extends Node {
 	public int hashCode() {
 		return Pojomatic.hashCode(this);
 	}
+	public static Comment create(final String string) {
+		return new Comment(null, string.replace("\n", " ").replace("\r", " "));
+	}
 }
