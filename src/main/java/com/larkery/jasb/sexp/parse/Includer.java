@@ -159,17 +159,18 @@ public class Includer {
 			try {
 			final ILocationReader loc = resolver.resolve(addr, errors);
 			String stringValue;
-				stringValue = IOUtils.toString(loc.getReader());
-				builder.put(addr, stringValue);
+			stringValue = IOUtils.toString(loc.getReader());
+			builder.put(addr, stringValue);
+		
+			final Node node = Node.copy(Parser.source(type, loc.getLocation(), new StringReader(stringValue), errors));
 			
-				final Node node = Node.copy(Parser.source(type, loc.getLocation(), new StringReader(stringValue), errors));
-				
-				type = Type.Include;
-				if (node != null) {
-					node.accept(addressCollector);
-				}
+			type = Type.Include;
+			if (node != null) {
+				node.accept(addressCollector);
+			}
 			} catch (final IOException e) {
 			} catch (final ResolutionException re) {
+				log.warn("Unable to resolve scenario {}", addr, re);
 			} catch (final UnsupportedOperationException e) {
 			} catch (final UnfinishedExpressionException e) {
 			}

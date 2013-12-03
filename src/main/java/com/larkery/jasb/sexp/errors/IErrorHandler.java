@@ -39,6 +39,13 @@ public interface IErrorHandler {
 		@Override
 		public void handle(final IError error) {}
 	};
+	static final IErrorHandler RAISE = new IErrorHandler(){
+	
+		@Override
+		public void handle(final IError error) {
+			throw new JasbErrorException(error);
+		}
+	};
 	
 	public void handle(final IError error);
 }
