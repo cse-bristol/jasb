@@ -16,6 +16,7 @@ import com.larkery.jasb.bind.Bind;
 import com.larkery.jasb.io.IAtomWriter;
 import com.larkery.jasb.io.IWriter;
 import com.larkery.jasb.io.impl.JasbPropertyDescriptor.BoundTo;
+import com.larkery.jasb.sexp.Delim;
 import com.larkery.jasb.sexp.ISExpression;
 import com.larkery.jasb.sexp.ISExpressionVisitor;
 import com.larkery.jasb.sexp.Location;
@@ -87,7 +88,7 @@ class Writer implements IWriter {
 			if (o.getClass().isAnnotationPresent(Bind.class)) {
 				final Bind bind = o.getClass().getAnnotation(Bind.class);
 				
-				visitor.open();
+				visitor.open(Delim.Paren);
 				visitor.atom(bind.value());
 				
 				final Set<JasbPropertyDescriptor> descriptors = 
@@ -163,14 +164,14 @@ class Writer implements IWriter {
 					}
 				}
 				
-				visitor.close();
+				visitor.close(Delim.Paren);
 			} else if (o instanceof List) {
 				if (((List<?>) o).size() > 0) {
-					visitor.open();
+					visitor.open(Delim.Bracket);
 					for (final Object val : ((List<?>) o)) {
 						accept(val, visitor);
 					}
-					visitor.close();
+					visitor.close(Delim.Bracket);
 				}
 			}
 		}

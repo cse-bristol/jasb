@@ -117,7 +117,7 @@ public class PrettyPrinter implements ISExpressionVisitor {
 	}
 
 	@Override
-	public void open() {
+	public void open(final Delim delimeter) {
 		switch (state.pop()) {
 		case EXPECT_KEY:
 			state.push(Head.EXPECT_REST);
@@ -141,7 +141,7 @@ public class PrettyPrinter implements ISExpressionVisitor {
 		
 		}
 		state.push(Head.EXPECT_NAME);
-		w.writeWord("(");
+		w.writeWord(""+delimeter.open);
 		w.push("   ");
 	}
 
@@ -192,8 +192,8 @@ public class PrettyPrinter implements ISExpressionVisitor {
 	}
 
 	@Override
-	public void close() {
-		w.writeWord(")");
+	public void close(final Delim delimeter) {
+		w.writeWord(""+delimeter.close);
 		w.pop();
 		w.pop();
 		state.pop();

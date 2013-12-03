@@ -13,7 +13,7 @@ public class SimplePrinter implements ISExpressionVisitor {
 	}
 
 	@Override
-	public void open() {
+	public void open(Delim delimeter) {
 		buffer.append('(');
 	}
 
@@ -29,7 +29,7 @@ public class SimplePrinter implements ISExpressionVisitor {
 	}
 
 	@Override
-	public void close() {
+	public void close(Delim delimeter) {
 		buffer.append(')');
 		buffer.append('\n');
 	}

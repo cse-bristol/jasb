@@ -55,7 +55,7 @@ public class Indenter implements ISExpressionVisitor {
 	}
 	
 	@Override
-	public void open() {
+	public void open(Delim delimeter) {
 		write("(");
 		tabs.push("\t");
 	}
@@ -71,7 +71,7 @@ public class Indenter implements ISExpressionVisitor {
 	}
 
 	@Override
-	public void close() {
+	public void close(Delim delimeter) {
 		tabs.pop();
 		write(")");
 	}

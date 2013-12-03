@@ -13,6 +13,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.larkery.jasb.sexp.Atom;
 import com.larkery.jasb.sexp.Comment;
+import com.larkery.jasb.sexp.Delim;
 import com.larkery.jasb.sexp.ISExpression;
 import com.larkery.jasb.sexp.ISExpressionVisitor;
 import com.larkery.jasb.sexp.Invocation;
@@ -52,7 +53,7 @@ public class Expander {
 		try {
 			return substitute(macros, withoutMacros.getBestEffort(), errors);
 		} catch (final NoSuchElementException | UnsupportedOperationException nse) {
-			return Seq.builder(null).build(null);
+			return Seq.builder(null, Delim.Paren).build(null);
 		}
 	}
 
@@ -187,8 +188,8 @@ public class Expander {
 			}
 
 			@Override
-			public void open() {
-				delegate.open();
+			public void open(final Delim delimeter) {
+				delegate.open(delimeter);
 			}
 
 			@Override
@@ -206,8 +207,8 @@ public class Expander {
 			}
 
 			@Override
-			public void close() {
-				delegate.close();
+			public void close(final Delim delimeter) {
+				delegate.close(delimeter);
 			}
 			
 		}
@@ -298,7 +299,7 @@ public class Expander {
 		}
 
 		@Override
-		public void open() {
+		public void open(final Delim delimeter) {
 		}
 
 		@Override
@@ -313,7 +314,7 @@ public class Expander {
 		public void comment(final String text) {}
 		
 		@Override
-		public void close() {
+		public void close(final Delim delimeter) {
 		}
 		
 	}

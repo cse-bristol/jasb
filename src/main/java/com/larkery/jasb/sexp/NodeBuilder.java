@@ -14,7 +14,7 @@ public class NodeBuilder implements ISExpressionVisitor {
 	
 	protected NodeBuilder(final boolean includeComments) {
 		this.includeComments = includeComments;
-		top = Seq.builder(null);
+		top = Seq.builder(null, Delim.Paren);
 		inprogress.push(top);
 	}
 	
@@ -27,8 +27,8 @@ public class NodeBuilder implements ISExpressionVisitor {
 	}
 	
 	@Override
-	public void open() {
-		inprogress.add(Seq.builder(here));
+	public void open(final Delim delimeter) {
+		inprogress.add(Seq.builder(here, delimeter));
 	}
 	
 	@Override
@@ -37,7 +37,7 @@ public class NodeBuilder implements ISExpressionVisitor {
 	}
 	
 	@Override
-	public void close() {
+	public void close(final Delim delimeter) {
 		final Seq seq = inprogress.pop().build(here);
 		push(seq);
 	}
@@ -62,7 +62,7 @@ public class NodeBuilder implements ISExpressionVisitor {
 	public Node get() throws UnfinishedExpressionException {
 		if (inprogress.size() > 1) {
 			while (inprogress.size() > 1){
-				close();
+				close(Delim.Paren);
 			}
 			final Seq build = top.build(null);
 			throw new UnfinishedExpressionException(build.isEmpty() ? build : build.getHead());

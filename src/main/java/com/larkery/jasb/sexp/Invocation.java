@@ -28,7 +28,9 @@ public class Invocation {
 		if (node instanceof Seq) {
 			final Seq seq = (Seq) node;
 			if (seq.size() == 0) {
-				errors.handle(BasicError.at(node, "an empty list was not expected here"));
+				errors.handle(BasicError.at(node, "An invocation was expected here; invocations must have an atom at the start, but this is an empty list"));
+			} else if (seq.getDelimeter() != Delim.Paren) {
+				errors.handle(BasicError.at(node, "An invocation was expected here; invocations must use parentheses ()"));
 			} else {
 				final Node head = seq.getHead();
 				
@@ -83,7 +85,7 @@ public class Invocation {
 					if (head == null) {
 						errors.handle(BasicError.at(node, "An empty list was not expected here"));
 					} else {
-						errors.handle(BasicError.at(head, "a word was expected here, not a list"));
+						errors.handle(BasicError.at(head, "The first element in an invocation must be a single atom, not a list"));
 					}
 				}
 				

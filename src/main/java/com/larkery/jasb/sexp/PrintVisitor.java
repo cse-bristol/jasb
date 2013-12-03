@@ -8,29 +8,29 @@ public class PrintVisitor implements ISExpressionVisitor {
 	private int depth = 1;
 	private ISExpressionVisitor delegate;
 
-	public PrintVisitor(PrintStream out) {
+	public PrintVisitor(final PrintStream out) {
 		super();
 		this.out = out;
 	}
 	
-	public PrintVisitor(PrintStream out, final ISExpressionVisitor delegate) {
+	public PrintVisitor(final PrintStream out, final ISExpressionVisitor delegate) {
 		super();
 		this.out = out;
 		this.delegate = delegate;
 	}
 
 	@Override
-	public void locate(Location loc) {
+	public void locate(final Location loc) {
 		if (delegate != null) delegate.locate(loc);
 		this.location = loc;
 	}
 
 	@Override
-	public void open() {
+	public void open(final Delim delimeter) {
 		tabs();
-		out.println('(');
+		out.println(delimeter);
 		depth++;
-		if (delegate != null) delegate.open();
+		if (delegate != null) delegate.open(delimeter);
 	}
 
 	private void tabs() {
@@ -42,24 +42,24 @@ public class PrintVisitor implements ISExpressionVisitor {
 	}
 
 	@Override
-	public void atom(String string) {
+	public void atom(final String string) {
 		tabs();
 		out.println(string);
 		if (delegate != null) delegate.atom(string);
 	}
 	
 	@Override
-	public void comment(String text) {
+	public void comment(final String text) {
 		tabs();
 		out.println(";;" + text);
 		if (delegate != null) delegate.comment(text);
 	}
 
 	@Override
-	public void close() {
+	public void close(final Delim delimeter) {
 		depth--;
 		tabs();
 		out.println(')');
-		if (delegate != null) delegate.close();
+		if (delegate != null) delegate.close(delimeter);
 	}
 }

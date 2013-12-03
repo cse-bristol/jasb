@@ -17,11 +17,21 @@ import com.google.common.collect.ImmutableList;
 public class Seq extends Node implements Iterable<Node> {
 	private final List<Node> nodes;
 	private final Location end;
+	private final Delim marker;
 	
-	private Seq(final Location location, final Location end, final List<Node> nodes) {
+	private Seq(
+			final Delim marker,
+			final Location location, 
+			final Location end, 
+			final List<Node> nodes) {
 		super(location);
+		this.marker = marker;
 		this.end = end;
 		this.nodes = ImmutableList.copyOf(nodes);
+	}
+	
+	public Delim getDelimeter() {
+		return marker;
 	}
 
 	public Node get(final int arg0) {
@@ -51,12 +61,12 @@ public class Seq extends Node implements Iterable<Node> {
 	@Override
 	public void accept(final ISExpressionVisitor visitor) {
 		super.accept(visitor);
-		visitor.open();
+		visitor.open(marker);
 		for (final Node node : this) {
 			node.accept(visitor);
 		}
 		visitor.locate(end);
-		visitor.close();
+		visitor.close(marker);
 	}
 	
 	public Location getEndLocation() {
@@ -70,24 +80,26 @@ public class Seq extends Node implements Iterable<Node> {
 	@Override
 	public String toString() {
 		final StringBuffer sb = new StringBuffer();
-		sb.append("(");
+		sb.append(marker.open);
 		boolean space = false;
 		for (final Node n : this) {
 			if (space) sb.append(" ");
 			else space = true;
 			sb.append(n);
 		}
-		sb.append(")");
+		sb.append(marker.close);
 		return sb.toString();
 	}
 
 	public static class Builder {
 		private final Location start;
 		private final ImmutableList.Builder<Node> builder = ImmutableList.builder();
+		private final Delim marker;
 		
-		private Builder(final Location start) {
+		private Builder(final Location start, final Delim marker) {
 			super();
 			this.start = start;
+			this.marker = marker;
 		}
 
 		public Builder add(final Node node) {
@@ -110,7 +122,7 @@ public class Seq extends Node implements Iterable<Node> {
 		}
 		
 		public Seq build(final Location end) {
-			return new Seq(start, end, this.builder.build());
+			return new Seq(marker, start, end, this.builder.build());
 		}
 		
 		@Override
@@ -124,8 +136,8 @@ public class Seq extends Node implements Iterable<Node> {
 		}
 	}
 	
-	public static Builder builder(final Location start) {
-		return new Builder(start);
+	public static Builder builder(final Location start, final Delim marker) {
+		return new Builder(start, marker);
 	}
 	
 	@Property(policy=PojomaticPolicy.HASHCODE_EQUALS)

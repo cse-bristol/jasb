@@ -108,7 +108,7 @@ public class TestSimpleExpressions {
 		final ListOfStrings node = read("(strings values: hello)", ListOfStrings.class);
 		Assert.assertEquals(ImmutableList.of("hello"), node.getStrings());
 		
-		final ListOfStrings node2 = read("(strings values: (hello world))", ListOfStrings.class);
+		final ListOfStrings node2 = read("(strings values: [hello world])", ListOfStrings.class);
 		Assert.assertEquals(ImmutableList.of("hello", "world"), node2.getStrings());
 	}
 }

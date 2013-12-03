@@ -27,7 +27,7 @@ public class NumberAtomIO implements IAtomIO {
 	public <T> Optional<T> read(String in, final Class<T> out) {
 		final boolean percent;
 		if (in.endsWith("%") && in.length() > 1) {
-			in = in.substring(0, in.length()-2);
+			in = in.substring(0, in.length()-1);
 			percent = true;
 		} else {
 			percent = false;

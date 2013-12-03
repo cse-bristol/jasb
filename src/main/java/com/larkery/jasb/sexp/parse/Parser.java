@@ -5,6 +5,7 @@ import java.io.Reader;
 import java.net.URI;
 
 import com.google.common.base.CharMatcher;
+import com.larkery.jasb.sexp.Delim;
 import com.larkery.jasb.sexp.ISExpression;
 import com.larkery.jasb.sexp.ISExpressionVisitor;
 import com.larkery.jasb.sexp.Location;
@@ -164,6 +165,8 @@ public class Parser {
 						return send(output);
 					case '(':
 					case ')':
+					case '[':
+					case ']':
 					case ';':
 					case '"':
 						return send(output).next(here, c, output, errors);
@@ -204,18 +207,20 @@ public class Parser {
 					switch (c) {
 					case ';': return new Comment(this, here);
 					case '(':
+					case '[':
 						depth++;
 						output.locate(here);
-						output.open();
+						output.open(Delim.of(c));
 						return this;
 					case ')':
+					case ']':
 						depth--;
 						if (depth < 0) {
 							errors.handle(BasicError.at(here, "Too many closing parentheses"));
 							return new Error();
 						}
 						output.locate(here);
-						output.close();
+						output.close(Delim.of(c));
 						return this;
 					default:
 						return new Atom(this, c, here);

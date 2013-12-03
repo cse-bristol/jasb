@@ -5,13 +5,14 @@ import java.util.List;
 import java.util.Stack;
 
 import com.google.common.base.Optional;
+import com.larkery.jasb.sexp.Delim;
 import com.larkery.jasb.sexp.ISExpressionVisitor;
 import com.larkery.jasb.sexp.Location;
 
 abstract class Cutout<Q extends ISExpressionVisitor> implements ISExpressionVisitor {
 	private final Stack<BalancedVisitor> cutouts = new Stack<>();
 	
-	private boolean afterOpen = false;
+	private Delim afterOpen = null;
 	private Location openLocation;
 	private Location location;
 	private final List<Location> commentLocationsAfterOpen = new ArrayList<>();
@@ -37,9 +38,9 @@ abstract class Cutout<Q extends ISExpressionVisitor> implements ISExpressionVisi
 		}
 
 		@Override
-		public void open() {
+		public void open(final Delim delimeter) {
 			depth++;
-			delegate.open();
+			delegate.open(delimeter);
 		}
 
 		@Override
@@ -53,8 +54,8 @@ abstract class Cutout<Q extends ISExpressionVisitor> implements ISExpressionVisi
 		}
 
 		@Override
-		public void close() {
-			delegate.close();
+		public void close(final Delim delimeter) {
+			delegate.close(delimeter);
 			depth--;
 		}
 	}
@@ -68,10 +69,10 @@ abstract class Cutout<Q extends ISExpressionVisitor> implements ISExpressionVisi
 	}
 
 	private void shiftOpen() {
-		if (afterOpen) {
+		if (afterOpen != null) {
 			final ISExpressionVisitor peek = cutouts.peek();
 			peek.locate(openLocation);
-			peek.open();
+			peek.open(afterOpen);
 			
 			for (int i = 0; i<commentLocationsAfterOpen.size(); i++) {
 				peek.locate(commentLocationsAfterOpen.get(i));
@@ -81,20 +82,20 @@ abstract class Cutout<Q extends ISExpressionVisitor> implements ISExpressionVisi
 			commentLocationsAfterOpen.clear();
 			commentsAfterOpen.clear();
 			
-			afterOpen = false;
+			afterOpen = null;
 		}
 	}
 	
 	@Override
-	public void open() {
+	public void open(final Delim delimeter) {
 		shiftOpen();
-		afterOpen = true;
+		afterOpen = delimeter;
 		openLocation = location;
 	}
 
 	@Override
 	public void atom(final String string) {
-		if (afterOpen) {
+		if (afterOpen != null) {
 			final Optional<Q> cutter = cut(string);
 			
 			if (cutter.isPresent()) {
@@ -110,7 +111,7 @@ abstract class Cutout<Q extends ISExpressionVisitor> implements ISExpressionVisi
 	
 	@Override
 	public void comment(final String text) {
-		if (afterOpen) {
+		if (afterOpen != null) {
 			commentLocationsAfterOpen.add(location);
 			commentsAfterOpen.add(text);
 		} else {
@@ -121,9 +122,9 @@ abstract class Cutout<Q extends ISExpressionVisitor> implements ISExpressionVisi
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public void close() {
+	public void close(final Delim delimeter) {
 		shiftOpen();
-		cutouts.peek().close();
+		cutouts.peek().close(delimeter);
 		if (cutouts.peek().depth == 0 && cutouts.size() > 1) {
 			final Q cutter = (Q) cutouts.pop().delegate;
 			paste(cutter);

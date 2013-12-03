@@ -9,6 +9,7 @@ import java.util.Set;
 import org.junit.Assert;
 import org.junit.Before;
 
+import com.larkery.jasb.sexp.Delim;
 import com.larkery.jasb.sexp.ISExpression;
 import com.larkery.jasb.sexp.ISExpressionVisitor;
 import com.larkery.jasb.sexp.Location;
@@ -50,7 +51,7 @@ public class VisitingTest {
 		public void locate(final Location loc) {}
 
 		@Override
-		public void open() {
+		public void open(final Delim delimeter) {
 			Assert.assertEquals(T.Open, this.type);
 		}
 
@@ -67,7 +68,7 @@ public class VisitingTest {
 		}
 
 		@Override
-		public void close() {
+		public void close(final Delim delimeter) {
 			Assert.assertEquals(T.Close, this.type);
 		}
 	}
@@ -113,8 +114,8 @@ public class VisitingTest {
 				.accept(new ISExpressionVisitor() {
 					int offset = 0;
 					@Override
-					public void open() {
-						values[offset++].open();
+					public void open(final Delim delimeter) {
+						values[offset++].open(delimeter);
 					}
 					
 					@Override
@@ -127,8 +128,8 @@ public class VisitingTest {
 					}
 					
 					@Override
-					public void close() {
-						values[offset++].close();
+					public void close(final Delim delimeter) {
+						values[offset++].close(delimeter);
 					}
 					
 					@Override

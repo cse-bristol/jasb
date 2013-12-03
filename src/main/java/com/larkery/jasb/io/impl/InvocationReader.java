@@ -10,6 +10,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.larkery.jasb.io.IReadContext;
 import com.larkery.jasb.sexp.Atom;
+import com.larkery.jasb.sexp.Delim;
 import com.larkery.jasb.sexp.Invocation;
 import com.larkery.jasb.sexp.Node;
 import com.larkery.jasb.sexp.Seq;
@@ -79,11 +80,12 @@ public abstract class InvocationReader<T> {
 			return Futures.allAsList(ImmutableList.of(readValue));
 		} else if (node instanceof Seq) {
 			final Seq seq = (Seq) node;
-			if (Invocation.isInvocation(seq) && context.hasInvocationNamed(seq.getHead())) {
+			
+			if (seq.getDelimeter() == Delim.Bracket) {
+				return context.readMany(type, seq);
+			} else {
 				final ListenableFuture<Q> readValue = context.read(type, seq);
 				return Futures.allAsList(ImmutableList.of(readValue));
-			} else {
-				return context.readMany(type, seq);
 			}
 		} else {
 			throw new RuntimeException(node + " is neither a Seq nor an Atom, which should not happen");

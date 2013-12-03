@@ -1,14 +1,17 @@
 package com.larkery.jasb.sexp;
 
 public interface ISExpressionVisitor {
+	
+	
 	/**
 	 * @param loc set the location for the next event
 	 */
 	public void locate(final Location loc);
 	/**
 	 * We saw a (
+	 * @param delimeter TODO
 	 */
-	public void open();
+	public void open(Delim delimeter);
 	/**
 	 * We saw a word
 	 * @param string the word
@@ -21,6 +24,7 @@ public interface ISExpressionVisitor {
 	public void comment(final String text);
 	/**
 	 * We saw a )
+	 * @param delimeter TODO
 	 */
-	public void close();
+	public void close(Delim delimeter);
 }
