@@ -162,7 +162,11 @@ public class Parser {
 					switch (c) {
 					case ':':
 						buffer.append(c);
-						return send(output);
+						if (buffer.length() == 0) {
+							return this;
+						} else {
+							return send(output);
+						}
 					case '(':
 					case ')':
 					case '[':
