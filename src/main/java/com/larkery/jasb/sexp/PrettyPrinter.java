@@ -142,7 +142,7 @@ public class PrettyPrinter implements ISExpressionVisitor {
 		}
 		state.push(Head.EXPECT_NAME);
 		w.writeWord(""+delimeter.open);
-		w.push("   ");
+		w.push("    ");
 	}
 
 	@Override
