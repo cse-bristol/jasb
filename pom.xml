@@ -13,15 +13,51 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
 
+	<scm>
+	  <connection>
+		scm:git:ssh://git@github.com/cse-bristol/jasb.git
+	  </connection>
+	  <developerConnection>
+		scm:git:ssh://git@github.com/cse-bristol/jasb.git
+	  </developerConnection>
+	  <tag>HEAD</tag>
+	</scm>
+
+		<distributionManagement>
+      <repository>
+        <id>repo.research.cse.org.uk</id>
+        <name>repo.research.cse.org.uk-releases</name>
+        <url>http://repo.research.cse.org.uk/artifactory/libs-release-local</url>
+      </repository>
+	  
+	  <snapshotRepository>
+        <id>repo.research.cse.org.uk</id>
+        <name>repo.research.cse.org.uk-snapshots</name>
+        <url>http://repo.research.cse.org.uk/artifactory/libs-snapshot-local</url>
+      </snapshotRepository>
+	</distributionManagement>
+
 	<build>
 		<plugins>
 			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<configuration>
-					<source>1.7</source>
-					<target>1.7</target>
-				</configuration>
+			  <groupId>org.apache.maven.plugins</groupId>
+			  <artifactId>maven-compiler-plugin</artifactId>
+			  <configuration>
+				<source>1.7</source>
+				<target>1.7</target>
+			  </configuration>
+			</plugin>
+
+			<plugin>
+			  <groupId>org.apache.maven.plugins</groupId>
+			  <artifactId>maven-release-plugin</artifactId>
+			  <version>2.4.1</version>
+			</plugin>
+
+			<plugin>
+			  <groupId>org.apache.maven.plugins</groupId>
+			  <artifactId>maven-deploy-plugin</artifactId>
+			  <version>2.7</version>
 			</plugin>
 		</plugins>
 	</build>
