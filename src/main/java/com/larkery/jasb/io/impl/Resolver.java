@@ -8,7 +8,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.larkery.jasb.sexp.Atom;
 
-
 /**
  * Resolves a single big flat namespace
  * @author hinton
@@ -28,7 +27,8 @@ class Resolver  {
 		if (type.isAssignableFrom(futureClasses.get(id))) {
 			return (ListenableFuture<Q>) futures.get(id);
 		} else {
-			return Futures.immediateFailedFuture(new RuntimeException("Incompatible definitions for " + id));
+			return Futures.immediateFailedFuture(
+					new IllegalArgumentException("The name " + id + " does not define an element of the correct type."));
 		}
 	}
 
@@ -36,7 +36,7 @@ class Resolver  {
 	public void define(final String result, final Object o) {
 		if (futures.containsKey(result)) {
 			if (futures.get(result).isDone()) {
-				throw new RuntimeException(result + " defined twice!");
+				throw new IllegalArgumentException("The name " + result + " was used for two different entities. Names must be unique.");
 			} else {
 				if (futureClasses.get(result).isInstance(o)) {
 					((SettableFuture) futures.get(result)).set(o);
@@ -48,5 +48,4 @@ class Resolver  {
 			((SettableFuture) futures.get(result)).set(o);
 		}
 	}
-	
 }

@@ -280,11 +280,16 @@ class Reader implements IReader {
 		}
 		
 		@Override
-		public void registerIdentity(final Object o, final ListenableFuture<String> future) {
+		public void registerIdentity(final Object o, final Node definingNode, final ListenableFuture<String> future) {
 			Futures.addCallback(future, new FutureCallback<String>() {
 				@Override
 				public void onSuccess(final String result) {
-					resolver.define(result, o);
+					try {
+						resolver.define(result, o);
+					} catch (final IllegalArgumentException exception) {
+						// produce an error
+						handle(BasicError.at(definingNode, exception.getMessage()));
+					}
 				}
 				
 				@Override

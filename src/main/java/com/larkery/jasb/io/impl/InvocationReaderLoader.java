@@ -604,7 +604,7 @@ class InvocationReaderLoader<T> extends ClassLoader implements Opcodes {
 					// if this is the name for this object, we want to tell 
 					// the read context to listen to the future as well so 
 					// it can find out our identifier.
-					// S: future
+					// S: future (we want to keep this)
 					mv.visitInsn(DUP);
 					// S: future, future
 					mv.visitVarInsn(ALOAD, CONTEXT_SLOT);
@@ -615,6 +615,11 @@ class InvocationReaderLoader<T> extends ClassLoader implements Opcodes {
 					// S: future, context, future, result
 					mv.visitInsn(SWAP);
 					// S: future, context, result, future
+					mv.visitVarInsn(ALOAD, node.position);
+					// S: future, context, result, future, node
+					mv.visitInsn(SWAP);
+					// S: future, context, result, node, future
+					
 					// do context.registerIdentity(result, future)
 					mv.visitMethodInsn(INVOKEINTERFACE, 
 							Type.getInternalName(IReadContext.class),
@@ -623,6 +628,7 @@ class InvocationReaderLoader<T> extends ClassLoader implements Opcodes {
 									Type.getType(Void.TYPE), 
 									new Type[] {
 										Type.getType(Object.class),
+										Type.getType(Node.class),
 										Type.getType(ListenableFuture.class)
 									}));
 					// S: future (i.e. back how we were)
