@@ -8,10 +8,6 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
-import com.larkery.jasb.io.atom.NumberAtomIO;
-import com.larkery.jasb.io.atom.StringAtomIO;
-import com.larkery.jasb.io.impl.JASB;
 import com.larkery.jasb.io.testmodel.Arithmetic;
 import com.larkery.jasb.io.testmodel.Div;
 import com.larkery.jasb.io.testmodel.GetNode;
@@ -25,21 +21,8 @@ import com.larkery.jasb.sexp.errors.IErrorHandler;
 import com.larkery.jasb.sexp.errors.UnfinishedExpressionException;
 import com.larkery.jasb.sexp.parse.Parser;
 
-public class TestSimpleExpressions {
+public class TestSimpleExpressions extends JasbIOTest {
 	public <T> T read(final String s, final Class<T> out) throws InterruptedException, ExecutionException {
-		final IReader context = 
-				JASB.of(
-						ImmutableSet.<Class<?>>of(
-								GetNode.class,
-								Div.class,
-								Plus.class,
-								ListOfStrings.class,
-								Times.class,
-								Value.class),
-						ImmutableSet.of(
-								new StringAtomIO(),
-								new NumberAtomIO())).getReader();
-		
 		Node node;
 		try {
 			node = Node.copy(Parser.source(Type.Normal, URI.create("test"), new StringReader(s), IErrorHandler.SLF4J));
@@ -47,7 +30,7 @@ public class TestSimpleExpressions {
 			throw new RuntimeException(e);
 		}
 		
-		final T result = context.readNode(out, node, IErrorHandler.SLF4J).get();
+		final T result = context.getReader().readNode(out, node, IErrorHandler.RAISE).get();
 		
 		if (result instanceof Arithmetic) {
 			Assert.assertSame(node, ((Arithmetic) result).node);
@@ -110,5 +93,18 @@ public class TestSimpleExpressions {
 		
 		final ListOfStrings node2 = read("(strings values: [hello world])", ListOfStrings.class);
 		Assert.assertEquals(ImmutableList.of("hello", "world"), node2.getStrings());
+	}
+	
+	@Test
+	public void readsIdentitiesAndResolvesThem() throws InterruptedException, ExecutionException {
+		final Times read = read("(* (value name:a of:1) #a #b #a (value name:b of:1))", Times.class);
+		
+		for (int i= 0; i<5; i++) {
+			Assert.assertNotNull(read.terms.get(i));
+		}
+		
+		Assert.assertSame(read.terms.get(0), read.terms.get(1));
+		Assert.assertSame(read.terms.get(1), read.terms.get(3));
+		Assert.assertSame(read.terms.get(2), read.terms.get(4));
 	}
 }
