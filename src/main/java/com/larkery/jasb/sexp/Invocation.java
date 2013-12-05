@@ -40,7 +40,7 @@ public class Invocation {
 					final HashSet<String> seenArguments = new HashSet<String>();
 					final ImmutableMap.Builder<String, Node> arguments = ImmutableMap.builder();
 					final ImmutableList.Builder<Node> rest = ImmutableList.builder();
-					boolean inRest = false;
+					
 					String key = null;
 					for (final Node argument : tail) {
 						if (argument instanceof Comment) continue;
@@ -58,12 +58,7 @@ public class Invocation {
 						}
 						
 						if (key == null && thisKey != null) {
-							if (inRest) {
-								errors.handle(BasicError.at(argument, "unexpected keyword " + argument + " in " + name.getValue() + " - keyword arguments are not allowed after non-keyword arguments have started"));
-								return null;
-							} else {
-								key = thisKey;
-							}
+							key = thisKey;
 						} else if (key != null) {
 							if (seenArguments.contains(key)) {
 								errors.handle(BasicError.at(argument, "repeated keyword " + key +" in " +name.getValue()));
@@ -73,7 +68,6 @@ public class Invocation {
 							}
 							key = null;
 						} else {
-							inRest = true;
 							rest.add(argument);
 						}
 					}
