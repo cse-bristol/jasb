@@ -9,6 +9,7 @@ import java.util.Set;
 import java.util.Stack;
 
 import com.google.common.base.Optional;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.larkery.jasb.sexp.Atom;
@@ -122,12 +123,14 @@ public class Expander {
 		protected final Node definingNode;
 		private final String name;
 		private final ImmutableSet<String> parameters;
+		private final ImmutableMap<String, Node> defaultParameters;
 		private final ImmutableSet<Node> templateContents;
 
-		public Template(final Node definition, final String name, final ImmutableSet<String> parameters, final ImmutableSet<Node> templateContents) {
+		public Template(final Node definition, final String name, final ImmutableSet<String> parameters, final ImmutableMap<String, Node> parameterDefaults, final ImmutableSet<Node> templateContents) {
 			this.definingNode = definition;
 			this.name = name;
 			this.parameters = parameters;
+			defaultParameters = parameterDefaults;
 			this.templateContents = templateContents;
 		}
 
@@ -142,6 +145,7 @@ public class Expander {
 			
 			boolean failed = false;
 			final Map<String, Node> mapping = new HashMap<>();
+			mapping.putAll(defaultParameters);
 			for (final Map.Entry<String, Node> value : invocation.arguments.entrySet()) {
 				final String withAt = "@"+value.getKey();
 				if (!parameters.contains(withAt)) {
@@ -225,6 +229,8 @@ public class Expander {
 				final List<Node> tail = seq.getTail();
 				
 				final ImmutableSet.Builder<String> templateParameters = ImmutableSet.builder();
+				final ImmutableMap.Builder<String,Node> parameterDefaults = ImmutableMap.builder();
+				
 				final ImmutableSet.Builder<Node> templateContents = ImmutableSet.builder();
 				
 				final Node name = tail.get(0);
@@ -241,7 +247,7 @@ public class Expander {
 				
 				if (parameters instanceof Seq) {
 					final Seq pseq = (Seq) parameters;
-					
+					String lastParameter = null;
 					for (final Node parameter : pseq) {
 						if (parameter instanceof Comment) {
 							continue;
@@ -249,14 +255,25 @@ public class Expander {
 						if (parameter instanceof Atom) {
 							final Atom atom = (Atom) parameter;
 							if (atom.getValue().startsWith("@")) {
-								templateParameters.add(atom.getValue());
+								lastParameter = atom.getValue();
+								templateParameters.add(lastParameter);
 							} else {
-								errors.handle(BasicError.at(atom, "template parameters should start with @"));
-								return null;
+								if (lastParameter == null) {
+									errors.handle(BasicError.at(atom, "template parameters should start with @"));
+									return null;
+								} else {
+									parameterDefaults.put(lastParameter, atom);
+									lastParameter = null;
+								}
 							}
 						} else {
-							errors.handle(BasicError.at(parameter, "template parameters should be single words"));
-							return null;
+							if (lastParameter == null) {
+								errors.handle(BasicError.at(parameter, "template parameters should be single words"));
+								return null;
+							} else {
+								parameterDefaults.put(lastParameter, parameter);
+								lastParameter = null;
+							}
 						}
 					}
 					final ParameterChecker pc = new ParameterChecker(templateParameters.build(), errors);
@@ -269,7 +286,7 @@ public class Expander {
 						return null;
 					}
 					
-					return new Template(n, nameValue, templateParameters.build(), templateContents.build());
+					return new Template(n, nameValue, templateParameters.build(), parameterDefaults.build(), templateContents.build());
 				} else {
 					errors.handle(BasicError.at(parameters, "template parameters should be a list"));
 					return null;
