@@ -8,7 +8,7 @@ import com.larkery.jasb.sexp.errors.IErrorHandler.IError;
 
 public class ExpanderTest extends ParserTest {
 	@Override
-	protected ISExpression source(String name, String src) {
+	protected ISExpression source(final String name, final String src) {
 		return Expander.expand(super.source(name, src), RECORD);
 	}
 	
@@ -23,8 +23,8 @@ public class ExpanderTest extends ParserTest {
 	}
 	
 	@Test
-	public void templatesArgumentsAreSubstituted() {
-		check("template cutout", "((template foo (@x) @x) (foo x:1))", e("("), e("1"), e(")"));
+	public void templatesArgumentsAreSubstitutedAndOverrideDefaults() {
+		check("template cutout", "((template foo (@x 2) @x) (foo x:1))", e("("), e("1"), e(")"));
 	}
 	
 	@Test
@@ -49,5 +49,10 @@ public class ExpanderTest extends ParserTest {
 	@Test
 	public void mutuallyRecursiveTemplatesCauseError() {
 		check("mutual recursion", "((template foo () (bar)) (template bar () (foo)) (foo))", ImmutableSet.<Class<? extends IError>>of(IError.class));
+	}
+	
+	@Test
+	public void defaultValuesAreSubstituted() {
+		check("template cutout", "((template foo (@x 1) @x) (foo))", e("("), e("1"), e(")"));
 	}
 }
