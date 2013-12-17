@@ -24,6 +24,7 @@ import com.larkery.jasb.io.IAtomReader;
 import com.larkery.jasb.io.IReadContext;
 import com.larkery.jasb.io.IReader;
 import com.larkery.jasb.sexp.Atom;
+import com.larkery.jasb.sexp.Comment;
 import com.larkery.jasb.sexp.ISExpression;
 import com.larkery.jasb.sexp.Node;
 import com.larkery.jasb.sexp.errors.BasicError;
@@ -274,6 +275,7 @@ class Reader implements IReader {
 		public <T> ListenableFuture<List<T>> readMany(final Class<T> clazz, final Iterable<Node> nodes) {
 			final ImmutableList.Builder<ListenableFuture<T>> futures = ImmutableList.builder();
 			for (final Node node : nodes) {
+				if (node instanceof Comment) continue;
 				futures.add(read(clazz, node));
 			}
 			return Futures.allAsList(futures.build());
