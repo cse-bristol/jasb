@@ -55,4 +55,14 @@ public class ExpanderTest extends ParserTest {
 	public void defaultValuesAreSubstituted() {
 		check("template cutout", "((template foo (@x 1) @x) (foo))", e("("), e("1"), e(")"));
 	}
+	
+	@Test
+	public void missingTemplateArgumentMakesError() {
+		check("no arg", "((template foo (@widgets) (bar)) (foo) )", ImmutableSet.<Class<? extends IError>>of(IError.class));
+	}
+	
+	@Test
+	public void unexpectedTemplateArgumentMakesError() {
+		check("extra arg", "((template foo (@widgets) (bar)) (foo widgets:1 sprockets:2) )", ImmutableSet.<Class<? extends IError>>of(IError.class));
+	}
 }

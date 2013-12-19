@@ -156,7 +156,7 @@ public class Expander {
 				}
 			}
 			
-			for (final String s : Sets.difference(mapping.keySet(), parameters)) {
+			for (final String s : Sets.difference(parameters, mapping.keySet())) {
 				errors.handle(BasicError.at(top, "misssing template argument " + s));
 				failed = true;
 			}
