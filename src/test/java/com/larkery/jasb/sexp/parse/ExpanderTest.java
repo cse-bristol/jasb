@@ -40,6 +40,24 @@ public class ExpanderTest extends ParserTest {
 	}
 	
 	@Test
+	public void templatesAreExpandedWithinTemplatesEvenIfTheirDefinitionsAreInOtherTemplates() {
+		check("template cutout", 
+				"("
+				+ "(template outer (@a) @a)"
+				+ "(outer a:(thing (widget) (template widget () other thing)"
+				+ ")", 
+				
+				e("("), e("("), e("thing"), e("other"), e("thing"), e(")"), e(")"));
+	}
+	
+	@Test
+	public void templatesAreExpandedWithinTemplatesAgain() {
+		check("template cutout", "((template foo (@x) @x) " + 
+									"(template bar (@another) @another)"
+				+"(foo x:(bar another:y)))", e("("), e("y"), e(")"));
+	}
+	
+	@Test
 	public void moreTemplatesAreExpandedInsideOtherExpansions() {
 		check("template inside template", "((template foo (@x) @x) " + 
 									"(template bar (@x) (@x))"

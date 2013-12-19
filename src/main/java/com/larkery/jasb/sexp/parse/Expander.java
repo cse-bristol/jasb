@@ -30,10 +30,13 @@ import com.larkery.jasb.sexp.errors.UnfinishedExpressionException;
 public class Expander {
 	public static Node expand(final ISExpression templateSource, final ISExpression sourceToExpand, final IErrorHandler errors) {
 		final Set<Node> macros = cutMacros(templateSource, ISExpressionVisitor.IGNORE);
+		final NodeBuilder withoutMacros = NodeBuilder.create();
+		
+		final Set<Node> moreMacros = cutMacros(sourceToExpand, withoutMacros);
 		
 		try {
-			return substitute(macros, Node.copy(sourceToExpand), errors);
-		} catch (final UnfinishedExpressionException | NoSuchElementException | UnsupportedOperationException nse) {
+			return substitute(Sets.union(macros, moreMacros), withoutMacros.getBestEffort(), errors);
+		} catch (NoSuchElementException | UnsupportedOperationException nse) {
 			return Seq.builder(null, Delim.Paren).build(null);
 		}
 	}
