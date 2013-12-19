@@ -52,24 +52,24 @@ public class VisitingTest {
 
 		@Override
 		public void open(final Delim delimeter) {
-			Assert.assertEquals(T.Open, this.type);
+			Assert.assertEquals(this.type, T.Open);
 		}
 
 		@Override
 		public void atom(final String string) {
 			Assert.assertEquals(this.value, string);
-			Assert.assertEquals(T.Atom, this.type);
+			Assert.assertEquals(this.type, T.Atom);
 		}
 
 		@Override
 		public void comment(final String text) {
 			Assert.assertEquals(this.value, text);
-			Assert.assertEquals(T.Comment, this.type);
+			Assert.assertEquals(this.type, T.Comment);
 		}
 
 		@Override
 		public void close(final Delim delimeter) {
-			Assert.assertEquals(T.Close, this.type);
+			Assert.assertEquals(this.type, T.Close);
 		}
 	}
 	

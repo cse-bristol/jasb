@@ -23,6 +23,11 @@ public class ExpanderTest extends ParserTest {
 	}
 	
 	@Test
+	public void templateGetsInsertedDoubledUp() {
+		check("template cutout", "((template foo (@a) @a @a) (foo a:x))", e("("), e("x"), e("x"), e(")"));
+	}
+	
+	@Test
 	public void templatesArgumentsAreSubstitutedAndOverrideDefaults() {
 		check("template cutout", "((template foo (@x 2) @x) (foo x:1))", e("("), e("1"), e(")"));
 	}

@@ -9,6 +9,7 @@ import java.util.Set;
 import java.util.Stack;
 
 import com.google.common.base.Optional;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
@@ -27,8 +28,29 @@ import com.larkery.jasb.sexp.errors.IErrorHandler;
 import com.larkery.jasb.sexp.errors.UnfinishedExpressionException;
 
 public class Expander {
+	public static Node expand(final ISExpression templateSource, final ISExpression sourceToExpand, final IErrorHandler errors) {
+		final Set<Node> macros = cutMacros(templateSource, ISExpressionVisitor.IGNORE);
+		
+		try {
+			return substitute(macros, Node.copy(sourceToExpand), errors);
+		} catch (final UnfinishedExpressionException | NoSuchElementException | UnsupportedOperationException nse) {
+			return Seq.builder(null, Delim.Paren).build(null);
+		}
+	}
+	
 	public static Node expand(final ISExpression source, final IErrorHandler errors) {
 		final NodeBuilder withoutMacros = NodeBuilder.create();
+		final Set<Node> macros = cutMacros(source, withoutMacros);
+		
+		try {
+			return substitute(macros, withoutMacros.getBestEffort(), errors);
+		} catch (final NoSuchElementException | UnsupportedOperationException nse) {
+			return Seq.builder(null, Delim.Paren).build(null);
+		}
+	}
+
+	private static Set<Node> cutMacros(final ISExpression source,
+			final ISExpressionVisitor withoutMacros) {
 		final Set<Node> macros = new HashSet<>();
 		
 		source.accept(new Cutout<NodeBuilder>(withoutMacros) {
@@ -50,12 +72,7 @@ public class Expander {
 				}
 			}
 		});
-		
-		try {
-			return substitute(macros, withoutMacros.getBestEffort(), errors);
-		} catch (final NoSuchElementException | UnsupportedOperationException nse) {
-			return Seq.builder(null, Delim.Paren).build(null);
-		}
+		return macros;
 	}
 
 	private static Node substitute(final Set<Node> macros, final Node node, final IErrorHandler errors) {
@@ -124,9 +141,9 @@ public class Expander {
 		private final String name;
 		private final ImmutableSet<String> parameters;
 		private final ImmutableMap<String, Node> defaultParameters;
-		private final ImmutableSet<Node> templateContents;
+		private final ImmutableList<Node> templateContents;
 
-		public Template(final Node definition, final String name, final ImmutableSet<String> parameters, final ImmutableMap<String, Node> parameterDefaults, final ImmutableSet<Node> templateContents) {
+		public Template(final Node definition, final String name, final ImmutableSet<String> parameters, final ImmutableMap<String, Node> parameterDefaults, final ImmutableList<Node> templateContents) {
 			this.definingNode = definition;
 			this.name = name;
 			this.parameters = parameters;
@@ -231,7 +248,7 @@ public class Expander {
 				final ImmutableSet.Builder<String> templateParameters = ImmutableSet.builder();
 				final ImmutableMap.Builder<String,Node> parameterDefaults = ImmutableMap.builder();
 				
-				final ImmutableSet.Builder<Node> templateContents = ImmutableSet.builder();
+				final ImmutableList.Builder<Node> templateContents = ImmutableList.builder();
 				
 				final Node name = tail.get(0);
 				final String nameValue;

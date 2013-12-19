@@ -27,4 +27,34 @@ public interface ISExpressionVisitor {
 	 * @param delimeter TODO
 	 */
 	public void close(Delim delimeter);
+	
+	/**
+	 * A visitor which ignores things
+	 */
+	public static final ISExpressionVisitor IGNORE = new ISExpressionVisitor() {
+		@Override
+		public void open(final Delim delimeter) {
+			
+		}
+	
+		@Override
+		public void locate(final Location loc) {
+			
+		}
+	
+		@Override
+		public void comment(final String text) {
+			
+		}
+	
+		@Override
+		public void close(final Delim delimeter) {
+			
+		}
+	
+		@Override
+		public void atom(final String string) {
+			
+		}
+	};
 }
