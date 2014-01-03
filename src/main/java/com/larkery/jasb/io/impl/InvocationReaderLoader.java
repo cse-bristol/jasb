@@ -463,7 +463,7 @@ class InvocationReaderLoader<T> extends ClassLoader implements Opcodes {
 				mv.visitJumpInsn(IFNULL, skip);
 				
 				// create the future for it
-				readSingleValued(mv, indexed, indexedLocal);
+				readSingleOrMultiValued(mv, indexed, indexedLocal);
 				mv.visitLabel(endIndexedLocal);
 				// create the callback
 				constructNewListener(mv, listenerClassesByProperty.get(indexed));
@@ -603,28 +603,7 @@ class InvocationReaderLoader<T> extends ClassLoader implements Opcodes {
 				final String listenerClassName = listenerClassesByProperty.get(property);
 				final Label error = new Label();
 				
-				if (property.isMultiple) {	
-					// call InvocationReader.readOneOrMany in base class, 
-					// as we need to do something complex and the bytecode
-					// is tedious to write out here.
-					mv.visitVarInsn(ALOAD, SELF_SLOT);
-					mv.visitVarInsn(ALOAD, CONTEXT_SLOT);
-					mv.visitLdcInsn(Type.getType(property.propertyType));
-					mv.visitVarInsn(ALOAD, node.position);
-					
-					mv.visitMethodInsn(INVOKESPECIAL, 
-							Type.getInternalName(InvocationReader.class),
-							READ_ONE_OR_MANY, 
-							Type.getMethodDescriptor(
-									Type.getType(ListenableFuture.class),
-									new Type[] {
-										Type.getType(IReadContext.class),
-										Type.getType(Class.class),
-										Type.getType(Node.class)
-									}));
-				} else {
-					readSingleValued(mv, property, node);
-				}
+				readSingleOrMultiValued(mv, property, node);
 				
 				if (property.isIdentifier) {
 					// if this is the name for this object, we want to tell 
@@ -700,6 +679,31 @@ class InvocationReaderLoader<T> extends ClassLoader implements Opcodes {
 							Type.getType(ListenableFuture.class),
 							Type.getType(FutureCallback.class)
 						}));
+	}
+
+	private void readSingleOrMultiValued(final MethodVisitor mv, final JasbPropertyDescriptor property, final Local node) {
+		if (property.isMultiple) {	
+			// call InvocationReader.readOneOrMany in base class, 
+			// as we need to do something complex and the bytecode
+			// is tedious to write out here.
+			mv.visitVarInsn(ALOAD, SELF_SLOT);
+			mv.visitVarInsn(ALOAD, CONTEXT_SLOT);
+			mv.visitLdcInsn(Type.getType(property.propertyType));
+			mv.visitVarInsn(ALOAD, node.position);
+					
+			mv.visitMethodInsn(INVOKESPECIAL, 
+							   Type.getInternalName(InvocationReader.class),
+							   READ_ONE_OR_MANY, 
+							   Type.getMethodDescriptor(
+														Type.getType(ListenableFuture.class),
+														new Type[] {
+															Type.getType(IReadContext.class),
+															Type.getType(Class.class),
+															Type.getType(Node.class)
+														}));
+		} else {
+			readSingleValued(mv, property, node);
+		}
 	}
 
 	private void readSingleValued(final MethodVisitor mv, final JasbPropertyDescriptor property, final Local node) {
