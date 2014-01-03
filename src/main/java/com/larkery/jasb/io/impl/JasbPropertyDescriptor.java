@@ -135,6 +135,10 @@ class JasbPropertyDescriptor {
 		final boolean remaining = readMethod.isAnnotationPresent(BindRemainingArguments.class);
 		
 		if (namedPresent) {
+			if (isListOfLists) {
+				throw new IllegalArgumentException(pd + " is a list of lists, but it is not remaining arguments");
+			}
+
 			if (positionPresent || remaining) {
 				throw new IllegalArgumentException(pd + " has several binding annotations");
 			}
@@ -145,6 +149,10 @@ class JasbPropertyDescriptor {
 			key = Optional.of(annotation.value().startsWith("#") ? pd.getName() : annotation.value());
 			position = Optional.<Integer>absent();
 		} else if (positionPresent) {
+			if (isListOfLists) {
+				throw new IllegalArgumentException(pd + " is a list of lists, but it is not remaining arguments");
+			}
+
 			if (namedPresent || remaining) {
 				throw new IllegalArgumentException(pd + " has several binding annotations");
 			}
