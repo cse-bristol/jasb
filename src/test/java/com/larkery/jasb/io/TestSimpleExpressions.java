@@ -12,6 +12,7 @@ import com.larkery.jasb.io.testmodel.Arithmetic;
 import com.larkery.jasb.io.testmodel.Div;
 import com.larkery.jasb.io.testmodel.GetNode;
 import com.larkery.jasb.io.testmodel.ListOfStrings;
+import com.larkery.jasb.io.testmodel.ListOfListsOfString;
 import com.larkery.jasb.io.testmodel.Plus;
 import com.larkery.jasb.io.testmodel.Times;
 import com.larkery.jasb.io.testmodel.Value;
@@ -106,5 +107,14 @@ public class TestSimpleExpressions extends JasbIOTest {
 		Assert.assertSame(read.terms.get(0), read.terms.get(1));
 		Assert.assertSame(read.terms.get(1), read.terms.get(3));
 		Assert.assertSame(read.terms.get(2), read.terms.get(4));
+	}
+
+	@Test
+	public void readsListsOfListsOfStringsInRemainder() throws InterruptedException, ExecutionException {
+		final ListOfListsOfString read = read("(listoflists [a b c] [d e f])", ListOfListsOfString.class);
+
+		Assert.assertEquals(ImmutableList.of(ImmutableList.of("a", "b", "c"),
+											 ImmutableList.of("d", "e", "f")),
+							read.getContents());
 	}
 }

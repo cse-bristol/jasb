@@ -9,6 +9,7 @@ import com.larkery.jasb.io.impl.JASB;
 import com.larkery.jasb.io.testmodel.Div;
 import com.larkery.jasb.io.testmodel.GetNode;
 import com.larkery.jasb.io.testmodel.ListOfStrings;
+import com.larkery.jasb.io.testmodel.ListOfListsOfString;
 import com.larkery.jasb.io.testmodel.Plus;
 import com.larkery.jasb.io.testmodel.Times;
 import com.larkery.jasb.io.testmodel.Value;
@@ -24,6 +25,7 @@ public class JasbIOTest {
 						Div.class,
 						Plus.class,
 						ListOfStrings.class,
+						ListOfListsOfString.class,
 						Times.class,
 						Value.class),
 				ImmutableSet.of(

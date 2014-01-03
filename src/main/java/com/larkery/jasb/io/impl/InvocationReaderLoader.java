@@ -478,26 +478,52 @@ class InvocationReaderLoader<T> extends ClassLoader implements Opcodes {
 			if (overflow.size() > 0) {
 				final JasbPropertyDescriptor varargs = overflow.iterator().next();
 				// to handle the remaining args, we use a superclass method
-				// S: 
-				mv.visitVarInsn(ALOAD, CONTEXT_SLOT);
-				//  context
-				mv.visitLdcInsn(Type.getType(varargs.propertyType));
-				// context, type
-				mv.visitVarInsn(ALOAD, remainder.position);	
-				//S:  context, type, remainder
-				mv.visitIntInsn(BIPUSH, lastIndexed);
-				//S: context, type, remainder, maxindex
-				mv.visitMethodInsn(INVOKESTATIC, 
-						Type.getInternalName(InvocationReader.class), 
-						"readRemainder", 
-						Type.getMethodDescriptor(Type.getType(ListenableFuture.class), 
-								new Type[]{
-								Type.getType(IReadContext.class),
-								Type.getType(Class.class),
-								Type.getType(List.class),
-								Type.getType(int.class)
-							}
-						));
+				if (varargs.isListOfLists) {
+					mv.visitVarInsn(ALOAD, CONTEXT_SLOT);
+					// S: context
+					mv.visitLdcInsn(Type.getType(varargs.propertyType));
+					// S: context, , property type
+					mv.visitVarInsn(ALOAD, remainder.position);	
+					// load remainder, which is the list of remaining unused arguments to read
+					// S: context, , property, remainder list
+					mv.visitIntInsn(BIPUSH, lastIndexed);
+					// load position of the last indexed argument,
+					// i.e. where in the remainder list to start
+					// reading from
+					mv.visitMethodInsn(INVOKESTATIC, 
+									   Type.getInternalName(InvocationReader.class), 
+									   "readListsRemainder", 
+									   Type.getMethodDescriptor(Type.getType(ListenableFuture.class), 
+																new Type[]{
+																	Type.getType(IReadContext.class),
+																	Type.getType(Class.class),
+																	Type.getType(List.class),
+																	Type.getType(int.class)
+																}
+																));
+				} else {
+					// S: 
+					mv.visitVarInsn(ALOAD, CONTEXT_SLOT);
+					//  context
+					mv.visitLdcInsn(Type.getType(varargs.propertyType));
+					// context, type
+					mv.visitVarInsn(ALOAD, remainder.position);	
+					//S:  context, type, remainder
+					mv.visitIntInsn(BIPUSH, lastIndexed);
+					//S: context, type, remainder, maxindex
+					mv.visitMethodInsn(INVOKESTATIC, 
+									   Type.getInternalName(InvocationReader.class), 
+									   "readRemainder", 
+									   Type.getMethodDescriptor(Type.getType(ListenableFuture.class), 
+																new Type[]{
+																	Type.getType(IReadContext.class),
+																	Type.getType(Class.class),
+																	Type.getType(List.class),
+																	Type.getType(int.class)
+																}
+																));
+				}
+				
 				// S: future
 				constructNewListener(mv, listenerClassesByProperty.get(varargs));
 				// S: future, callback

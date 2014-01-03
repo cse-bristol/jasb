@@ -18,6 +18,7 @@ import com.larkery.jasb.bind.Identity;
 class JasbPropertyDescriptor {
 	public final boolean isMultiple;
 	public final Class<?> propertyType;
+	public final boolean isListOfLists;
 	public final Method readMethod;
 	public final Method writeMethod;
 	public final String name;
@@ -105,11 +106,22 @@ class JasbPropertyDescriptor {
 	
 	JasbPropertyDescriptor(final PropertyDescriptor pd) {
 		isMultiple = List.class.isAssignableFrom(pd.getPropertyType());
+
 		isIdentifier = pd.getReadMethod().isAnnotationPresent(Identity.class);
 		if (isMultiple) {
-			propertyType = getListTypeParameter(pd.getReadMethod().getGenericReturnType());
+			final Class<?> listTypeParameter = getListTypeParameter(pd.getReadMethod().getGenericReturnType());
+			
+			if (listTypeParameter.isAssignableFrom(List.class)) {
+				// pd's property type looks like List<? extends List<X>>
+				propertyType = getListListTypeParameter(pd.getReadMethod().getGenericReturnType());
+				isListOfLists = true;
+			} else {
+				propertyType = listTypeParameter;
+				isListOfLists = false;
+			}
 		} else {
 			propertyType = pd.getPropertyType();
+			isListOfLists = false;
 		}
 		
 		boxedPropertyType = getBoxedType(propertyType);
@@ -177,6 +189,23 @@ class JasbPropertyDescriptor {
 					.resolveType(
 							List.class.getMethod("get", int.class)
 							.getGenericReturnType()).getRawType();
+		} catch (NoSuchMethodException | SecurityException e) {
+			throw new RuntimeException("Cannot see list.get");
+		}
+	}
+
+	/**
+	 * genericReturnType is something like List<List<X>>;
+	 * this returns Class<X>
+	 */
+	private static Class<?> getListListTypeParameter(final java.lang.reflect.Type genericReturnType) {
+		try {
+			java.lang.reflect.Type listX = List.class.getMethod("get", int.class).getGenericReturnType();
+			return TypeToken
+				.of(genericReturnType)
+				.resolveType(listX)
+				.resolveType(listX)
+				.getRawType();
 		} catch (NoSuchMethodException | SecurityException e) {
 			throw new RuntimeException("Cannot see list.get");
 		}
