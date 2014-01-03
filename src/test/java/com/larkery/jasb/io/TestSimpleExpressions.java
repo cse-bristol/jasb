@@ -111,7 +111,9 @@ public class TestSimpleExpressions extends JasbIOTest {
 
 	@Test
 	public void readsListsOfListsOfStringsInRemainder() throws InterruptedException, ExecutionException {
-		final ListOfListsOfString read = read("(listoflists [a b c] [d e f])", ListOfListsOfString.class);
+		final ListOfListsOfString read = read("(listoflists [x y z] [a b c] [d e f])", ListOfListsOfString.class);
+
+		Assert.assertEquals(ImmutableList.of("x", "y", "z"), read.getFirst());
 
 		Assert.assertEquals(ImmutableList.of(ImmutableList.of("a", "b", "c"),
 											 ImmutableList.of("d", "e", "f")),
