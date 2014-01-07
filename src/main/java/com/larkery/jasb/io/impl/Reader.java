@@ -94,8 +94,7 @@ class Reader implements IReader {
 	}
 	
 	@Override
-	public <T> Optional<T> readNode(final Class<T> output, final Node input,
-			final IErrorHandler errors) {
+	public <T> Optional<T> readNode(final Class<T> output, final Node input, final IErrorHandler errors) {
 		if (input == null) return Optional.absent();
 		
 		final Context context = new Context(errors);
