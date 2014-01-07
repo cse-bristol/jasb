@@ -251,7 +251,7 @@ public class Parser {
 		while ((input = reader.read()) != -1 && !state.isError()) {
 			offset++;
 			column++;
-			if (input == '\n' || input == '\r') {
+			if (input == '\n') {
 				line++;
 				column = 0;
 			}
