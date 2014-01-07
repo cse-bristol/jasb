@@ -34,6 +34,7 @@ public interface IModel {
 		public boolean isRemainderArgument();
 		public Class<?> getJavaType();
 		public boolean isMultiple();
+		public boolean isListOfLists();
 		public Method getReadMethod();
 		public boolean isIdentity();
 		

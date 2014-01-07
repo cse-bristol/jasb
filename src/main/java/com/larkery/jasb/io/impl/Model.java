@@ -145,6 +145,11 @@ public class Model implements IModel {
 		public Class<?> getJavaType() {
 			return pd.boxedPropertyType;
 		}
+
+		@Override
+		public boolean isListOfLists() {
+			return pd.isListOfLists;
+		}
 	}
 	
 	class InvocationModel implements IInvocationModel {
