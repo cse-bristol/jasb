@@ -92,8 +92,9 @@ public class Includer {
 		 * @param include
 		 * @param errors
 		 * @return
+		 * @throws ResolutionException 
 		 */
-		public URI convert(final Seq include, final IErrorHandler errors);
+		public URI convert(final Seq include, final IErrorHandler errors) throws ResolutionException;
 		
 		/**
 		 * Get the content pointed to by a URI produced by {@link #convert(Seq, IErrorHandler)}
@@ -134,9 +135,13 @@ public class Includer {
 				if (seq.size() >= 1) {
 					if (seq.getHead() instanceof Atom) {
 						if (((Atom)seq.getHead()).getValue().equals("include")) {
-							final URI addr = resolver.convert(seq, errors);
+							URI addr;
+							try {
+								addr = resolver.convert(seq, errors);
+							} catch (final ResolutionException e) {
+								return false;
+							}
 							if (builder.containsKey(addr)) {
-								errors.handle(BasicError.at(seq, "Recursive includes are illegal"));
 							} else {
 								addrs.push(addr);
 							}
@@ -282,7 +287,7 @@ public class Includer {
 				}
 		
 				@Override
-				public URI convert(final Seq include, final IErrorHandler errors) {
+				public URI convert(final Seq include, final IErrorHandler errors) throws ResolutionException {
 					return resolver.convert(include, errors);
 				}
 		}, root, errors);
