@@ -51,6 +51,19 @@ public class Location {
 		return new Location(type, ImmutableList.copyOf(positions));
 	}
 
+	public static Location of(final Type type, final List<Position> positions, final List<Position> tail) {
+		return of(type,
+				  ImmutableList.<Position>builder()
+				  .addAll(positions)
+				  .addAll(tail)
+				  .build());
+	}
+
+	public final Position getLastPosition() {
+		if (positions.isEmpty()) return null;
+		return positions.get(positions.size()-1);
+	}
+
 	@Override
 	public String toString() {
 		return positions.toString();

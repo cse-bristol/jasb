@@ -139,7 +139,8 @@ public class Expander {
 		}
 	}
 	
-	static class Template {
+	static class Template 
+	{
 		protected final Node definingNode;
 		private final String name;
 		private final ImmutableSet<String> parameters;
@@ -159,7 +160,8 @@ public class Expander {
 			if (invocation == null) return null;
 			
 			if (!invocation.remainder.isEmpty()) {
-				errors.handle(BasicError.at(invocation.remainder.get(0), "Unexpected non-keyword template arguments"));
+				errors.handle(BasicError.at(invocation.remainder.get(0), 
+											"Unexpected non-keyword template arguments"));
 				return null;
 			}
 			
@@ -177,7 +179,7 @@ public class Expander {
 			}
 			
 			for (final String s : Sets.difference(parameters, mapping.keySet())) {
-				errors.handle(BasicError.at(top, "misssing template argument " + s));
+				errors.handle(BasicError.at(top, "Missing template argument " + s));
 				failed = true;
 			}
 			
@@ -187,7 +189,7 @@ public class Expander {
 					public void accept(final ISExpressionVisitor visitor) {
 						final ExpandingVisitor expander = new ExpandingVisitor(mapping, visitor);
 						for (final Node node : templateContents) {
-							node.accept(expander);
+							node.accept(new InsertLocation(expander, top.getLocation()));
 						}
 					}
 				};
@@ -196,6 +198,43 @@ public class Expander {
 			return null;
 		}
 		
+		static class InsertLocation implements ISExpressionVisitor {
+			private final ISExpressionVisitor delegate;
+			private final Location location;
+
+			public InsertLocation(final ISExpressionVisitor delegate, final Location location) {
+				this.delegate = delegate;
+				this.location = location;
+			}
+
+			@Override
+			public void locate(final Location loc) {
+				delegate.locate(Location.of(Location.Type.Template,
+											this.location.positions,
+											loc.positions));
+			}
+
+			@Override
+			public void open(Delim delimeter) {
+				delegate.open(delimeter);
+			}
+
+			@Override
+			public void atom(final String string) {
+				delegate.atom(string);
+			}
+
+			@Override
+			public void comment(final String text) {
+				delegate.comment(text);
+			}
+
+			@Override
+			public void close(Delim delimeter) {
+				delegate.close(delimeter);
+			}
+		}
+
 		static class ExpandingVisitor implements ISExpressionVisitor {
 			final ISExpressionVisitor delegate;
 			private final Map<String, Node> mapping;
