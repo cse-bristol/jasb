@@ -9,9 +9,13 @@ import com.larkery.jasb.sexp.Delim;
 import com.larkery.jasb.sexp.ISExpression;
 import com.larkery.jasb.sexp.ISExpressionVisitor;
 import com.larkery.jasb.sexp.Location;
+import com.larkery.jasb.sexp.Location.Position;
 import com.larkery.jasb.sexp.Location.Type;
 import com.larkery.jasb.sexp.errors.BasicError;
 import com.larkery.jasb.sexp.errors.IErrorHandler;
+import java.util.List;
+import com.google.common.collect.ImmutableList;
+import java.util.Collections;
 
 public class Parser {
 	private final Reader reader;
@@ -21,24 +25,30 @@ public class Parser {
 	private long offset;
 	private int line, column;
 	private final Type type;
+	private final List<Position> positions;
 	
-	private Parser(final Type type, final URI location, final Reader reader) {
+	private Parser(final List<Position> positions, final Type type, final URI location, final Reader reader) {
 		super();
 		this.type = type;
 		this.locationName = location;
 		this.reader = reader;
+		this.positions = positions;
 	}
 	
-	public static void parse(final Location.Type type, final URI location, final Reader input, final ISExpressionVisitor output, final IErrorHandler errors) throws IOException {
-		new Parser(type, location, input).parse(output, errors);
+	public static void parse(final List<Position> positions, final Location.Type type, final URI location, final Reader input, final ISExpressionVisitor output, final IErrorHandler errors) throws IOException {
+		new Parser(positions, type, location, input).parse(output, errors);
 	}
 	
-	public static ISExpression source(final Location.Type type, final URI location, final Reader input, final IErrorHandler errors) {
+	public static ISExpression source(final URI location, final Reader input, final IErrorHandler errors) {
+		return source(Collections.<Position>emptyList(), Location.Type.Normal, location, input, errors);
+	}
+
+	public static ISExpression source(final List<Position> positions, final Location.Type type, final URI location, final Reader input, final IErrorHandler errors) {
 		return new ISExpression() {
 			@Override
 			public void accept(final ISExpressionVisitor visitor) {
 				try {
-					parse(type, location, input, visitor, errors);
+					parse(positions, type, location, input, visitor, errors);
 				} catch (final IOException e) {
 					throw new RuntimeException(e);
 				}
@@ -262,6 +272,7 @@ public class Parser {
 	}
 	
 	private Location location() {
-		return Location.of(type, locationName, offset, line, column);
+		return Location.of(type, 
+						   ImmutableList.<Position>builder().addAll(positions).add(Location.Position.of(locationName, line, column)).build());
 	}
 }

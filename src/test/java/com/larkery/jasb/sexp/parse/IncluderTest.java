@@ -14,6 +14,10 @@ import com.larkery.jasb.sexp.Seq;
 import com.larkery.jasb.sexp.errors.IErrorHandler;
 import com.larkery.jasb.sexp.parse.Includer.ILocationReader;
 import com.larkery.jasb.sexp.parse.Includer.IResolver;
+import com.larkery.jasb.sexp.Node;
+import com.larkery.jasb.sexp.errors.UnfinishedExpressionException;
+import com.larkery.jasb.sexp.Atom;
+import com.larkery.jasb.sexp.Location;
 
 public class IncluderTest extends VisitingTest {
 	private IResolver resolver;
@@ -71,12 +75,35 @@ public class IncluderTest extends VisitingTest {
 	public void collectingIncludesWorks() {
 		values.put(URI.create("test://my-include"), "hello world");
 		Includer.collectFromRoot(resolver, "(include my-include)", RECORD);
-		
-		
 	}
 	
 	@Test
-	public void includesHaveCorrectLocations() {
-//		Assert.fail();
+	public void includesHaveCorrectLocations() throws UnfinishedExpressionException {
+		values.put(URI.create("test://my-include"), "hello");
+		final Node node = Node.copy(source("includesHaveCorrectLocations", "(outside (include my-include))"));
+
+		Assert.assertTrue(node instanceof Seq);
+		final Seq seq = (Seq) node;
+
+		Assert.assertEquals(1, seq.getLocation().positions.size());
+		Assert.assertEquals(URI.create("test://includesHaveCorrectLocations"), 
+							seq.getLocation().positions.get(0).name);
+
+		// so that is correct
+
+		final Node inner = seq.get(1);
+
+		Assert.assertTrue(inner instanceof Atom);
+
+		final Atom atom = (Atom) inner;
+
+		// the atom should be the included bit, which is the word hello
+		Assert.assertEquals(URI.create("test://includesHaveCorrectLocations"),
+							atom.getLocation().positions.get(0).name);
+
+		Assert.assertEquals(URI.create("test://my-include"),
+							atom.getLocation().positions.get(1).name);
+
+		Assert.assertEquals(Location.Type.Include, atom.getLocation().type);
 	}
 }

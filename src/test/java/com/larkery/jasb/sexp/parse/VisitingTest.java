@@ -85,7 +85,6 @@ public class VisitingTest {
 	
 	protected ISExpression source(final String name, final String src) {
 		return Parser.source(
-				Type.Normal,
 				createTestURI(name),
 				new StringReader(src),
 				RECORD);
@@ -138,7 +137,7 @@ public class VisitingTest {
 					}
 				});
 		} catch (final Throwable e) {
-				Parser.source(Type.Normal, createTestURI(name), new StringReader(src), IErrorHandler.SLF4J).accept(new PrintVisitor(System.out));
+				Parser.source(createTestURI(name), new StringReader(src), IErrorHandler.SLF4J).accept(new PrintVisitor(System.out));
 			
 			throw e;
 		}

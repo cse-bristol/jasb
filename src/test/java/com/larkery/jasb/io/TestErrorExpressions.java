@@ -23,7 +23,6 @@ public class TestErrorExpressions extends JasbIOTest {
 		context.getReader().read(
 				out,
 				Parser.source(
-						Type.Normal, 
 						URI.create("test:" + testName), 
 						new StringReader(source), 
 						errors),

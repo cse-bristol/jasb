@@ -1,8 +1,6 @@
 package com.larkery.jasb.sexp;
 
-public interface ISExpressionVisitor {
-	
-	
+public interface ISExpressionVisitor {	
 	/**
 	 * @param loc set the location for the next event
 	 */

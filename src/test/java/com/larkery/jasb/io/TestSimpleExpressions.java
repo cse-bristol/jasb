@@ -26,7 +26,7 @@ public class TestSimpleExpressions extends JasbIOTest {
 	public <T> T read(final String s, final Class<T> out) throws InterruptedException, ExecutionException {
 		Node node;
 		try {
-			node = Node.copy(Parser.source(Type.Normal, URI.create("test"), new StringReader(s), IErrorHandler.SLF4J));
+			node = Node.copy(Parser.source(URI.create("test"), new StringReader(s), IErrorHandler.SLF4J));
 		} catch (final UnfinishedExpressionException e) {
 			throw new RuntimeException(e);
 		}

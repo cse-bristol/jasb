@@ -2,7 +2,6 @@ package com.larkery.jasb.sexp;
 
 import com.larkery.jasb.sexp.errors.UnfinishedExpressionException;
 
-
 public abstract class Node implements ISExpression {
 	private final Location location;
 	

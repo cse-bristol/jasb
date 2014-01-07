@@ -120,7 +120,8 @@ public class Includer {
 	public static Map<URI, String> collect(final IResolver resolver, final URI root, final IErrorHandler errors) {
 		final HashMap<URI, String> builder = new HashMap<>();
 		
-		final Deque<URI> addrs = new LinkedList<>();
+		final Deque<URI> addrs = new LinkedList<>();		
+		
 		addrs.add(root);
 		URI addr;
 		
@@ -154,20 +155,18 @@ public class Includer {
 			public void atom(final Atom atom) {}
 		};
 		
-		Type type = Type.Normal;
 		while ((addr = addrs.poll()) != null) {
 			try {
-			final ILocationReader loc = resolver.resolve(addr, errors);
-			String stringValue;
-			stringValue = IOUtils.toString(loc.getReader());
-			builder.put(addr, stringValue);
+				final ILocationReader loc = resolver.resolve(addr, errors);
+				String stringValue;
+				stringValue = IOUtils.toString(loc.getReader());
+				builder.put(addr, stringValue);
 		
-			final Node node = Node.copy(Parser.source(type, loc.getLocation(), new StringReader(stringValue), errors));
+				final Node node = Node.copy(Parser.source(loc.getLocation(), new StringReader(stringValue), errors));
 			
-			type = Type.Include;
-			if (node != null) {
-				node.accept(addressCollector);
-			}
+				if (node != null) {
+					node.accept(addressCollector);
+				}
 			} catch (final IOException e) {
 			} catch (final ResolutionException re) {
 				log.warn("Unable to resolve scenario {}", addr, re);
@@ -192,7 +191,7 @@ public class Includer {
 			public void accept(final ISExpressionVisitor visitor) {
 				try {
 					final ILocationReader reader = resolver.resolve(root, errors);
-					final ISExpression real = Parser.source(Type.Normal, reader.getLocation(), reader.getReader(), errors);
+					final ISExpression real = Parser.source(reader.getLocation(), reader.getReader(), errors);
 					real.accept(new IncludingVisitor(resolver, visitor, errors));
 				} catch (final ResolutionException nse) {
 					log.error("Error resolving a scenario from {}", root, nse);
@@ -241,8 +240,12 @@ public class Includer {
 						errors.handle(BasicError.at(include, uri + " recursively includes itself"));
 					} else {
 						final ILocationReader reader = resolver.resolve(uri, errors);
-						final ISExpression real = Parser.source(
-								Type.Include, reader.getLocation(), reader.getReader(), errors);
+						final ISExpression real = 
+							Parser.source(include.getLocation().positions,
+										  Type.Include, 
+										  reader.getLocation(), 
+										  reader.getReader(), 
+										  errors);
 						stack.push(uri);
 						real.accept(this);
 						stack.pop();
