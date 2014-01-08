@@ -20,6 +20,7 @@ import com.larkery.jasb.sexp.ISExpression;
 import com.larkery.jasb.sexp.ISExpressionVisitor;
 import com.larkery.jasb.sexp.Invocation;
 import com.larkery.jasb.sexp.Location;
+import com.larkery.jasb.sexp.Location.Type;
 import com.larkery.jasb.sexp.Node;
 import com.larkery.jasb.sexp.NodeBuilder;
 import com.larkery.jasb.sexp.Seq;
@@ -204,18 +205,16 @@ public class Expander {
 
 			public InsertLocation(final ISExpressionVisitor delegate, final Location location) {
 				this.delegate = delegate;
-				this.location = location;
+				this.location = location.withTypeOfTail(Type.Template);
 			}
 
 			@Override
 			public void locate(final Location loc) {
-				delegate.locate(Location.of(Location.Type.Template,
-											this.location.positions,
-											loc.positions));
+				delegate.locate(this.location.appending(loc));
 			}
 
 			@Override
-			public void open(Delim delimeter) {
+			public void open(final Delim delimeter) {
 				delegate.open(delimeter);
 			}
 
@@ -230,7 +229,7 @@ public class Expander {
 			}
 
 			@Override
-			public void close(Delim delimeter) {
+			public void close(final Delim delimeter) {
 				delegate.close(delimeter);
 			}
 		}

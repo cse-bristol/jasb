@@ -23,7 +23,6 @@ import com.larkery.jasb.sexp.Comment;
 import com.larkery.jasb.sexp.INodeVisitor;
 import com.larkery.jasb.sexp.ISExpression;
 import com.larkery.jasb.sexp.ISExpressionVisitor;
-import com.larkery.jasb.sexp.Location.Type;
 import com.larkery.jasb.sexp.Node;
 import com.larkery.jasb.sexp.NodeBuilder;
 import com.larkery.jasb.sexp.Seq;
@@ -246,8 +245,7 @@ public class Includer {
 					} else {
 						final ILocationReader reader = resolver.resolve(uri, errors);
 						final ISExpression real = 
-							Parser.source(include.getLocation().positions,
-										  Type.Include, 
+							Parser.source(include.getLocation(),
 										  reader.getLocation(), 
 										  reader.getReader(), 
 										  errors);

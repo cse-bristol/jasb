@@ -9,15 +9,14 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.larkery.jasb.sexp.Atom;
 import com.larkery.jasb.sexp.ISExpression;
+import com.larkery.jasb.sexp.Node;
 import com.larkery.jasb.sexp.Seq;
 import com.larkery.jasb.sexp.errors.IErrorHandler;
+import com.larkery.jasb.sexp.errors.UnfinishedExpressionException;
 import com.larkery.jasb.sexp.parse.Includer.ILocationReader;
 import com.larkery.jasb.sexp.parse.Includer.IResolver;
-import com.larkery.jasb.sexp.Node;
-import com.larkery.jasb.sexp.errors.UnfinishedExpressionException;
-import com.larkery.jasb.sexp.Atom;
-import com.larkery.jasb.sexp.Location;
 
 public class IncluderTest extends VisitingTest {
 	private IResolver resolver;
@@ -103,7 +102,5 @@ public class IncluderTest extends VisitingTest {
 
 		Assert.assertEquals(URI.create("test://my-include"),
 							atom.getLocation().positions.get(1).name);
-
-		Assert.assertEquals(Location.Type.Include, atom.getLocation().type);
 	}
 }

@@ -2,7 +2,9 @@ package com.larkery.jasb.sexp;
 
 import java.net.URI;
 import java.util.List;
+
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableList.Builder;
 
 /**
  * Represents a location for an event in an s-expression event stream,
@@ -17,55 +19,81 @@ public class Location {
 		Template
 	}
 	
-	public final Type type;
 	public final List<Position> positions;
 	
 	public static class Position {
 		public final URI name;
 		public final int line;
 		public final int column;
+		public final Type type;
 	
-		private Position(final URI name, final int line, final int column) {
+		private Position(final Type type, final URI name, final int line, final int column) {
+			this.type = type;
 			this.name = name;
 			this.line = line;
 			this.column = column;
 		}
 
 		public static Position of(final URI name, final int line, final int column) {
-			return new Position(name, line, column);
+			return of(Type.Normal, name, line, column);
+		}
+		
+		public static Position of(final Type type, final URI name, final int line, final int column) {
+			return new Position(type, name, line, column);
 		}
 
 		@Override
 		public String toString() {
 			return String.format("%s:%s:%s", name, line, column);
 		}
+		
+		public Position withType(final Type type) {
+			return of(type, this.name, this.line, this.column);
+		}
 	}
 
-	private Location(final Type type, final List<Position> where) {
+	private Location(final List<Position> where) {
 		super();
-		this.type = type;
 		this.positions = ImmutableList.copyOf(where);
 	}
 	
-	public static Location of(final Type type, final List<Position> positions) {
-		return new Location(type, ImmutableList.copyOf(positions));
+	public static Location of(final URI name, final int line, final int column) {
+		return of(ImmutableList.of(Position.of(name, line, column)));
+	}
+	
+	public static Location of(final List<Position> positions) {
+		return new Location(ImmutableList.copyOf(positions));
 	}
 
-	public static Location of(final Type type, final List<Position> positions, final List<Position> tail) {
-		return of(type,
-				  ImmutableList.<Position>builder()
-				  .addAll(positions)
-				  .addAll(tail)
-				  .build());
+	public Location withTypeOfTail(final Type type) {
+		final Builder<Position> builder = ImmutableList.<Position>builder();
+		for (int i = 0; i<positions.size()-1; i++) {
+			builder.add(positions.get(i));
+		}
+		
+		builder.add(positions.get(positions.size()-1).withType(type));
+		return of(builder.build());
+	}
+	
+	public Location withTypeAndPosition(final Type type, final Position inner) {
+		return of(ImmutableList.<Position>builder().addAll(withTypeOfTail(type).positions).add(inner).build());
 	}
 
-	public final Position getLastPosition() {
+	public final Position getSourcePosition() {
 		if (positions.isEmpty()) return null;
-		return positions.get(positions.size()-1);
+		return positions.get(0);
 	}
 
 	@Override
 	public String toString() {
 		return positions.toString();
+	}
+
+	public Location appending(final URI name, final int line, final int column) {
+		return of(ImmutableList.<Position>builder().addAll(positions).add(Position.of(name, line, column)).build());
+	}
+
+	public Location appending(final Location loc) {
+		return of(ImmutableList.<Position>builder().addAll(positions).addAll(loc.positions).build());
 	}
 }
