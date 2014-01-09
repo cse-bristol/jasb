@@ -13,14 +13,14 @@ public class SimplePrinter implements ISExpressionVisitor {
 	}
 
 	@Override
-	public void open(Delim delimeter) {
-		buffer.append('(');
+	public void open(final Delim delimeter) {
+		buffer.append(delimeter.open);
 	}
 
 	@Override
 	public void atom(final String string) {
 		buffer.append(' ');
-		buffer.append(string);
+		buffer.append(Atom.escape(string));
 	}
 
 	@Override
@@ -29,8 +29,8 @@ public class SimplePrinter implements ISExpressionVisitor {
 	}
 
 	@Override
-	public void close(Delim delimeter) {
-		buffer.append(')');
+	public void close(final Delim delimeter) {
+		buffer.append(delimeter.close);
 		buffer.append('\n');
 	}
 	
