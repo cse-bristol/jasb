@@ -4,6 +4,7 @@ import java.util.Stack;
 
 import com.larkery.jasb.sexp.Seq.Builder;
 import com.larkery.jasb.sexp.errors.UnfinishedExpressionException;
+import java.util.List;
 
 public class NodeBuilder implements ISExpressionVisitor {
 	private Location here;
@@ -72,6 +73,18 @@ public class NodeBuilder implements ISExpressionVisitor {
 			throw new UnfinishedExpressionException(build);
 		}
 		return build.getHead();
+	}
+
+	public List<Node> getAll() throws UnfinishedExpressionException {
+				if (inprogress.size() > 1) {
+			while (inprogress.size() > 1){
+				close(Delim.Paren);
+			}
+			final Seq build = top.build(null);
+			throw new UnfinishedExpressionException(build.isEmpty() ? build : build.getHead());
+		}
+		final Seq build = top.build(null);
+		return build.getNodes();
 	}
 	
 	public Node getBestEffort() {

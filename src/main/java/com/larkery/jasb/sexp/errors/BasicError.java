@@ -14,7 +14,7 @@ public class BasicError implements IError {
 	private final Type type;
 	
 	public BasicError(final Set<Location> locations, final Set<Node> nodes, final String message,
-			final Type type) {
+					  final Type type) {
 		super();
 		this.locations = locations;
 		this.nodes = nodes;
@@ -44,8 +44,8 @@ public class BasicError implements IError {
 
 	public static IError at(final Node node, final String string) {
 		return new BasicError(
-				node.getLocation() == null ? ImmutableSet.<Location>of() :
-				ImmutableSet.of(node.getLocation()), ImmutableSet.of(node), string, Type.ERROR);
+							  node.getLocation() == null ? ImmutableSet.<Location>of() :
+							  ImmutableSet.of(node.getLocation()), ImmutableSet.of(node), string, Type.ERROR);
 	}
 
 	public static IError nowhere(final String message) {
@@ -56,4 +56,8 @@ public class BasicError implements IError {
 		return new BasicError(ImmutableSet.<Location>of(location), ImmutableSet.<Node>of(), message, Type.ERROR);
 	}
 
+	@Override
+	public String toString() {
+		return locations + " " + getMessage();
+	}
 }

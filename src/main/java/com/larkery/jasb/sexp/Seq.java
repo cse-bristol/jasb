@@ -12,6 +12,8 @@ import org.pojomatic.annotations.PojomaticPolicy;
 import org.pojomatic.annotations.Property;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.base.Optional;
+
 
 @AutoProperty(autoDetect=AutoDetectPolicy.NONE)
 public class Seq extends Node implements Iterable<Node> {
@@ -75,6 +77,33 @@ public class Seq extends Node implements Iterable<Node> {
 	
 	public int size() {
 		return nodes.size();
+	}
+
+	public Optional<Node> exceptComments(int i) {
+		for (final Node n : this) {
+			if (n instanceof Comment) continue;
+			
+			if (i == 0) {
+				return Optional.of(n);
+			}
+			
+			i--;
+		}
+
+		return Optional.absent();
+	}
+
+	public List<Node> exceptComments() {
+		final ImmutableList.Builder<Node> b = ImmutableList.builder();
+		for (final Node n : this) {
+			if (n instanceof Comment) continue;
+			b.add(n);
+		}
+		return b.build();
+	}
+
+	public List<Node> getNodesAfter(final Node node) {
+		return nodes.subList(nodes.indexOf(node)+1, nodes.size());
 	}
 
 	@Override
