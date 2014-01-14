@@ -1,10 +1,11 @@
 package com.larkery.jasb.io.testmodel;
 
-import com.larkery.jasb.bind.Bind;
-import com.larkery.jasb.bind.BindRemainingArguments;
-import com.larkery.jasb.bind.BindPositionalArgument;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.larkery.jasb.bind.Bind;
+import com.larkery.jasb.bind.BindPositionalArgument;
+import com.larkery.jasb.bind.BindRemainingArguments;
 
 @Bind("listoflists")
 public class ListOfListsOfString {
