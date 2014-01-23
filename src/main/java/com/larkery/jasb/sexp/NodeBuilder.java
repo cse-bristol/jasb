@@ -1,10 +1,10 @@
 package com.larkery.jasb.sexp;
 
+import java.util.List;
 import java.util.Stack;
 
 import com.larkery.jasb.sexp.Seq.Builder;
 import com.larkery.jasb.sexp.errors.UnfinishedExpressionException;
-import java.util.List;
 
 public class NodeBuilder implements ISExpressionVisitor {
 	private Location here;
@@ -62,26 +62,30 @@ public class NodeBuilder implements ISExpressionVisitor {
 	
 	public Node get() throws UnfinishedExpressionException {
 		if (inprogress.size() > 1) {
+			Node badNode = null;
 			while (inprogress.size() > 1){
 				close(Delim.Paren);
+				if (badNode == null) badNode = getLastNode();
 			}
 			final Seq build = top.build(null);
-			throw new UnfinishedExpressionException(build.isEmpty() ? build : build.getHead());
+			throw new UnfinishedExpressionException(badNode, build.isEmpty() ? build : build.getHead());
 		}
 		final Seq build = top.build(null);
 		if (build.isEmpty()) {
-			throw new UnfinishedExpressionException(build);
+			throw new UnfinishedExpressionException(build, build);
 		}
 		return build.getHead();
 	}
 
 	public List<Node> getAll() throws UnfinishedExpressionException {
-				if (inprogress.size() > 1) {
+		if (inprogress.size() > 1) {
+			Node badNode = null;
 			while (inprogress.size() > 1){
 				close(Delim.Paren);
+				if (badNode == null) badNode = getLastNode();
 			}
 			final Seq build = top.build(null);
-			throw new UnfinishedExpressionException(build.isEmpty() ? build : build.getHead());
+			throw new UnfinishedExpressionException(badNode, build.isEmpty() ? build : build.getHead());
 		}
 		final Seq build = top.build(null);
 		return build.getNodes();

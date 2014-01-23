@@ -1,26 +1,20 @@
 package com.larkery.jasb.sexp.parse;
 
-import com.larkery.jasb.sexp.errors.JasbErrorException;
+import java.util.List;
 
-import com.larkery.jasb.sexp.Node;
-
-import com.larkery.jasb.sexp.Atom;
-
-import com.larkery.jasb.sexp.Delim;
-
-import com.larkery.jasb.sexp.Seq;
+import org.junit.Assert;
+import org.junit.Test;
 
 import com.google.common.collect.ImmutableSet;
-
-import com.larkery.jasb.sexp.NodeBuilder;
-import java.util.List;
-import com.larkery.jasb.sexp.errors.IErrorHandler;
-
-import org.junit.Test;
-import static org.junit.Assert.fail;
-import org.junit.Assert;
-import com.larkery.jasb.sexp.Invocation;
+import com.larkery.jasb.sexp.Atom;
+import com.larkery.jasb.sexp.Delim;
 import com.larkery.jasb.sexp.ISExpression;
+import com.larkery.jasb.sexp.Invocation;
+import com.larkery.jasb.sexp.Node;
+import com.larkery.jasb.sexp.NodeBuilder;
+import com.larkery.jasb.sexp.Seq;
+import com.larkery.jasb.sexp.errors.IErrorHandler;
+import com.larkery.jasb.sexp.errors.JasbErrorException;
 
 public class TemplateTest extends VisitingTest {
 	@Test

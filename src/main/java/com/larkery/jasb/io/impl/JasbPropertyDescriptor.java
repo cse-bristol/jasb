@@ -208,7 +208,7 @@ class JasbPropertyDescriptor {
 	 */
 	private static Class<?> getListListTypeParameter(final java.lang.reflect.Type genericReturnType) {
 		try {
-			java.lang.reflect.Type listX = List.class.getMethod("get", int.class).getGenericReturnType();
+			final java.lang.reflect.Type listX = List.class.getMethod("get", int.class).getGenericReturnType();
 			return TypeToken
 				.of(genericReturnType)
 				.resolveType(listX)

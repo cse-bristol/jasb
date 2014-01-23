@@ -1,22 +1,19 @@
 package com.larkery.jasb.sexp.parse;
 
-import com.larkery.jasb.sexp.ISExpression;
-
-import java.util.Map;
 import java.util.List;
-import com.larkery.jasb.sexp.errors.IErrorHandler;
-import com.google.common.collect.ImmutableMap;
-import com.larkery.jasb.sexp.ISExpressionVisitor;
+import java.util.Map;
+
 import com.google.common.base.Optional;
-import com.larkery.jasb.sexp.NodeBuilder;
-import com.larkery.jasb.sexp.Node;
-import com.larkery.jasb.sexp.Invocation;
-import java.util.HashMap;
-import java.util.ArrayList;
-import com.larkery.jasb.sexp.errors.UnfinishedExpressionException;
-import com.larkery.jasb.sexp.errors.BasicError;
-import com.larkery.jasb.sexp.Seq;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
+import com.larkery.jasb.sexp.ISExpression;
+import com.larkery.jasb.sexp.ISExpressionVisitor;
+import com.larkery.jasb.sexp.Invocation;
+import com.larkery.jasb.sexp.Node;
+import com.larkery.jasb.sexp.NodeBuilder;
+import com.larkery.jasb.sexp.Seq;
+import com.larkery.jasb.sexp.errors.BasicError;
+import com.larkery.jasb.sexp.errors.IErrorHandler;
 
 public class MacroExpander {
 	private final Map<String, IMacro> macros;

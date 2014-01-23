@@ -9,7 +9,6 @@ import org.junit.Test;
 
 import com.google.common.collect.ImmutableList;
 import com.larkery.jasb.io.testmodel.Arithmetic;
-import com.larkery.jasb.sexp.Location.Type;
 import com.larkery.jasb.sexp.errors.IErrorHandler.IError;
 import com.larkery.jasb.sexp.parse.Parser;
 

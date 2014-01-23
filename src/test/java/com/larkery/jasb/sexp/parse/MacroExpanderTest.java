@@ -1,19 +1,18 @@
 package com.larkery.jasb.sexp.parse;
 
-import com.larkery.jasb.sexp.NodeBuilder;
+import java.util.Collections;
 import java.util.List;
-import com.larkery.jasb.sexp.Node;
-import com.larkery.jasb.sexp.errors.IErrorHandler;
+import java.util.Set;
 
 import org.junit.Test;
-import com.larkery.jasb.sexp.Seq;
-import com.larkery.jasb.sexp.Invocation;
-import com.larkery.jasb.sexp.Delim;
-import java.util.Collections;
+
 import com.google.common.collect.ImmutableList;
-import java.util.Set;
 import com.larkery.jasb.sexp.ISExpression;
 import com.larkery.jasb.sexp.ISExpressionVisitor;
+import com.larkery.jasb.sexp.Invocation;
+import com.larkery.jasb.sexp.Node;
+import com.larkery.jasb.sexp.NodeBuilder;
+import com.larkery.jasb.sexp.errors.IErrorHandler;
 
 public class MacroExpanderTest extends VisitingTest {
 	@Test
