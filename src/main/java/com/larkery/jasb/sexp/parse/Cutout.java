@@ -9,7 +9,7 @@ import com.larkery.jasb.sexp.Delim;
 import com.larkery.jasb.sexp.ISExpressionVisitor;
 import com.larkery.jasb.sexp.Location;
 
-abstract class Cutout<Q extends ISExpressionVisitor> implements ISExpressionVisitor {
+public abstract class Cutout<Q extends ISExpressionVisitor> implements ISExpressionVisitor {
 	private final Stack<BalancedVisitor> cutouts = new Stack<>();
 	
 	private Delim afterOpen = null;

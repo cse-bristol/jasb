@@ -62,6 +62,10 @@ public class Atom extends Node {
 		return Pojomatic.hashCode(this);
 	}
 
+	public static Node create(final String string, final Location location) {
+		return new Atom(location, string);
+	}
+	
 	public static Node create(final String string) {
 		return new Atom(null,string);
 	}
