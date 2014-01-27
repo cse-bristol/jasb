@@ -13,10 +13,10 @@ import com.larkery.jasb.sexp.Node;
 import com.larkery.jasb.sexp.errors.BasicError;
 import com.larkery.jasb.sexp.errors.IErrorHandler;
 
-public class ConcatMacro implements IMacro {
+public class JoinMacro implements IMacro {
 	@Override
 	public String getName() {
-		return "concat";
+		return "join";
 	}
 
 	@Override
