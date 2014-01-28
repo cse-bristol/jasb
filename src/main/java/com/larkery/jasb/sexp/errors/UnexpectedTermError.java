@@ -5,6 +5,7 @@ import java.util.Iterator;
 import java.util.Set;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Iterables;
 import com.larkery.jasb.sexp.Location;
 import com.larkery.jasb.sexp.Node;
@@ -42,7 +43,10 @@ public class UnexpectedTermError extends BasicError {
 			
 			sb.append("one of ");
 			
-			final Iterator<String> iterator = legalValues.iterator();
+			final Iterator<String> iterator = 
+					ImmutableSortedSet.copyOf(
+							Distance.to(value),
+							legalValues).iterator();
 			String previous = iterator.next();
 			do {
 				sb.append(previous);
