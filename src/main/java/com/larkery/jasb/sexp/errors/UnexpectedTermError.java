@@ -29,8 +29,12 @@ public class UnexpectedTermError extends BasicError {
 		this.value = value;
 	}
 
-	private static String createMessage(final String value, final Set<String> legalValues) {
+	private static String createMessage(final String value, final Set<String> legalValues_) {
 		final String expected;
+		
+		final Set<String> legalValues = ImmutableSortedSet.copyOf(
+				Distance.to(value),
+				legalValues_);
 		
 		if (legalValues.isEmpty()) {
 			expected = "nothing here";
@@ -43,10 +47,7 @@ public class UnexpectedTermError extends BasicError {
 			
 			sb.append("one of ");
 			
-			final Iterator<String> iterator = 
-					ImmutableSortedSet.copyOf(
-							Distance.to(value),
-							legalValues).iterator();
+			final Iterator<String> iterator = legalValues.iterator();
 			String previous = iterator.next();
 			do {
 				sb.append(previous);
