@@ -22,7 +22,7 @@ public class MacroExpanderTest extends VisitingTest {
 																 "(top (template test [@a [@b]] (@a @b @a)) (test a:(this is some a)))"),
 														  nb, IErrorHandler.RAISE);
 
-		final Node n = Node.copy(MacroExpander.expand(macs, nb.get(), IErrorHandler.RAISE));
+		Node.copy(MacroExpander.expand(macs, nb.get(), IErrorHandler.RAISE));
 	}
 
 	@Test
@@ -34,7 +34,7 @@ public class MacroExpanderTest extends VisitingTest {
 
 		final Node n = nb.get();
 
-		final Node n2 = Node.copy(MacroExpander.expand(ImmutableList.<IMacro>builder()
+		Node.copy(MacroExpander.expand(ImmutableList.<IMacro>builder()
 													  .addAll(macs)
 													  .add(new TestMacro())
 													  .build(), 
@@ -51,7 +51,7 @@ public class MacroExpanderTest extends VisitingTest {
 
 		final Node n = nb.get();
 
-		final Node n2 = Node.copy(MacroExpander.expand(ImmutableList.<IMacro>builder()
+		Node.copy(MacroExpander.expand(ImmutableList.<IMacro>builder()
 													  .addAll(macs)
 													  .add(new TestMacro())
 													  .build(), 
@@ -88,6 +88,7 @@ public class MacroExpanderTest extends VisitingTest {
 		@Override
 		public ISExpression transform(final Invocation expanded, final IErrorHandler errors) {
 			return new ISExpression() {
+				@Override
 				public void accept(final ISExpressionVisitor v) {
 					v.atom("a:");
 					v.atom("b");

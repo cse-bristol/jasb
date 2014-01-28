@@ -60,7 +60,7 @@ public class TemplateTest extends VisitingTest {
 	@Test(expected=JasbErrorException.class)
 	public void templateCreationFailsForUndeclaredArgument() throws Exception {
 		final NodeBuilder nb = NodeBuilder.create();
-		final List<IMacro> macros = Template.stripTemplates(source("missingArgument", "(top (template hello [] @banana))"),
+		Template.stripTemplates(source("missingArgument", "(top (template hello [] @banana))"),
 															nb, 
 															IErrorHandler.RAISE);
 
@@ -69,7 +69,7 @@ public class TemplateTest extends VisitingTest {
 	@Test(expected=JasbErrorException.class)
 	public void templateCreationFailsForDuplicateArgument() throws Exception {
 		final NodeBuilder nb = NodeBuilder.create();
-		final List<IMacro> macros = Template.stripTemplates(source("missingArgument", "(top (template hello [@x @x] ))"),
+		Template.stripTemplates(source("missingArgument", "(top (template hello [@x @x] ))"),
 															nb, 
 															IErrorHandler.RAISE);
 
@@ -78,7 +78,7 @@ public class TemplateTest extends VisitingTest {
 	@Test(expected=JasbErrorException.class)
 	public void templateCreationFailsForDuplicateArgumentAgain() throws Exception {
 		final NodeBuilder nb = NodeBuilder.create();
-		final List<IMacro> macros = Template.stripTemplates(source("missingArgument", "(top (template hello [@x [@x]] ))"),
+		Template.stripTemplates(source("missingArgument", "(top (template hello [@x [@x]] ))"),
 															nb, 
 															IErrorHandler.RAISE);
 
@@ -87,7 +87,7 @@ public class TemplateTest extends VisitingTest {
 	@Test(expected=JasbErrorException.class)
 	public void templateCreationFailsForMalformedArgumentName() throws Exception {
 		final NodeBuilder nb = NodeBuilder.create();
-		final List<IMacro> macros = Template.stripTemplates(source("missingArgument", "(top (template hello [badarg] ))"),
+		Template.stripTemplates(source("missingArgument", "(top (template hello [badarg] ))"),
 															nb, 
 															IErrorHandler.RAISE);
 
@@ -96,7 +96,7 @@ public class TemplateTest extends VisitingTest {
 	@Test(expected=JasbErrorException.class)
 	public void templateCreationFailsForMalformedArgumentWithDefault() throws Exception {
 		final NodeBuilder nb = NodeBuilder.create();
-		final List<IMacro> macros = Template.stripTemplates(source("missingArgument", "(top (template hello [(badarg)] ))"),
+		Template.stripTemplates(source("missingArgument", "(top (template hello [(badarg)] ))"),
 															nb, 
 															IErrorHandler.RAISE);
 
@@ -105,7 +105,7 @@ public class TemplateTest extends VisitingTest {
 	@Test(expected=JasbErrorException.class)
 	public void templateCreationFailsForMalformedArgumentWithDefault2() throws Exception {
 		final NodeBuilder nb = NodeBuilder.create();
-		final List<IMacro> macros = Template.stripTemplates(source("missingArgument", "(top (template hello [[]] ))"),
+		Template.stripTemplates(source("missingArgument", "(top (template hello [[]] ))"),
 															nb, 
 															IErrorHandler.RAISE);
 
