@@ -25,6 +25,10 @@ public class Invocation {
 	}
 	
 	public static final Invocation of(final Node node, final IErrorHandler errors) {
+		return of(node, errors, false);
+	}
+	
+	public static final Invocation of(final Node node, final IErrorHandler errors, final boolean withComments) {
 		if (node instanceof Seq) {
 			final Seq seq = (Seq) node;
 			if (seq.size() == 0) {
@@ -43,7 +47,14 @@ public class Invocation {
 					
 					String key = null;
 					for (final Node argument : tail) {
-						if (argument instanceof Comment) continue;
+						if (argument instanceof Comment) {
+							if (withComments) {
+								if (key == null) {
+									rest.add(argument);
+								}
+							}
+							continue;
+						}
 						
 						final String thisKey;
 						if (argument instanceof Atom) {
