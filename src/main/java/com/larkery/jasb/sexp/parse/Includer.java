@@ -13,8 +13,6 @@ import java.util.NoSuchElementException;
 import java.util.Stack;
 
 import org.apache.commons.io.IOUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableMap;
@@ -32,8 +30,6 @@ import com.larkery.jasb.sexp.errors.ResolutionException;
 import com.larkery.jasb.sexp.errors.UnfinishedExpressionException;
 
 public class Includer {
-	private static final Logger log = LoggerFactory.getLogger(Includer.class);
-	
 	public interface ILocationReader {
 		public Reader getReader();
 		public URI getLocation();
@@ -173,7 +169,6 @@ public class Includer {
 				}
 			} catch (final IOException e) {
 			} catch (final ResolutionException re) {
-				log.warn("Unable to resolve scenario {}", addr, re);
 			} catch (final UnsupportedOperationException e) {
 			} catch (final UnfinishedExpressionException e) {
 			}
@@ -198,7 +193,6 @@ public class Includer {
 					final ISExpression real = Parser.source(reader.getLocation(), reader.getReader(), errors);
 					real.accept(new IncludingVisitor(resolver, visitor, errors));
 				} catch (final ResolutionException nse) {
-					log.error("Error resolving a scenario from {}", root, nse);
 					errors.handle(BasicError.nowhere("Unable to resolve" + root + " (" + nse.getMessage() + ")"));
 				}
 			}
@@ -224,7 +218,6 @@ public class Includer {
 		@Override
 		protected Optional<NodeBuilder> cut(final String head) {
 			if (head.equals("include")) {
-				log.debug("cutting out include");
 				return Optional.of(NodeBuilder.create());
 			} else {
 				return Optional.absent();
@@ -233,7 +226,6 @@ public class Includer {
 		
 		@Override
 		protected void paste(final NodeBuilder q) {
-			log.debug("pasting completed include");
 			final Node node = q.getBestEffort();
 			try {
 				if (node instanceof Seq) {
@@ -256,7 +248,6 @@ public class Includer {
 					locate(include.getEndLocation());
 				}
 			} catch (final ResolutionException e) {
-				log.error("Error resolving a scenario from {}", node, e);
 				errors.handle(BasicError.at(node, "Unable to resolve include - " + e.getMessage()));
 			}
 		}
