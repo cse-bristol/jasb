@@ -3,7 +3,7 @@
 
 	<groupId>com.larkery</groupId>
 	<artifactId>jasb</artifactId>
-	<version>1.0.3-SNAPSHOT</version>
+	<version>1.0.4-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
 	<name>jasb</name>
