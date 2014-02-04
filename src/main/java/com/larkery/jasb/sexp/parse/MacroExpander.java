@@ -49,6 +49,7 @@ public class MacroExpander {
 		@Override
 		public void accept(final ISExpressionVisitor visitor) {
 			unexpanded.accept(new Cutout<NodeBuilder>(visitor) {
+					@Override
 					protected Optional<NodeBuilder> cut(final String s) {
 						if (macros.containsKey(s)) {
 							return Optional.of(NodeBuilder.create());
@@ -57,6 +58,7 @@ public class MacroExpander {
 						}
 					}
 
+					@Override
 					protected void paste(final NodeBuilder nb) {
 						final Node node = nb.getBestEffort();
 
@@ -73,7 +75,12 @@ public class MacroExpander {
 									final IMacro macro = macros.get(inv.name);
 									
 									if (validateMacroParameters(inv, macro)) {
-										macro.transform(inv, errors).accept(this);
+										try {
+											macro.transform(inv, errors).accept(this);
+										} catch (final StackOverflowError soe) {
+											errors.handle(BasicError.at(inv.node, 
+													"Maximum macro expansion depth reached within " + inv.name));
+										}
 									}
 								}
 							}
