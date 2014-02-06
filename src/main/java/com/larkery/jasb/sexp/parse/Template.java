@@ -26,7 +26,7 @@ import com.larkery.jasb.sexp.errors.IErrorHandler;
  * A template is a simple macro which substitutes a set of arguments into
  * a fixed structure
  */
-public class Template implements IMacro {
+public class Template extends SimpleMacro {
 	private static final String TEMPLATE = "template";
 	private static final String AT = "@";
 	private static final Comment NOTHING = Comment.create("");
@@ -63,7 +63,8 @@ public class Template implements IMacro {
 		final ImmutableList.Builder<IMacro> result = ImmutableList.builder();
 
 		input.accept(new Cutout<NodeBuilder>(output) {
-						 protected Optional<NodeBuilder> cut(final String head) {
+						 @Override
+						protected Optional<NodeBuilder> cut(final String head) {
 							 if (head.equals(TEMPLATE)) {
 								 return Optional.of(NodeBuilder.create());
 							 } else {
@@ -71,7 +72,8 @@ public class Template implements IMacro {
 							 }
 						 }
 
-						 protected void paste(final NodeBuilder b) {
+						 @Override
+						protected void paste(final NodeBuilder b) {
 							 final Node node = b.getBestEffort();
 							 final Optional<Template> t = Template.of(node, errors);
 							 if (t.isPresent()) {
@@ -187,9 +189,11 @@ public class Template implements IMacro {
 		
 		// validate body
 		final INodeVisitor argcheck = new INodeVisitor() {
+				@Override
 				public boolean seq(final Seq seq) {
 					return true;
 				}
+				@Override
 				public void atom(final Atom atom) {
 					if (atom.getValue().startsWith(AT)) {
 						final String n = atom.getValue().substring(1);
@@ -198,6 +202,7 @@ public class Template implements IMacro {
 						}
 					}
 				}
+				@Override
 				public void comment(final Comment comment) {
 					
 				}
@@ -236,7 +241,7 @@ public class Template implements IMacro {
 	}
 
 	@Override
-	public ISExpression transform(final Invocation expanded, final IErrorHandler errors) {
+	public ISExpression doTransform(final Invocation expanded, final IMacroExpander expander, final IErrorHandler errors) {
 		final Map<String, Node> arguments = new HashMap<String, Node>();
 		
 		arguments.putAll(defaults);

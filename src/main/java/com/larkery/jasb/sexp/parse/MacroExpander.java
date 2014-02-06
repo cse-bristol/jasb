@@ -5,17 +5,16 @@ import java.util.Map;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Sets;
+import com.larkery.jasb.sexp.Atom;
 import com.larkery.jasb.sexp.ISExpression;
 import com.larkery.jasb.sexp.ISExpressionVisitor;
-import com.larkery.jasb.sexp.Invocation;
 import com.larkery.jasb.sexp.Node;
 import com.larkery.jasb.sexp.NodeBuilder;
 import com.larkery.jasb.sexp.Seq;
 import com.larkery.jasb.sexp.errors.BasicError;
 import com.larkery.jasb.sexp.errors.IErrorHandler;
 
-public class MacroExpander {
+public class MacroExpander implements IMacroExpander {
 	private final Map<String, IMacro> macros;
 	private final IErrorHandler errors;
 
@@ -35,6 +34,7 @@ public class MacroExpander {
 		this.macros = b.build();
 	}
 
+	@Override
 	public ISExpression expand(final ISExpression input) {
 		return new ExpandedExpression(input);
 	}
@@ -51,6 +51,9 @@ public class MacroExpander {
 			unexpanded.accept(new Cutout<NodeBuilder>(visitor) {
 					@Override
 					protected Optional<NodeBuilder> cut(final String s) {
+						// we don't want to cutout if we are already cutting out
+						if (isAlreadyCuttingOut()) return Optional.absent();
+						
 						if (macros.containsKey(s)) {
 							return Optional.of(NodeBuilder.create());
 						} else {
@@ -68,19 +71,16 @@ public class MacroExpander {
 							if (unexpanded.isEmpty()) {
 								throw new RuntimeException("This should never happen - if pasting part of a macro, it should at least have a macro name");
 							} else {
-
-								final Invocation inv = Invocation.of(unexpanded, errors);
-
-								if (inv != null) {
-									final IMacro macro = macros.get(inv.name);
+								final Node first = unexpanded.get(0);
+								if (first instanceof Atom) {
+									final String s = ((Atom) first).getValue();
 									
-									if (validateMacroParameters(inv, macro)) {
-										try {
-											macro.transform(inv, errors).accept(this);
-										} catch (final StackOverflowError soe) {
-											errors.handle(BasicError.at(inv.node, 
-													"Maximum macro expansion depth reached within " + inv.name));
-										}
+									final IMacro macro = macros.get(s);
+									
+									try {
+										macro.transform(unexpanded, MacroExpander.this,  errors).accept(this);
+									} catch (final StackOverflowError soe) {
+										errors.handle(BasicError.at(first, "Maximum macro expansion depth reached within " + s));
 									}
 								}
 							}
@@ -90,33 +90,5 @@ public class MacroExpander {
 					}
 				});
 		}
-	}
-
-	private boolean validateMacroParameters(final Invocation inv, final IMacro macro) {
-		boolean valid = true;
-
-		for (final String s : Sets.difference(macro.getRequiredArgumentNames(), inv.arguments.keySet())) {
-			errors.handle(BasicError.at(inv.node, inv.name + " requires named argument " + s));
-			valid = false;
-		}
-
-		for (final String s : Sets.difference(inv.arguments.keySet(), macro.getAllowedArgumentNames())) {
-			valid = false;
-			errors.handle(BasicError.at(inv.arguments.get(s), inv.name + " does not expect argument " + s));
-		}
-
-		if (inv.remainder.size() < macro.getMinimumArgumentCount()) {
-			errors.handle(BasicError.at(inv.node, 
-										inv.name + " expects at least " + 
-										macro.getMinimumArgumentCount() + " unnamed arguments"));
-			valid = false;
-		}
-
-		if (inv.remainder.size() > macro.getMaximumArgumentCount()) {
-			errors.handle(BasicError.at(inv.remainder.get(macro.getMaximumArgumentCount()), inv.name + " expects at most " + macro.getMinimumArgumentCount() + " unnamed arguments, but there are " + inv.remainder.size()));
-			valid = false;
-		}
-
-		return valid;
 	}
 }

@@ -29,11 +29,11 @@ public class TemplateTest extends VisitingTest {
 
 		Assert.assertEquals("thing, other-thing and third define all the args",
 							ImmutableSet.of("thing", "other-thing", "third"),
-							mac.getAllowedArgumentNames());
+							((Template)mac).getAllowedArgumentNames());
 
 		Assert.assertEquals("thing is a required argument", 
 							ImmutableSet.of("thing"),
-							mac.getRequiredArgumentNames());
+							((Template)mac).getRequiredArgumentNames());
 
 		final Node node = nb.getBestEffort();
 		Assert.assertEquals("template is stripped out", Seq.builder(null, Delim.Paren).add(Atom.create("top")).build(null), node);
@@ -48,7 +48,7 @@ public class TemplateTest extends VisitingTest {
 															IErrorHandler.RAISE);
 		
 		final IMacro mac = macros.get(0);
-		final ISExpression e = mac.transform(Invocation.of(Node.copy(source("templateInput", "(hello thing:99)")), IErrorHandler.RAISE), IErrorHandler.RAISE);
+		final ISExpression e = ((Template)mac).doTransform(Invocation.of(Node.copy(source("templateInput", "(hello thing:99)")), IErrorHandler.RAISE), null, IErrorHandler.RAISE);
 
 		final Node node = Node.copy(e);
 

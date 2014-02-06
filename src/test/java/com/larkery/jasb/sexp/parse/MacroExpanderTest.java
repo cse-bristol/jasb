@@ -1,17 +1,14 @@
 package com.larkery.jasb.sexp.parse;
 
-import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 import org.junit.Test;
 
-import com.google.common.collect.ImmutableList;
 import com.larkery.jasb.sexp.ISExpression;
 import com.larkery.jasb.sexp.ISExpressionVisitor;
-import com.larkery.jasb.sexp.Invocation;
 import com.larkery.jasb.sexp.Node;
 import com.larkery.jasb.sexp.NodeBuilder;
+import com.larkery.jasb.sexp.Seq;
 import com.larkery.jasb.sexp.errors.IErrorHandler;
 
 public class MacroExpanderTest extends VisitingTest {
@@ -25,40 +22,6 @@ public class MacroExpanderTest extends VisitingTest {
 		Node.copy(MacroExpander.expand(macs, nb.get(), IErrorHandler.RAISE));
 	}
 
-	@Test
-	public void macroExpanderExpandsArgumentsToOtherMacros() throws Exception {
-		final NodeBuilder nb = NodeBuilder.create();
-		final List<IMacro> macs = Template.stripTemplates(source("macExTest", 
-																 "(top (template test [@a [@b]] (@a @b @a)) (test (test-macro)))"),
-														  nb, IErrorHandler.RAISE);
-
-		final Node n = nb.get();
-
-		Node.copy(MacroExpander.expand(ImmutableList.<IMacro>builder()
-													  .addAll(macs)
-													  .add(new TestMacro())
-													  .build(), 
-													   n, 
-													   IErrorHandler.RAISE));
-	}
-
-	@Test
-	public void macroExpanderExpandsArgumentsToOtherMacros2() throws Exception {
-		final NodeBuilder nb = NodeBuilder.create();
-		final List<IMacro> macs = Template.stripTemplates(source("macExTest", 
-																 "(top (template a-is-b [] a: b) (template test [@a [@b]] (@a @b @a)) (test (a-is-b)))"),
-														  nb, IErrorHandler.RAISE);
-
-		final Node n = nb.get();
-
-		Node.copy(MacroExpander.expand(ImmutableList.<IMacro>builder()
-													  .addAll(macs)
-													  .add(new TestMacro())
-													  .build(), 
-													   n, 
-													   IErrorHandler.RAISE));
-	}
-
 	static class TestMacro 	implements IMacro {
 		@Override
 		public String getName() {
@@ -66,27 +29,7 @@ public class MacroExpanderTest extends VisitingTest {
 		}
 
 		@Override
-		public Set<String> getRequiredArgumentNames() {
-			return Collections.emptySet();
-		}
-
-		@Override
-		public Set<String> getAllowedArgumentNames() {
-			return Collections.emptySet();
-		}
-
-		@Override
-		public int getMaximumArgumentCount() {
-			return 0;
-		}
-
-		@Override
-		public int getMinimumArgumentCount() {
-			return 0;
-		}
-
-		@Override
-		public ISExpression transform(final Invocation expanded, final IErrorHandler errors) {
+		public ISExpression transform(final Seq expanded, final IMacroExpander e, final IErrorHandler errors) {
 			return new ISExpression() {
 				@Override
 				public void accept(final ISExpressionVisitor v) {

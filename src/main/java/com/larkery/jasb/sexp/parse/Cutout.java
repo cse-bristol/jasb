@@ -58,8 +58,17 @@ public abstract class Cutout<Q extends ISExpressionVisitor> implements ISExpress
 			delegate.close(delimeter);
 			depth--;
 		}
+		
+		@Override
+		public String toString() {
+			return String.format("BalancedVisitor(%d %s)", depth, delegate);
+		}
 	}
 
+	protected boolean isAlreadyCuttingOut() {
+		return cutouts.size() > 1;
+	}
+	
 	protected abstract Optional<Q> cut(final String head);
 	protected abstract void paste(final Q q);
 	
