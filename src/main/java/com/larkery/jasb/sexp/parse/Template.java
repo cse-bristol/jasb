@@ -298,7 +298,7 @@ public class Template extends SimpleMacro {
 
 					if (n != NOTHING) {
 						// strip out the dead comment
-						n.accept(delegate);
+						n.accept(this);
 					}
 				} else {
 					delegate.atom(string);

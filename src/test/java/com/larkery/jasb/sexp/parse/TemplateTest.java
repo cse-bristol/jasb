@@ -55,6 +55,22 @@ public class TemplateTest extends VisitingTest {
 		Assert.assertEquals("Expanded node is what we were expecting", Node.copy(source("exemplar", "(99 a a)")), node);
 	}
 
+	@Test
+	public void canExpandOneArgumentWithinAnother() throws Exception {
+		final NodeBuilder nb = NodeBuilder.create();
+		final List<IMacro> macros = Template.stripTemplates(source("templateCreation", 
+																   "(top (template hello [@thing [@other-thing (+ 1 @thing)] [@third a]] (@thing @other-thing @third @third)))"),
+															nb, 
+															IErrorHandler.RAISE);
+		
+		final IMacro mac = macros.get(0);
+		final ISExpression e = ((Template)mac).doTransform(Invocation.of(Node.copy(source("templateInput", "(hello thing:99)")), IErrorHandler.RAISE), null, IErrorHandler.RAISE);
+
+		final Node node = Node.copy(e);
+
+		Assert.assertEquals("Expanded node is what we were expecting", Node.copy(source("exemplar", "(99 (+ 1 99) a a)")), node);
+	}
+	
 	// subsequent tests are all for errors
 
 	@Test(expected=JasbErrorException.class)
