@@ -548,6 +548,35 @@ class InvocationReaderLoader<T> extends ClassLoader implements Opcodes {
 			}
 			
 			mv.visitLabel(endIndexed);
+		} else {
+			final Label startIndexed = new Label();
+			final Label endIndexed = new Label();
+			final Local remainder = new Local("remainder", startIndexed, endIndexed, List.class, localCounter);
+			locals.add(remainder);
+			
+			mv.visitLabel(startIndexed);
+			// remainder = invocation.remainder
+			mv.visitVarInsn(ALOAD, INVOCATION_SLOT);
+			mv.visitFieldInsn(GETFIELD, Type.getInternalName(Invocation.class), "remainder", Type.getDescriptor(List.class));
+			mv.visitVarInsn(ASTORE, remainder.position);
+			
+			// we need to check that there are no extra things
+			// beyond what we hoped
+			mv.visitVarInsn(ALOAD, CONTEXT_SLOT);
+			mv.visitVarInsn(ALOAD, remainder.position);
+			mv.visitIntInsn(BIPUSH, 0);
+			mv.visitMethodInsn(INVOKESTATIC, 
+					Type.getInternalName(InvocationReader.class), 
+					"warnOnUnusedPositions", 
+					Type.getMethodDescriptor(Type.getType(Void.TYPE), 
+							new Type[]{
+							Type.getType(IReadContext.class),
+							Type.getType(List.class),
+							Type.getType(int.class)
+						}
+					));
+			
+			mv.visitLabel(endIndexed);
 		}
 	}
 
