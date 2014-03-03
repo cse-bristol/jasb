@@ -250,7 +250,8 @@ public class Parser {
 		
 		ParseState state = ParseState.start();
 	
-		line = column = 1;
+		line = 1;
+		column = 0;
 	
 		while ((input = reader.read()) != -1 && !state.isError()) {
 			column++;

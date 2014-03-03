@@ -5,6 +5,7 @@ import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
+import com.larkery.jasb.sexp.Location.Position;
 
 /**
  * Represents a location for an event in an s-expression event stream,
@@ -95,5 +96,13 @@ public class Location {
 
 	public Location appending(final Location loc) {
 		return of(ImmutableList.<Position>builder().addAll(positions).addAll(loc.positions).build());
+	}
+
+	public Position getTailPosition() {
+		if (positions.isEmpty()) {
+			return null;
+		} else {
+			return positions.get(positions.size()-1);
+		}
 	}
 }
