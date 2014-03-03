@@ -3,7 +3,7 @@
 
 	<groupId>com.larkery</groupId>
 	<artifactId>jasb</artifactId>
-	<version>1.0.8-SNAPSHOT</version>
+	<version>1.0.8</version>
 	<packaging>jar</packaging>
 
 	<name>jasb</name>
@@ -19,7 +19,7 @@
 	  <developerConnection>
 		scm:git:ssh://git@github.com/cse-bristol/jasb.git
 	  </developerConnection>
-	  <tag>HEAD</tag>
+	  <tag>jasb-1.0.8</tag>
 	</scm>
 
 		<distributionManagement>
