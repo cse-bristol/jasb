@@ -157,7 +157,7 @@ public class BetterPrinter implements ISExpressionVisitor, AutoCloseable {
 	@Override
 	public void comment(String text) {
 		doShift();
-		write("; " + text);
+		write(";" + text);
 	}
 
 	@Override
