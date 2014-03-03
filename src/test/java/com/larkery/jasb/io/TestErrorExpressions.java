@@ -30,6 +30,14 @@ public class TestErrorExpressions extends JasbIOTest {
 		
 		return ImmutableList.copyOf(errors.errors);
 	}
+
+	@Test
+	public void extraArgumentsProduceErrors() {
+		final List<IError> errors =
+			runWithErrors(Arithmetic.class, "extraArgumentErrors",
+						  "(value this that the other)");
+		Assert.assertFalse("There should be errors", errors.isEmpty());
+	}
 	
 	@Test
 	public void duplicateIdentitiesProduceErrors() {
