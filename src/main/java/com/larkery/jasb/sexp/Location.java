@@ -5,7 +5,6 @@ import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
-import com.larkery.jasb.sexp.Location.Position;
 
 /**
  * Represents a location for an event in an s-expression event stream,
