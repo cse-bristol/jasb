@@ -464,6 +464,7 @@ class InvocationReaderLoader<T> extends ClassLoader implements Opcodes {
 				
 				// create the future for it
 				readSingleOrMultiValued(mv, indexed, indexedLocal);
+				connectIdentifierProperty(mv, indexed, indexedLocal);
 				mv.visitLabel(endIndexedLocal);
 				// create the callback
 				constructNewListener(mv, listenerClassesByProperty.get(indexed));
@@ -634,39 +635,7 @@ class InvocationReaderLoader<T> extends ClassLoader implements Opcodes {
 				
 				readSingleOrMultiValued(mv, property, node);
 				
-				if (property.isIdentifier) {
-					// if this is the name for this object, we want to tell 
-					// the read context to listen to the future as well so 
-					// it can find out our identifier.
-					// S: future (we want to keep this)
-					mv.visitInsn(DUP);
-					// S: future, future
-					mv.visitVarInsn(ALOAD, CONTEXT_SLOT);
-					// S: future, future, context
-					mv.visitInsn(SWAP);
-					// S: future, context, future
-					mv.visitVarInsn(ALOAD, RESULT_SLOT);
-					// S: future, context, future, result
-					mv.visitInsn(SWAP);
-					// S: future, context, result, future
-					mv.visitVarInsn(ALOAD, node.position);
-					// S: future, context, result, future, node
-					mv.visitInsn(SWAP);
-					// S: future, context, result, node, future
-					
-					// do context.registerIdentity(result, future)
-					mv.visitMethodInsn(INVOKEINTERFACE, 
-							Type.getInternalName(IReadContext.class),
-							"registerIdentity",
-							Type.getMethodDescriptor(
-									Type.getType(Void.TYPE), 
-									new Type[] {
-										Type.getType(Object.class),
-										Type.getType(Node.class),
-										Type.getType(ListenableFuture.class)
-									}));
-					// S: future (i.e. back how we were)
-				}
+				connectIdentifierProperty(mv, property, node);
 				
 				constructNewListener(mv, listenerClassName);
 				
@@ -695,6 +664,43 @@ class InvocationReaderLoader<T> extends ClassLoader implements Opcodes {
 							}));
 			
 			mv.visitLabel(endKeyVal);
+		}
+	}
+
+	private void connectIdentifierProperty(final MethodVisitor mv,
+			final JasbPropertyDescriptor property, final Local node) {
+		if (property.isIdentifier) {
+			// if this is the name for this object, we want to tell 
+			// the read context to listen to the future as well so 
+			// it can find out our identifier.
+			// S: future (we want to keep this)
+			mv.visitInsn(DUP);
+			// S: future, future
+			mv.visitVarInsn(ALOAD, CONTEXT_SLOT);
+			// S: future, future, context
+			mv.visitInsn(SWAP);
+			// S: future, context, future
+			mv.visitVarInsn(ALOAD, RESULT_SLOT);
+			// S: future, context, future, result
+			mv.visitInsn(SWAP);
+			// S: future, context, result, future
+			mv.visitVarInsn(ALOAD, node.position);
+			// S: future, context, result, future, node
+			mv.visitInsn(SWAP);
+			// S: future, context, result, node, future
+			
+			// do context.registerIdentity(result, future)
+			mv.visitMethodInsn(INVOKEINTERFACE, 
+					Type.getInternalName(IReadContext.class),
+					"registerIdentity",
+					Type.getMethodDescriptor(
+							Type.getType(Void.TYPE), 
+							new Type[] {
+								Type.getType(Object.class),
+								Type.getType(Node.class),
+								Type.getType(ListenableFuture.class)
+							}));
+			// S: future (i.e. back how we were)
 		}
 	}
 
