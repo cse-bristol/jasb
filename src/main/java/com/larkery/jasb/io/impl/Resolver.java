@@ -2,7 +2,10 @@ package com.larkery.jasb.io.impl;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
@@ -15,7 +18,7 @@ import com.larkery.jasb.sexp.Atom;
  */
 class Resolver  {
 	private final Map<String, SettableFuture<?>> futures = new HashMap<>();
-	private final Map<String, Class<?>> futureClasses = new HashMap<>();
+	private final Multimap<String, Class<?>> futureClasses = HashMultimap.create();
 	
 	@SuppressWarnings("unchecked")
 	public <Q> ListenableFuture<Q> resolve(final Atom cause, final String id, final Class<Q> type) {
@@ -24,12 +27,19 @@ class Resolver  {
 			futureClasses.put(id, type);
 		}
 		
-		if (type.isAssignableFrom(futureClasses.get(id))) {
-			return (ListenableFuture<Q>) futures.get(id);
-		} else {
-			return Futures.immediateFailedFuture(
-					new IllegalArgumentException("The name " + id + " does not define an element of the correct type."));
+		if (futures.get(id).isDone()) {
+			try {
+				if (!type.isInstance(futures.get(id).get())) {
+					return Futures.immediateFailedFuture(
+							new IllegalArgumentException("The name " + id + " does not define an element of the correct type."));				
+				}
+			} catch (InterruptedException | ExecutionException e) {
+				return Futures.immediateFailedFuture(
+						new IllegalArgumentException("The name " + id + " does not define an element of the correct type."));								
+			}
 		}
+		
+		return (ListenableFuture<Q>) futures.get(id);
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
@@ -38,9 +48,14 @@ class Resolver  {
 			if (futures.get(result).isDone()) {
 				throw new IllegalArgumentException("The name " + result + " was used for two different entities. Names must be unique.");
 			} else {
-				if (futureClasses.get(result).isInstance(o)) {
-					((SettableFuture) futures.get(result)).set(o);
+				for (final Class<?> clazz : futureClasses.get(result)) {
+					if (!clazz.isInstance(o)) {
+						//TODO provide a better type of error here
+						throw new IllegalArgumentException("The name " + result + " does not define an element of the correct type.");
+					}
 				}
+				
+				((SettableFuture) futures.get(result)).set(o);
 			}
 		} else {
 			futures.put(result, SettableFuture.create());
