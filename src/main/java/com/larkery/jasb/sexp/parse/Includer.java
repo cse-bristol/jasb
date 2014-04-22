@@ -8,6 +8,7 @@ import java.net.URI;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Stack;
@@ -162,10 +163,10 @@ public class Includer {
 				stringValue = IOUtils.toString(loc.getReader());
 				builder.put(addr, stringValue);
 		
-				final Node node = Node.copy(Parser.source(loc.getLocation(), new StringReader(stringValue), errors));
+				final List<Node> nodes = Node.copyAll(Parser.source(loc.getLocation(), new StringReader(stringValue), errors));
 			
-				if (node != null) {
-					node.accept(addressCollector);
+				for (final Node n : nodes) {
+					n.accept(addressCollector);
 				}
 			} catch (final IOException|ResolutionException|UnsupportedOperationException|UnfinishedExpressionException e) {
 				errors.handle(BasicError.nowhere(e.getMessage()));
