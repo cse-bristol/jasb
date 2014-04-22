@@ -56,22 +56,31 @@ public class JoinMacro extends SimpleMacro {
 						errors.handle(BasicError.at(n2, "concat can only join together atoms"));
 					}
 			}
-	
-			final String atomString;
-			final Node node = Node.copy(expander.expand(expanded.arguments.get("separator")));
-			if (node instanceof Atom) {
-				atomString = Joiner.on(((Atom) node).getValue()).join(parts.build());			
-			} else {
-				atomString = Joiner.on("").join(parts.build());
-				if (node != null) {
-					errors.handle(BasicError.at(node, "the separator for concat should be an atom"));
-				}
-			}
+
+			final String separator = getSeparator(expanded, expander, errors);
+			
+			final String atomString = Joiner.on(separator).join(parts.build());
 			return Atom.create(atomString, expanded.node.getLocation());
 		} catch (final UnfinishedExpressionException e) {
 			errors.handle(e.getError());
 		}
 		
 		return ISExpression.EMPTY;
+	}
+
+	private String getSeparator(final Invocation expanded,
+			final IMacroExpander expander, final IErrorHandler errors)
+			throws UnfinishedExpressionException {
+		if (expanded.arguments.containsKey("separator")) {
+			final Node node = Node.copy(expander.expand(expanded.arguments.get("separator")));
+			if (node instanceof Atom) {
+				return ((Atom) node).getValue();
+			} else {
+				errors.handle(BasicError.at(node, "the separator for concat should be an atom"));
+				return "";
+			}
+		} else {
+			return "";
+		}
 	}
 }
