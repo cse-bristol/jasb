@@ -167,10 +167,8 @@ public class Includer {
 				if (node != null) {
 					node.accept(addressCollector);
 				}
-			} catch (final IOException e) {
-			} catch (final ResolutionException re) {
-			} catch (final UnsupportedOperationException e) {
-			} catch (final UnfinishedExpressionException e) {
+			} catch (final IOException|ResolutionException|UnsupportedOperationException|UnfinishedExpressionException e) {
+				errors.handle(BasicError.nowhere(e.getMessage()));
 			}
 		}
 		
