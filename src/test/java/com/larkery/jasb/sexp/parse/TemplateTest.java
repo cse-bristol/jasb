@@ -126,4 +126,46 @@ public class TemplateTest extends VisitingTest {
 															IErrorHandler.RAISE);
 
 	}
+	
+	@Test(expected=JasbErrorException.class)
+	public void templateCreationFailsIfUsingRestTwice() throws Exception {
+		Template.stripTemplates(source("restTwice", "(template t [@rest @rest] )"), 
+				NodeBuilder.create(), 
+				IErrorHandler.RAISE);
+	}
+	
+	@Test(expected=JasbErrorException.class)
+	public void templateCreationFailsIfUsingRestInBodyOnly() throws Exception {
+		Template.stripTemplates(source("missingRest", "(template t [] @rest)"), 
+				NodeBuilder.create(), 
+				IErrorHandler.RAISE);
+	}
+	
+	@Test(expected=JasbErrorException.class)
+	public void templateCreationFailsIfUsingNumberedArgInBodyonly() throws Exception {
+		Template.stripTemplates(source("missingNumbered", "(template t [] @1)"), 
+				NodeBuilder.create(), 
+				IErrorHandler.RAISE);
+	}
+	
+	@Test(expected=JasbErrorException.class)
+	public void templateCreationFailsIfWronglyNumberedArg() throws Exception {
+		Template.stripTemplates(source("wrongNumber", "(template t [@0])"), 
+				NodeBuilder.create(), 
+				IErrorHandler.RAISE);
+	}
+	
+	@Test(expected=JasbErrorException.class)
+	public void templateCreationFailsIfGapInNumberedArgs() throws Exception {
+		Template.stripTemplates(source("numberingGap", "(template t [@1 @3])"), 
+				NodeBuilder.create(), 
+				IErrorHandler.RAISE);
+	}
+	
+	@Test(expected=JasbErrorException.class)
+	public void templateCreationFailsIfOptionalNumberedFollowedByMandatoryNumbered() throws Exception {
+		Template.stripTemplates(source("numberingIllegalOptional", "(template t [[@1] @2])"), 
+				NodeBuilder.create(), 
+				IErrorHandler.RAISE);
+	}
 }

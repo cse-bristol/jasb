@@ -251,15 +251,17 @@ public class Template extends SimpleMacro {
 
 	@Override
 	public int getMaximumArgumentCount() {
-		return numbered.allPositional() + rest.allPositional();
+		/* Be careful of integer overflows. */
+		if (rest.exists()) {
+			return Integer.MAX_VALUE;
+		} else {
+			return numbered.allPositional();
+		}
 	}
 
 	@Override
 	public int getMinimumArgumentCount() {
-		/* Be careful of integer overflows. */
-		return numbered.requiredPositional() == Integer.MAX_VALUE ? 
-				Integer.MAX_VALUE : 
-				numbered.requiredPositional() + rest.requiredPositional();
+		return numbered.requiredPositional();
 	}
 
 	@Override
@@ -361,8 +363,6 @@ public class Template extends SimpleMacro {
 		void check(Atom atom, String arg) throws TemplateDefinitionException;
 		boolean maybeHandle(Node node, String arg) throws TemplateDefinitionException;
 		boolean maybeHandle(final Node node, final List<Node> parts, final String arg) throws TemplateDefinitionException;
-		int requiredPositional();
-		int allPositional();
 	}
 	
 	private static void putAll(final Builder<String, List<Node>> namedArgs, final Map<String, Node> source) {
@@ -423,16 +423,6 @@ public class Template extends SimpleMacro {
 		}
 
 		@Override
-		public int requiredPositional() {
-			return 0;
-		}
-
-		@Override
-		public int allPositional() {
-			return 0;
-		}
-
-		@Override
 		public void check(final Atom atom, final String arg) throws TemplateDefinitionException {
 			if (!(argsWithDefault.containsKey(arg) || argsNoDefault.contains(arg))) {
 				throw new TemplateDefinitionException (atom, "Template body contains template variable " + atom + ", which is not in the template's argument list");
@@ -446,7 +436,6 @@ public class Template extends SimpleMacro {
 		private static final Map<String, List<Node>> NO_NAMED_ARGS = ImmutableMap.<String, List<Node>>of();
 		private static final List<Node> EMPTY = ImmutableList.of();
 		boolean included = false;
-		boolean required = true;
 
 		@Override
 		public TransformResult doTransform(final Invocation expanded,
@@ -484,7 +473,6 @@ public class Template extends SimpleMacro {
 					
 				} else {
 					included = true;
-					required = false;
 					defaults.addAll(parts.subList(1, parts.size()));
 					return true;
 					
@@ -494,14 +482,8 @@ public class Template extends SimpleMacro {
 			}
 		}
 
-		@Override
-		public int requiredPositional() {
-			return required ? 1 : 0;
-		}
-
-		@Override
-		public int allPositional() {
-			return Integer.MAX_VALUE;
+		public boolean exists() {
+			return included;
 		}
 
 		@Override
@@ -575,12 +557,10 @@ public class Template extends SimpleMacro {
 			}
 		}
 
-		@Override
 		public int requiredPositional() {
 			return count - defaults.size();
 		}
 
-		@Override
 		public int allPositional() {
 			return count;
 		}
