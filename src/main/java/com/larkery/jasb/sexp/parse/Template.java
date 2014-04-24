@@ -1,12 +1,17 @@
 package com.larkery.jasb.sexp.parse;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMap.Builder;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.larkery.jasb.sexp.Atom;
 import com.larkery.jasb.sexp.Comment;
@@ -21,6 +26,7 @@ import com.larkery.jasb.sexp.NodeBuilder;
 import com.larkery.jasb.sexp.Seq;
 import com.larkery.jasb.sexp.errors.BasicError;
 import com.larkery.jasb.sexp.errors.IErrorHandler;
+import com.larkery.jasb.sexp.errors.IErrorHandler.IError;
 
 /**
  * A template is a simple macro which substitutes a set of arguments into
@@ -29,24 +35,31 @@ import com.larkery.jasb.sexp.errors.IErrorHandler;
 public class Template extends SimpleMacro {
 	private static final String TEMPLATE = "template";
 	private static final String AT = "@";
+	/* NOTHING is deliberately put in as the default for optional arguments which do not have an explicit default. */
 	private static final Comment NOTHING = Comment.create("");
 
 	private final String name;
 	private final List<Node> body;
-	private final Map<String, Node> defaults;
-	private final Set<String> noDefaults;
 	private final Location baseLocation;
-
+	
+	final Set<Args> all;
+	private final NamedArgs named;
+	private final NumberedArgs numbered;
+	private final RestArgs rest;
+	
 	private Template(final Location baseLocation,
 					 final String name,
 					 final List<Node> body,
-					 final Map<String, Node> defaults,
-					 final Set<String> noDefaults) {
+					 final NamedArgs named,
+					 final NumberedArgs numbered,
+					 final RestArgs rest) {
 		this.baseLocation = baseLocation;
 		this.name = name;
 		this.body = body;
-		this.defaults = defaults;
-		this.noDefaults = noDefaults;
+		this.named = named;
+		this.numbered = numbered;
+		this.rest = rest;
+		all = ImmutableSet.of(named, numbered, rest);
 	}
 
 	/**
@@ -150,36 +163,38 @@ public class Template extends SimpleMacro {
 	static Optional<Template> of(final Location baseLocation, final String name, final Seq args, final List<Node> body, final IErrorHandler errors) {
 		// separate args into bits.
 
-		final HashSet<String> argsNoDefault = new HashSet<String>();
-		final HashMap<String, Node> argsWithDefault = new HashMap<String, Node>();
-
+		final NumberedArgs numbered = new NumberedArgs();
+		final NamedArgs named = new NamedArgs();
+		final RestArgs rest = new RestArgs();
+		final Set<Args> argsHandlers = ImmutableSet.of(numbered, named, rest);
+		
 		for (final Node node : args.exceptComments()) {
 			if (isLegalTemplateArgument(node)) {
-				if (node instanceof Atom) {
-					final String arg = ((Atom) node).getValue().substring(1);
-					if (argsNoDefault.contains(arg) || argsWithDefault.containsKey(arg)) {
-						errors.handle(BasicError.at(node, "Repeated template argument " + node));
-						return Optional.<Template>absent();
-					} else {
-						argsNoDefault.add(arg);
-					}
-				} else if (node instanceof Seq) {
-					final List<Node> parts = ((Seq) node).exceptComments();
-					final String arg = ((Atom) parts.get(0)).getValue().substring(1);
-					if (argsNoDefault.contains(arg) || argsWithDefault.containsKey(arg)) {
-						errors.handle(BasicError.at(node, "Repeated template argument " + node));
-						return Optional.<Template>absent();
-					} else {
-
-						final Node defaultValue;
-						if (parts.size() == 1) {
-							defaultValue = NOTHING;
-						} else {
-							defaultValue = parts.get(1);
+				try {
+				
+					if (node instanceof Atom) {
+						final String arg = ((Atom) node).getValue().substring(1);
+						
+						for (final Args a : argsHandlers) {
+							if (a.maybeHandle(node, arg)) {
+								break;
+							}
 						}
-
-						argsWithDefault.put(arg, defaultValue);
+						
+					} else if (node instanceof Seq) {
+						final List<Node> parts = ((Seq) node).exceptComments();
+						final String arg = ((Atom) parts.get(0)).getValue().substring(1);
+	
+						for (final Args a : argsHandlers) {
+							if (a.maybeHandle(node, parts, arg)) {
+								break;
+							}
+						}
 					}
+				
+				} catch (final TemplateDefinitionException e) {
+					errors.handle(e.error);
+					return Optional.<Template>absent();
 				}
 			} else {
 				errors.handle(BasicError.at(node, "Template arguments should be atoms like " + AT + "arg, or lists like ["+AT+ "arg default]"));
@@ -196,9 +211,13 @@ public class Template extends SimpleMacro {
 				@Override
 				public void atom(final Atom atom) {
 					if (atom.getValue().startsWith(AT)) {
-						final String n = atom.getValue().substring(1);
-						if (!(argsWithDefault.containsKey(n) || argsNoDefault.contains(n))) {
-							errors.handle(BasicError.at(atom, "Template body contains template variable " + atom + ", which is not in the template's argument list"));
+						final String arg = atom.getValue().substring(1);
+						try {
+							for (final Args a : argsHandlers) {
+								a.check(atom, arg);
+							}
+						} catch (final TemplateDefinitionException e) {
+							errors.handle(e.error);
 						}
 					}
 				}
@@ -212,7 +231,7 @@ public class Template extends SimpleMacro {
 			n.accept(argcheck);
 		}
 
-		return Optional.of(new Template(baseLocation, name, body, argsWithDefault, argsNoDefault));
+		return Optional.of(new Template(baseLocation, name, body, named, numbered, rest));
 	}
 
 	@Override
@@ -222,40 +241,47 @@ public class Template extends SimpleMacro {
 
 	@Override
 	public Set<String> getRequiredArgumentNames() {
-		return noDefaults;
+		return named.requiredNamed();
 	}
 
 	@Override
 	public Set<String> getAllowedArgumentNames() {
-		return Sets.union(noDefaults, defaults.keySet());
+		return named.allNamed();
 	}
 
 	@Override
 	public int getMaximumArgumentCount() {
-		return 0;
+		return numbered.allPositional() + rest.allPositional();
 	}
 
 	@Override
 	public int getMinimumArgumentCount() {
-		return 0;
+		/* Be careful of integer overflows. */
+		return numbered.requiredPositional() == Integer.MAX_VALUE ? 
+				Integer.MAX_VALUE : 
+				numbered.requiredPositional() + rest.requiredPositional();
 	}
 
 	@Override
 	public ISExpression doTransform(final Invocation expanded, final IMacroExpander expander, final IErrorHandler errors) {
-		final Map<String, Node> arguments = new HashMap<String, Node>();
+		final Map<String, List<Node>> arguments = new HashMap<String, List<Node>>();
 		
-		arguments.putAll(defaults);
-		arguments.putAll(expanded.arguments);
-
+		List<Node> remaining = expanded.remainder;
+		for (final Args a : all) {
+			final TransformResult r = a.doTransform(expanded, remaining);
+			arguments.putAll(r.namedArgs);
+			remaining = r.unhandled;
+		}
+		
 		return new Substitution(baseLocation, body, arguments);
 	}
 
 	static class Substitution implements ISExpression {
 		private final List<Node> body;
-		private final Map<String, Node> arguments;
+		private final Map<String, List<Node>> arguments;
 		private final Location baseLocation;
 		
-		public Substitution(final Location baseLocation, final List<Node> body, final Map<String, Node> arguments) {
+		public Substitution(final Location baseLocation, final List<Node> body, final Map<String, List<Node>> arguments) {
 			this.body = body;
 			this.arguments = arguments;
 			this.baseLocation = baseLocation.withTypeOfTail(Location.Type.Template);
@@ -294,12 +320,15 @@ public class Template extends SimpleMacro {
 					// so we want to put that in for where we are; its
 					// source location is already OK so we don't need
 					// to rewrite it.
-					final Node n = arguments.get(string.substring(1));
+					final List<Node> nodes = arguments.get(string.substring(1));
 
-					if (n != NOTHING) {
-						// strip out the dead comment
-						n.accept(this);
+					for (final Node n : nodes) {
+						if (n != NOTHING) {
+							// strip out the dead comment
+							n.accept(this);
+						}						
 					}
+
 				} else {
 					delegate.atom(string);
 				}
@@ -314,6 +343,271 @@ public class Template extends SimpleMacro {
 			public void close(final Delim delimeter) {
 				delegate.close(delimeter);
 			}
+		}
+	}
+	
+	@SuppressWarnings("serial")
+	static class TemplateDefinitionException extends Exception {
+
+		private final IError error;
+
+		public TemplateDefinitionException(final Node node, final String message) {
+			this.error = BasicError.at(node, message);
+		}
+	}
+	
+	static interface Args {
+		TransformResult doTransform(Invocation expanded, List<Node> remaining);
+		void check(Atom atom, String arg) throws TemplateDefinitionException;
+		boolean maybeHandle(Node node, String arg) throws TemplateDefinitionException;
+		boolean maybeHandle(final Node node, final List<Node> parts, final String arg) throws TemplateDefinitionException;
+		int requiredPositional();
+		int allPositional();
+	}
+	
+	private static void putAll(final Builder<String, List<Node>> namedArgs, final Map<String, Node> source) {
+		for (final Entry<String, Node> e : source.entrySet()) {
+			namedArgs.put(e.getKey(), ImmutableList.of(e.getValue()));
+		}
+	}
+	
+	static class NamedArgs implements Args {
+		final HashSet<String> argsNoDefault = new HashSet<String>();
+		final HashMap<String, Node> argsWithDefault = new HashMap<String, Node>();
+
+		@Override
+		public TransformResult doTransform(final Invocation expanded,
+				final List<Node> remaining) {
+			final Builder<String, List<Node>> namedArgs = ImmutableMap.<String, List<Node>> builder();
+			
+			putAll(namedArgs, argsWithDefault);
+			putAll(namedArgs, expanded.arguments);
+
+			return new TransformResult(namedArgs.build(), remaining);
+		}
+		
+		@Override
+		public boolean maybeHandle(final Node node, final String arg) throws TemplateDefinitionException {
+			if (argsNoDefault.contains(arg) || argsWithDefault.containsKey(arg)) {
+				throw new TemplateDefinitionException(node, "Repeated template argument " + node);
+			} else {
+				argsNoDefault.add(arg);
+				return true;
+			}
+		}
+
+		@Override
+		public boolean maybeHandle(final Node node, final List<Node> parts, final String arg) throws TemplateDefinitionException {
+			if (argsNoDefault.contains(arg) || argsWithDefault.containsKey(arg)) {
+				throw new TemplateDefinitionException(node, "Repeated template argument " + node);
+
+			} else {
+				if (parts.size() == 1) {
+					argsWithDefault.put(arg, NOTHING);
+				} else {
+					argsWithDefault.put(arg, parts.get(1));
+				}
+
+				return true;
+			}
+		}
+
+		public Set<String> requiredNamed() {
+			return argsNoDefault;
+		}
+
+		public Set<String> allNamed() {
+			return Sets.union(
+					argsWithDefault.keySet(),
+					argsNoDefault);
+		}
+
+		@Override
+		public int requiredPositional() {
+			return 0;
+		}
+
+		@Override
+		public int allPositional() {
+			return 0;
+		}
+
+		@Override
+		public void check(final Atom atom, final String arg) throws TemplateDefinitionException {
+			if (!(argsWithDefault.containsKey(arg) || argsNoDefault.contains(arg))) {
+				throw new TemplateDefinitionException (atom, "Template body contains template variable " + atom + ", which is not in the template's argument list");
+			}
+		}
+	}
+	
+	static class RestArgs implements Args {
+		final List<Node> defaults = new ArrayList<>();
+		private static final String REST = "rest";
+		private static final Map<String, List<Node>> NO_NAMED_ARGS = ImmutableMap.<String, List<Node>>of();
+		private static final List<Node> EMPTY = ImmutableList.of();
+		boolean included = false;
+		boolean required = true;
+
+		@Override
+		public TransformResult doTransform(final Invocation expanded,
+				final List<Node> remaining) {
+			
+			if (!included) {
+				return new TransformResult(NO_NAMED_ARGS, remaining);
+			} else if (remaining.isEmpty()) {
+				return new TransformResult(ImmutableMap.of("rest", defaults), remaining);
+			} else {
+				return new TransformResult(ImmutableMap.of("rest", remaining), EMPTY);
+			}
+		}
+
+		@Override
+		public boolean maybeHandle(final Node node, final String arg) throws TemplateDefinitionException {
+			if (arg.equals(REST)) {
+				if (included) {
+					throw new TemplateDefinitionException(node, "Repeated template argument " + node);
+					
+				} else {
+					included = true;
+					return true;
+				}
+			} else {
+				return false;
+			}
+		}
+
+		@Override
+		public boolean maybeHandle(final Node node, final List<Node> parts, final String arg) throws TemplateDefinitionException {
+			if (arg.equals(REST)) {
+				if (included) {
+					throw new TemplateDefinitionException(node, "Repeated template argument " + node);
+					
+				} else {
+					included = true;
+					required = false;
+					defaults.addAll(parts.subList(1, parts.size()));
+					return true;
+					
+				}
+			} else {
+				return false;
+			}
+		}
+
+		@Override
+		public int requiredPositional() {
+			return required ? 1 : 0;
+		}
+
+		@Override
+		public int allPositional() {
+			return Integer.MAX_VALUE;
+		}
+
+		@Override
+		public void check(final Atom atom, final String arg)
+				throws TemplateDefinitionException {
+			if (arg.equals(REST) && !included) {
+				throw new TemplateDefinitionException (atom, "Template body contains template variable " + atom + ", which is not in the template's argument list");
+			}
+		}
+	}
+	
+	static class NumberedArgs implements Args {
+		int count = 0;
+		Map<String, Node> defaults = new HashMap<>();
+
+		@Override
+		public TransformResult doTransform(final Invocation expanded,
+				final List<Node> remaining) {
+			
+			final Builder<String, List<Node>> numbered = ImmutableMap.<String, List<Node>>builder();
+			putAll(numbered, defaults);
+			
+			for (Integer i = 0; i < count && i < remaining.size(); i++) {
+				numbered.put(i.toString(), ImmutableList.of(remaining.get(i)));
+			}
+			
+			return new TransformResult(numbered.build(), remaining.subList(count, remaining.size()));
+		}
+
+		@Override
+		public boolean maybeHandle(final Node node, final String arg) throws TemplateDefinitionException {
+			try {
+				final int i = Integer.parseInt(arg);
+				
+				if (i == count + 1) {
+					if (!defaults.isEmpty()) {
+						throw new TemplateDefinitionException(node, "Mandatory numbered template argument should always be defined before all optional numbered arguments " + node);
+					}
+					
+					count += 1;
+					return true;
+				} else {
+					throw new TemplateDefinitionException(node, "Numbered template argument was out of order " + node);
+				}
+				
+			} catch (final NumberFormatException e) {
+				return false;
+			}
+		}
+
+		@Override
+		public boolean maybeHandle(final Node node, final List<Node> parts, final String arg) throws TemplateDefinitionException {
+			try {
+				final Integer i = Integer.parseInt(arg);
+				
+				if (i == count + 1) {
+					count += 1;
+					if (parts.size() == 1) {
+						defaults.put(i.toString(), NOTHING);
+					} else {
+						defaults.put(i.toString(), parts.get(1));
+					}
+					
+					return true;
+					
+				} else {
+					throw new TemplateDefinitionException(node, "Template positional argument was out of order " + node);
+				}
+			} catch (final NumberFormatException e) {
+				return false;
+			}
+		}
+
+		@Override
+		public int requiredPositional() {
+			return count - defaults.size();
+		}
+
+		@Override
+		public int allPositional() {
+			return count;
+		}
+
+		@Override
+		public void check(final Atom atom, final String arg)
+				throws TemplateDefinitionException {
+			try {
+				final int i = Integer.parseInt(arg);
+				
+				if (i > count) {
+					throw new TemplateDefinitionException (atom, "Template body contains template variable " + atom + ", which is not in the template's argument list");
+				}
+				
+			} catch (final NumberFormatException e) {
+				// No-op
+			}
+		}
+	}
+	
+	static class TransformResult {
+		private final List<Node> unhandled;
+		private final Map<String, List<Node>> namedArgs;
+
+		public TransformResult(final Map<String, List<Node>> namedArgs, final List<Node> unhandled) {
+			this.namedArgs = namedArgs;
+			this.unhandled = unhandled;
 		}
 	}
 }
