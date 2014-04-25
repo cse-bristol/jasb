@@ -168,4 +168,18 @@ public class TemplateTest extends VisitingTest {
 				NodeBuilder.create(), 
 				IErrorHandler.RAISE);
 	}
+	
+	@Test
+	public void canUseRestArgs() {
+		Template.stripTemplates(source("restArgs", "(template t [@rest] @rest)"), 
+				NodeBuilder.create(), 
+				IErrorHandler.RAISE);
+	}
+	
+	@Test
+	public void canUseNumberedArgs() {
+		Template.stripTemplates(source("restArgs", "(template t [@1 @2] @1 @2)"), 
+				NodeBuilder.create(), 
+				IErrorHandler.RAISE);
+	}
 }

@@ -214,7 +214,9 @@ public class Template extends SimpleMacro {
 						final String arg = atom.getValue().substring(1);
 						try {
 							for (final Args a : argsHandlers) {
-								a.check(atom, arg);
+								if (a.check(atom, arg)) {
+									return; /* This atom confirmed ok. */
+								}
 							}
 						} catch (final TemplateDefinitionException e) {
 							errors.handle(e.error);
@@ -360,7 +362,10 @@ public class Template extends SimpleMacro {
 	
 	static interface Args {
 		TransformResult doTransform(Invocation expanded, List<Node> remaining);
-		void check(Atom atom, String arg) throws TemplateDefinitionException;
+		/**
+		 * @return true if this atom is confirmed ok, false if the other args should continue checking it 
+		 */
+		boolean check(Atom atom, String arg) throws TemplateDefinitionException;
 		boolean maybeHandle(Node node, String arg) throws TemplateDefinitionException;
 		boolean maybeHandle(final Node node, final List<Node> parts, final String arg) throws TemplateDefinitionException;
 	}
@@ -423,9 +428,11 @@ public class Template extends SimpleMacro {
 		}
 
 		@Override
-		public void check(final Atom atom, final String arg) throws TemplateDefinitionException {
+		public boolean check(final Atom atom, final String arg) throws TemplateDefinitionException {
 			if (!(argsWithDefault.containsKey(arg) || argsNoDefault.contains(arg))) {
 				throw new TemplateDefinitionException (atom, "Template body contains template variable " + atom + ", which is not in the template's argument list");
+			} else {
+				return true;
 			}
 		}
 	}
@@ -487,10 +494,16 @@ public class Template extends SimpleMacro {
 		}
 
 		@Override
-		public void check(final Atom atom, final String arg)
+		public boolean check(final Atom atom, final String arg)
 				throws TemplateDefinitionException {
-			if (arg.equals(REST) && !included) {
-				throw new TemplateDefinitionException (atom, "Template body contains template variable " + atom + ", which is not in the template's argument list");
+			if (arg.equals(REST)) {
+				if (included) {
+					return true;
+				} else {
+					throw new TemplateDefinitionException (atom, "Template body contains remainder template variable " + atom + ", which is not in the template's argument list");
+				}
+			} else {
+				return false;
 			}
 		}
 	}
@@ -566,17 +579,19 @@ public class Template extends SimpleMacro {
 		}
 
 		@Override
-		public void check(final Atom atom, final String arg)
+		public boolean check(final Atom atom, final String arg)
 				throws TemplateDefinitionException {
 			try {
 				final int i = Integer.parseInt(arg);
 				
 				if (i > count) {
-					throw new TemplateDefinitionException (atom, "Template body contains template variable " + atom + ", which is not in the template's argument list");
+					throw new TemplateDefinitionException (atom, "Template body contains numbered template variable " + atom + ", which is not in the template's argument list");
+				} else {
+					return true;
 				}
 				
 			} catch (final NumberFormatException e) {
-				// No-op
+				return false;
 			}
 		}
 	}
