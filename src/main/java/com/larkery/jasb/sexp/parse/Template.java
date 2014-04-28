@@ -11,7 +11,6 @@ import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.larkery.jasb.sexp.Atom;
 import com.larkery.jasb.sexp.Comment;
@@ -42,7 +41,7 @@ public class Template extends SimpleMacro {
 	private final List<Node> body;
 	private final Location baseLocation;
 	
-	final Set<Args> all;
+	private final Args[] all;
 	private final NamedArgs named;
 	private final NumberedArgs numbered;
 	private final RestArgs rest;
@@ -52,14 +51,15 @@ public class Template extends SimpleMacro {
 					 final List<Node> body,
 					 final NamedArgs named,
 					 final NumberedArgs numbered,
-					 final RestArgs rest) {
+					 final RestArgs rest,
+					 final Args[] allArgs) {
 		this.baseLocation = baseLocation;
 		this.name = name;
 		this.body = body;
 		this.named = named;
 		this.numbered = numbered;
 		this.rest = rest;
-		all = ImmutableSet.of(named, numbered, rest);
+		this.all = allArgs;
 	}
 
 	/**
@@ -164,9 +164,9 @@ public class Template extends SimpleMacro {
 		// separate args into bits.
 
 		final NumberedArgs numbered = new NumberedArgs();
-		final NamedArgs named = new NamedArgs();
 		final RestArgs rest = new RestArgs();
-		final Set<Args> argsHandlers = ImmutableSet.of(numbered, named, rest);
+		final NamedArgs named = new NamedArgs();
+		final Args[] argsHandlers = new Args[]{numbered, rest, named};
 		
 		for (final Node node : args.exceptComments()) {
 			if (isLegalTemplateArgument(node)) {
@@ -233,7 +233,7 @@ public class Template extends SimpleMacro {
 			n.accept(argcheck);
 		}
 
-		return Optional.of(new Template(baseLocation, name, body, named, numbered, rest));
+		return Optional.of(new Template(baseLocation, name, body, named, numbered, rest, argsHandlers));
 	}
 
 	@Override
@@ -322,7 +322,7 @@ public class Template extends SimpleMacro {
 				if (string.startsWith(AT) && arguments.containsKey(string.substring(1))) {
 					// this is a template parameter for this template,
 					// so we want to put that in for where we are; its
-					// source location is already OK so we don't need
+					// source location is al ready OK so we don't need
 					// to rewrite it.
 					final List<Node> nodes = arguments.get(string.substring(1));
 
@@ -520,7 +520,9 @@ public class Template extends SimpleMacro {
 			putAll(numbered, defaults);
 			
 			for (Integer i = 0; i < count && i < remaining.size(); i++) {
-				numbered.put(i.toString(), ImmutableList.of(remaining.get(i)));
+				numbered.put(
+						Integer.toString(i + 1), /* Arguments are 1-indexed, lists are 0-indexed. */ 
+						ImmutableList.of(remaining.get(i)));
 			}
 			
 			return new TransformResult(numbered.build(), remaining.subList(count, remaining.size()));

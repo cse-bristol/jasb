@@ -15,6 +15,7 @@ import com.larkery.jasb.sexp.NodeBuilder;
 import com.larkery.jasb.sexp.Seq;
 import com.larkery.jasb.sexp.errors.IErrorHandler;
 import com.larkery.jasb.sexp.errors.JasbErrorException;
+import com.larkery.jasb.sexp.errors.UnfinishedExpressionException;
 
 public class TemplateTest extends VisitingTest {
 	@Test
@@ -170,16 +171,32 @@ public class TemplateTest extends VisitingTest {
 	}
 	
 	@Test
-	public void canUseRestArgs() {
-		Template.stripTemplates(source("restArgs", "(template t [@rest] @rest)"), 
+	public void canUseRestArgs() throws UnfinishedExpressionException {
+		final Template t = (Template) Template.stripTemplates(source("restArgs", "(template t [@rest] @rest)"), 
 				NodeBuilder.create(), 
-				IErrorHandler.RAISE);
+				IErrorHandler.RAISE).get(0);
+		
+		final ISExpression e = t.doTransform(Invocation.of(node("(t a b c)"), IErrorHandler.RAISE), null, IErrorHandler.RAISE);
+		final Node node = Node.copy(e);
+		
+		Assert.assertEquals("Expanded node is what we were expecting", node("a b c"), node);
+
+	}
+
+	private Node node(final String source) throws UnfinishedExpressionException {
+		return Node.copy(source("don't care", source));
 	}
 	
 	@Test
-	public void canUseNumberedArgs() {
-		Template.stripTemplates(source("restArgs", "(template t [@1 @2] @1 @2)"), 
+	public void canUseNumberedArgs() throws UnfinishedExpressionException {
+		final Template t = (Template) Template.stripTemplates(
+				node("(template t [@1 @2] @2 @1)"), 
 				NodeBuilder.create(), 
-				IErrorHandler.RAISE);
+				IErrorHandler.RAISE).get(0);
+		
+		final ISExpression e = t.doTransform(Invocation.of(node("(t a b)"), IErrorHandler.RAISE), null, IErrorHandler.RAISE);
+		final Node node = Node.copy(e);
+		
+		Assert.assertEquals("Expanded node is what we were expecting", node("b a"), node);
 	}
 }
