@@ -10,7 +10,6 @@ import java.util.Set;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableMap.Builder;
 import com.google.common.collect.Sets;
 import com.larkery.jasb.sexp.Atom;
 import com.larkery.jasb.sexp.Comment;
@@ -370,7 +369,7 @@ public class Template extends SimpleMacro {
 		boolean maybeHandle(final Node node, final List<Node> parts, final String arg) throws TemplateDefinitionException;
 	}
 	
-	private static void putAll(final Builder<String, List<Node>> namedArgs, final Map<String, Node> source) {
+	private static void putAll(final Map<String, List<Node>> namedArgs, final Map<String, Node> source) {
 		for (final Entry<String, Node> e : source.entrySet()) {
 			namedArgs.put(e.getKey(), ImmutableList.of(e.getValue()));
 		}
@@ -383,12 +382,12 @@ public class Template extends SimpleMacro {
 		@Override
 		public TransformResult doTransform(final Invocation expanded,
 				final List<Node> remaining) {
-			final Builder<String, List<Node>> namedArgs = ImmutableMap.<String, List<Node>> builder();
+			final HashMap<String, List<Node>> namedArgs = new HashMap<String, List<Node>>();
 			
 			putAll(namedArgs, argsWithDefault);
 			putAll(namedArgs, expanded.arguments);
 
-			return new TransformResult(namedArgs.build(), remaining);
+			return new TransformResult(namedArgs, remaining);
 		}
 		
 		@Override
@@ -516,7 +515,7 @@ public class Template extends SimpleMacro {
 		public TransformResult doTransform(final Invocation expanded,
 				final List<Node> remaining) {
 			
-			final Builder<String, List<Node>> numbered = ImmutableMap.<String, List<Node>>builder();
+			final Map<String, List<Node>> numbered = new HashMap<String, List<Node>>();
 			putAll(numbered, defaults);
 			
 			for (Integer i = 0; i < count && i < remaining.size(); i++) {
@@ -525,7 +524,7 @@ public class Template extends SimpleMacro {
 						ImmutableList.of(remaining.get(i)));
 			}
 			
-			return new TransformResult(numbered.build(), remaining.subList(count, remaining.size()));
+			return new TransformResult(numbered, remaining.subList(count, remaining.size()));
 		}
 
 		@Override

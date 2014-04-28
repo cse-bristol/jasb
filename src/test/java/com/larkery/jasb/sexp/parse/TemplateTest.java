@@ -199,4 +199,30 @@ public class TemplateTest extends VisitingTest {
 		
 		Assert.assertEquals("Expanded node is what we were expecting", node("b a"), node);
 	}
+	
+	@Test
+	public void canUseOptionalArguments() throws UnfinishedExpressionException {
+		final Template t = (Template) Template.stripTemplates(
+				node("(template t [[@a]] @a)"), 
+				NodeBuilder.create(), 
+				IErrorHandler.RAISE).get(0);
+		
+		final ISExpression e = t.doTransform(Invocation.of(node("(t a: thing)"), IErrorHandler.RAISE), null, IErrorHandler.RAISE);
+		final Node node = Node.copy(e);
+		
+		Assert.assertEquals("Expanded node is what we were expecting", node("thing"), node);
+	}
+	
+	@Test
+	public void canUseOptionalNumberedArguments() throws UnfinishedExpressionException {
+		final Template t = (Template) Template.stripTemplates(
+				node("(template t [[@1]] @1)"), 
+				NodeBuilder.create(), 
+				IErrorHandler.RAISE).get(0);
+		
+		final ISExpression e = t.doTransform(Invocation.of(node("(t thing)"), IErrorHandler.RAISE), null, IErrorHandler.RAISE);
+		final Node node = Node.copy(e);
+		
+		Assert.assertEquals("Expanded node is what we were expecting", node("thing"), node);
+	}
 }
