@@ -300,6 +300,7 @@ public class Template extends SimpleMacro {
 
 		class SubbingVisitor implements ISExpressionVisitor {
 			private final ISExpressionVisitor delegate;
+			private boolean rewritingLocation = true;
 			
 			public SubbingVisitor(final ISExpressionVisitor delegate) {
 				this.delegate = delegate;
@@ -307,8 +308,10 @@ public class Template extends SimpleMacro {
 
 			@Override
 			public void locate(final Location loc) {
-				// rewrite location to be inside template
-				delegate.locate(baseLocation.appending(loc));
+				// rewrite location to give location of error within template definition
+				if (rewritingLocation) {
+					delegate.locate(loc.appending(baseLocation));
+				}
 			}
 
 			@Override
@@ -325,12 +328,15 @@ public class Template extends SimpleMacro {
 					// to rewrite it.
 					final List<Node> nodes = arguments.get(string.substring(1));
 
+					// disable location rewriting
+					rewritingLocation = false;
 					for (final Node n : nodes) {
 						if (n != NOTHING) {
 							// strip out the dead comment
 							n.accept(this);
-						}						
+						}
 					}
+					rewritingLocation = true;
 
 				} else {
 					delegate.atom(string);
