@@ -38,21 +38,18 @@ public class Template extends SimpleMacro {
 
 	private final String name;
 	private final List<Node> body;
-	private final Location baseLocation;
 	
 	private final Args[] all;
 	private final NamedArgs named;
 	private final NumberedArgs numbered;
 	private final RestArgs rest;
 	
-	private Template(final Location baseLocation,
-					 final String name,
+	private Template(final String name,
 					 final List<Node> body,
 					 final NamedArgs named,
 					 final NumberedArgs numbered,
 					 final RestArgs rest,
 					 final Args[] allArgs) {
-		this.baseLocation = baseLocation;
 		this.name = name;
 		this.body = body;
 		this.named = named;
@@ -123,8 +120,7 @@ public class Template extends SimpleMacro {
 				if (head instanceof Atom && name instanceof Atom && args instanceof Seq) {
 					final String sHead = ((Atom) head).getValue();
 					if (sHead.equals(TEMPLATE)) {
-						return of(definition.getLocation(),
-								  ((Atom)name).getValue(),
+						return of(((Atom)name).getValue(),
 								  (Seq) args,
 								  seq.getNodesAfter(args),
 								  errors);
@@ -159,7 +155,7 @@ public class Template extends SimpleMacro {
 	/**
 	 * Second part of construction helper; checks that args represents some valid args.
 	 */
-	static Optional<Template> of(final Location baseLocation, final String name, final Seq args, final List<Node> body, final IErrorHandler errors) {
+	static Optional<Template> of(final String name, final Seq args, final List<Node> body, final IErrorHandler errors) {
 		// separate args into bits.
 
 		final NumberedArgs numbered = new NumberedArgs();
@@ -232,7 +228,7 @@ public class Template extends SimpleMacro {
 			n.accept(argcheck);
 		}
 
-		return Optional.of(new Template(baseLocation, name, body, named, numbered, rest, argsHandlers));
+		return Optional.of(new Template(name, body, named, numbered, rest, argsHandlers));
 	}
 
 	@Override
@@ -276,7 +272,7 @@ public class Template extends SimpleMacro {
 			remaining = r.unhandled;
 		}
 		
-		return new Substitution(baseLocation, body, arguments);
+		return new Substitution(expanded.node.getLocation(), body, arguments);
 	}
 
 	static class Substitution implements ISExpression {
@@ -308,9 +304,11 @@ public class Template extends SimpleMacro {
 
 			@Override
 			public void locate(final Location loc) {
-				// rewrite location to give location of error within template definition
+				// rewrite location to give location of error within template usage
+				// so that errors associate to the place the template is used, not where
+				// it is defined
 				if (rewritingLocation) {
-					delegate.locate(loc.appending(baseLocation));
+					delegate.locate(baseLocation.appending(loc));
 				}
 			}
 
@@ -328,7 +326,7 @@ public class Template extends SimpleMacro {
 					// to rewrite it.
 					final List<Node> nodes = arguments.get(string.substring(1));
 
-					// disable location rewriting
+					// disable location rewriting because we are visiting the argument and we want the error there
 					rewritingLocation = false;
 					for (final Node n : nodes) {
 						if (n != NOTHING) {
