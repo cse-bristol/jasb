@@ -17,6 +17,10 @@ public abstract class SimpleMacro implements IMacro {
 
 	protected abstract int getMinimumArgumentCount();
 
+	protected ISExpression expandResult(final IMacroExpander expander, final ISExpression transformed) {
+		return expander.expand(transformed);
+	}
+	
 	@Override
 	public ISExpression transform(
 			final Seq input,
@@ -33,7 +37,7 @@ public abstract class SimpleMacro implements IMacro {
 
 				if (inv != null) {
 					if (validateMacroParameters(inv, errors)) {
-						return doTransform(inv, expander, errors);
+						return expandResult(expander, doTransform(inv, expander, errors));
 					}
 				}
 			}
@@ -46,7 +50,7 @@ public abstract class SimpleMacro implements IMacro {
 	
 	protected abstract ISExpression doTransform(final Invocation validated, final IMacroExpander expander, final IErrorHandler errors);
 	
-	private boolean validateMacroParameters(final Invocation inv, final IErrorHandler errors) {
+	protected boolean validateMacroParameters(final Invocation inv, final IErrorHandler errors) {
 		boolean valid = true;
 
 		for (final String s : Sets.difference(getRequiredArgumentNames(), inv.arguments.keySet())) {
