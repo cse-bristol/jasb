@@ -78,7 +78,7 @@ public class MacroExpander implements IMacroExpander {
 									final IMacro macro = macros.get(s);
 									
 									try {
-										macro.transform(unexpanded, MacroExpander.this,  errors).accept(this);
+										macro.transform(unexpanded, MacroExpander.this,  errors).accept(visitor);
 									} catch (final StackOverflowError soe) {
 										errors.handle(BasicError.at(first, "Maximum macro expansion depth reached within " + s));
 									}
