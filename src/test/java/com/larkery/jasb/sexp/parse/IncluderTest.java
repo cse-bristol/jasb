@@ -103,4 +103,21 @@ public class IncluderTest extends VisitingTest {
 		Assert.assertEquals(URI.create("test://my-include"),
 							atom.getLocation().positions.get(1).name);
 	}
+	
+	@Test
+	public void removesNoInclude() throws UnfinishedExpressionException {
+		final Node n = Node.copy(
+			source("removesNoInclude", "(a b c (no-include x y z) 1 2 3)"));
+		
+		Assert.assertEquals("Should strip out the no-include statement.", "(a b c x y z 1 2 3)", n.toString()); 
+	}
+	
+	@Test
+	public void removesBodyOfNoIncludeInsideInclude() throws UnfinishedExpressionException {
+		values.put(URI.create("test://no-include"), "m n o (no-include x y z) p q r");
+		final Node n = Node.copy(
+				source("removesNoInclude", "(a b c (include no-include) 1 2 3)"));
+		
+		Assert.assertEquals("Should strip out the contents of the no-include statement.", "(a b c m n o p q r 1 2 3)", n.toString()); 
+	}
 }
