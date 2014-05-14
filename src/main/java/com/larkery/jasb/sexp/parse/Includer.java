@@ -216,7 +216,7 @@ public class Includer {
 
 		@Override
 		protected Optional<NodeBuilder> cut(final String head) {
-			if (head.equals("include")) {
+			if (head.equals("include") || head.equals("no-include")) {
 				return Optional.of(NodeBuilder.create());
 			} else {
 				return Optional.absent();
@@ -229,22 +229,33 @@ public class Includer {
 			try {
 				if (node instanceof Seq) {
 					final Seq include = (Seq) node;
-					final URI uri = resolver.convert(include, errors);
 					
-					if (stack.contains(uri)) {
-						errors.handle(BasicError.at(include, uri + " recursively includes itself"));
+					final Atom head = (Atom) include.getHead();
+					if (head.getValue().equals("no-include")) {
+						if (stack.isEmpty()) {
+							for (final Node n : include.getTail()) {
+								n.accept(this);
+							}
+						}
+						
 					} else {
-						final ILocationReader reader = resolver.resolve(uri, errors);
-						final ISExpression real = 
-							Parser.source(include.getLocation(),
-										  reader.getLocation(), 
-										  reader.getReader(), 
-										  errors);
-						stack.push(uri);
-						real.accept(this);
-						stack.pop();
+						final URI uri = resolver.convert(include, errors);
+						
+						if (stack.contains(uri)) {
+							errors.handle(BasicError.at(include, uri + " recursively includes itself"));
+						} else {
+							final ILocationReader reader = resolver.resolve(uri, errors);
+							final ISExpression real = 
+								Parser.source(include.getLocation(),
+											  reader.getLocation(), 
+											  reader.getReader(), 
+											  errors);
+							stack.push(uri);
+							real.accept(this);
+							stack.pop();
+						}
+						locate(include.getEndLocation());
 					}
-					locate(include.getEndLocation());
 				}
 			} catch (final ResolutionException e) {
 				errors.handle(BasicError.at(node, "Unable to resolve include - " + e.getMessage()));
