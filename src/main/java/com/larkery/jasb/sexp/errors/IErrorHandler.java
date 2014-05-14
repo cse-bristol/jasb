@@ -46,6 +46,9 @@ public interface IErrorHandler {
 			throw new JasbErrorException(error);
 		}
 	};
+	static final IErrorHandler IGNORE = new IErrorHandler() {
+		@Override public void handle(final IError error) {}
+	};
 	
 	public void handle(final IError error);
 }
