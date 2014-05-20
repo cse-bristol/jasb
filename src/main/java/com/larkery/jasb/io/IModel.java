@@ -41,5 +41,7 @@ public interface IModel {
 		public Optional<Object> getDefaultValue();
 		
 		public Set<IElement> getLegalValues();
+		
+		public boolean isMandatory();
 	}
 }

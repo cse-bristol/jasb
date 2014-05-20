@@ -148,6 +148,11 @@ public class Model implements IModel {
 		public boolean isListOfLists() {
 			return pd.isListOfLists;
 		}
+
+		@Override
+		public boolean isMandatory() {
+			return pd.isMandatory && !defaultValue.isPresent();
+		}
 	}
 	
 	class InvocationModel implements IInvocationModel {
