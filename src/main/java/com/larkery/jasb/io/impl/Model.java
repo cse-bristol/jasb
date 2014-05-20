@@ -71,9 +71,7 @@ public class Model implements IModel {
 			this.pd = pd;
 			try {
 				this.defaultValue = 
-					Optional.fromNullable(
-							pd.isMultiple ? null : 
-								pd.readMethod.invoke(val));
+					Optional.fromNullable(pd.readMethod.invoke(val));
 			} catch (IllegalAccessException | IllegalArgumentException
 					| InvocationTargetException e) {
 				throw new IllegalArgumentException("Couldn't get default value for " + pd);
