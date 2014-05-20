@@ -7,6 +7,8 @@ import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Set;
 
+import javax.validation.constraints.NotNull;
+
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.reflect.TypeToken;
@@ -28,6 +30,7 @@ class JasbPropertyDescriptor {
 	public final Optional<Integer> position;
 	public final Class<?> boxedPropertyType;
 	public final boolean isIdentifier;
+	public final boolean isMandatory;
 	
 	public enum BoundTo {
 		Name,
@@ -171,6 +174,8 @@ class JasbPropertyDescriptor {
 		} else {
 			throw new IllegalArgumentException(pd + " does not have any binding annotation, and should not have been used to make a property");
 		}
+		
+		isMandatory = readMethod.isAnnotationPresent(NotNull.class);
 		
 		checkConsistency();
 	}
