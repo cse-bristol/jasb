@@ -166,8 +166,11 @@ public abstract class Editor implements ISExpressionVisitor {
 			if (editDepth == 0) {
 				final Action old = this.action;
 				this.action = Action.Pass;
-				if (activeDelegate instanceof NodeBuilder) {
-					final NodeBuilder nb = (NodeBuilder) activeDelegate;
+				final ISExpressionVisitor oldDelegate = activeDelegate;
+				activeDelegate = delegate;
+				
+				if (oldDelegate instanceof NodeBuilder) {
+					final NodeBuilder nb = (NodeBuilder) oldDelegate;
 					final Node node = nb.getBestEffort();
 					if (old == Action.RecursiveEdit) {
 						edit((Seq) node).accept(this);
@@ -175,8 +178,6 @@ public abstract class Editor implements ISExpressionVisitor {
 						edit((Seq) node).accept(delegate);
 					}
 				}
-				
-				activeDelegate = delegate;
 			}
 		}
 	}
