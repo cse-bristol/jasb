@@ -20,7 +20,6 @@ import com.larkery.jasb.sexp.ISExpressionVisitor;
 import com.larkery.jasb.sexp.Invocation;
 import com.larkery.jasb.sexp.Location;
 import com.larkery.jasb.sexp.Node;
-import com.larkery.jasb.sexp.NodeBuilder;
 import com.larkery.jasb.sexp.Seq;
 import com.larkery.jasb.sexp.errors.BasicError;
 import com.larkery.jasb.sexp.errors.IErrorHandler;
@@ -71,32 +70,31 @@ public class Template extends SimpleMacro {
 		final Set<String> templateNames = new HashSet<String>();
 		final ImmutableList.Builder<IMacro> result = ImmutableList.builder();
 
-		input.accept(new Cutout<NodeBuilder>(output) {
-						 @Override
-						protected Optional<NodeBuilder> cut(final String head) {
-							 if (head.equals(TEMPLATE)) {
-								 return Optional.of(NodeBuilder.create());
-							 } else {
-								 return Optional.<NodeBuilder>absent();
-							 }
-						 }
+		input.accept(new Editor(output) {
+			@Override
+			protected Action act(final String name) {
+				if (name.equals(TEMPLATE)) {
+					return Action.SingleEdit;
+				} else {
+					return Action.Pass;
+				}
+			}
+			@Override
+			protected ISExpression edit(final Seq node) {
+				final Optional<Template> t = Template.of(node, errors);
+				 if (t.isPresent()) {
+					 final Template template = t.get();
+					 if (templateNames.contains(template.getName())) {
+						 errors.handle(BasicError.at(node, "Duplicate definition of " + template.getName()));
+					 } else {
+						 templateNames.add(template.getName());
+						 result.add(template);
+					 }
+				 }
+				return ISExpression.EMPTY;
+			}
+		});
 
-						 @Override
-						protected void paste(final NodeBuilder b) {
-							 final Node node = b.getBestEffort();
-							 final Optional<Template> t = Template.of(node, errors);
-							 if (t.isPresent()) {
-								 final Template template = t.get();
-								 if (templateNames.contains(template.getName())) {
-									 errors.handle(BasicError.at(node, "Duplicate definition of " + template.getName()));
-								 } else {
-									 templateNames.add(template.getName());
-									 result.add(template);
-								 }
-							 }
-						 }
-					 });
-		
 		return result.build();
 	}
 
@@ -364,12 +362,12 @@ public class Template extends SimpleMacro {
 	}
 	
 	static interface Args {
-		TransformResult doTransform(Invocation expanded, List<Node> remaining);
+		TransformResult doTransform(final Invocation expanded, final List<Node> remaining);
 		/**
 		 * @return true if this atom is confirmed ok, false if the other args should continue checking it 
 		 */
-		boolean check(Atom atom, String arg) throws TemplateDefinitionException;
-		boolean maybeHandle(Node node, String arg) throws TemplateDefinitionException;
+		boolean check(final Atom atom, final String arg) throws TemplateDefinitionException;
+		boolean maybeHandle(final Node node, final String arg) throws TemplateDefinitionException;
 		boolean maybeHandle(final Node node, final List<Node> parts, final String arg) throws TemplateDefinitionException;
 	}
 	

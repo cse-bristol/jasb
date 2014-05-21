@@ -3,13 +3,11 @@ package com.larkery.jasb.sexp.parse;
 import java.util.List;
 import java.util.Map;
 
-import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableMap;
 import com.larkery.jasb.sexp.Atom;
 import com.larkery.jasb.sexp.ISExpression;
 import com.larkery.jasb.sexp.ISExpressionVisitor;
 import com.larkery.jasb.sexp.Node;
-import com.larkery.jasb.sexp.NodeBuilder;
 import com.larkery.jasb.sexp.Seq;
 import com.larkery.jasb.sexp.errors.BasicError;
 import com.larkery.jasb.sexp.errors.IErrorHandler;
@@ -48,47 +46,37 @@ public class MacroExpander implements IMacroExpander {
 
 		@Override
 		public void accept(final ISExpressionVisitor visitor) {
-			unexpanded.accept(new Cutout<NodeBuilder>(visitor) {
-					@Override
-					protected Optional<NodeBuilder> cut(final String s) {
-						// we don't want to cutout if we are already cutting out
-						if (isAlreadyCuttingOut()) return Optional.absent();
-						
-						if (macros.containsKey(s)) {
-							return Optional.of(NodeBuilder.create());
-						} else {
-							return Optional.absent();
-						}
+			unexpanded.accept(new Editor(visitor) {
+				@Override
+				protected Action act(final String name) {
+					if (macros.containsKey(name)) {
+						return Action.SingleEdit;
+					} else {
+						return Action.Pass;
 					}
-
-					@Override
-					protected void paste(final NodeBuilder nb) {
-						final Node node = nb.getBestEffort();
-
-						if (node instanceof Seq) {
-							final Seq unexpanded = (Seq) node;
+				}
+				@Override
+				protected ISExpression edit(final Seq unexpanded) {
+					if (unexpanded.isEmpty()) {
+						throw new RuntimeException("This should never happen - if pasting part of a macro, it should at least have a macro name");
+					} else {
+						final Node first = unexpanded.get(0);
+						if (first instanceof Atom) {
+							final String s = ((Atom) first).getValue();
 							
-							if (unexpanded.isEmpty()) {
-								throw new RuntimeException("This should never happen - if pasting part of a macro, it should at least have a macro name");
-							} else {
-								final Node first = unexpanded.get(0);
-								if (first instanceof Atom) {
-									final String s = ((Atom) first).getValue();
-									
-									final IMacro macro = macros.get(s);
-									
-									try {
-										macro.transform(unexpanded, MacroExpander.this,  errors).accept(visitor);
-									} catch (final StackOverflowError soe) {
-										errors.handle(BasicError.at(first, "Maximum macro expansion depth reached within " + s));
-									}
-								}
+							final IMacro macro = macros.get(s);
+							
+							try {
+								return macro.transform(unexpanded, MacroExpander.this,  errors);
+							} catch (final StackOverflowError soe) {
+								errors.handle(BasicError.at(first, "Maximum macro expansion depth reached within " + s));
 							}
-						} else {
-							throw new RuntimeException("This should never happen - if pasting a macro, we should see a Seq");
 						}
 					}
-				});
+					
+					return ISExpression.EMPTY;
+				}
+			});
 		}
 	}
 }

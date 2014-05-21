@@ -15,7 +15,6 @@ import java.util.Stack;
 
 import org.apache.commons.io.IOUtils;
 
-import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableMap;
 import com.larkery.jasb.sexp.Atom;
 import com.larkery.jasb.sexp.Comment;
@@ -23,7 +22,6 @@ import com.larkery.jasb.sexp.INodeVisitor;
 import com.larkery.jasb.sexp.ISExpression;
 import com.larkery.jasb.sexp.ISExpressionVisitor;
 import com.larkery.jasb.sexp.Node;
-import com.larkery.jasb.sexp.NodeBuilder;
 import com.larkery.jasb.sexp.Seq;
 import com.larkery.jasb.sexp.errors.BasicError;
 import com.larkery.jasb.sexp.errors.IErrorHandler;
@@ -203,7 +201,7 @@ public class Includer {
 		};
 	}
 	
-	static class IncludingVisitor extends Cutout<NodeBuilder> {
+	static class IncludingVisitor extends Editor {
 		private final IResolver resolver;
 		private final IErrorHandler errors;
 		private final Stack<URI> stack = new Stack<>();
@@ -213,55 +211,65 @@ public class Includer {
 			this.resolver = resolver;
 			this.errors = errors;
 		}
-
+		
 		@Override
-		protected Optional<NodeBuilder> cut(final String head) {
-			if (head.equals("include") || head.equals("no-include")) {
-				return Optional.of(NodeBuilder.create());
-			} else {
-				return Optional.absent();
+		protected Action act(final String name) {
+			switch (name) {
+			case "include":
+				return Action.RecursiveEdit;
+			case "no-include":
+				if (stack.isEmpty()) {
+					return Action.RecursiveEdit;
+				} else {
+					return Action.Remove;
+				}
+			default:
+				return Action.Pass;
 			}
 		}
 		
 		@Override
-		protected void paste(final NodeBuilder q) {
-			final Node node = q.getBestEffort();
-			try {
-				if (node instanceof Seq) {
-					final Seq include = (Seq) node;
-					
-					final Atom head = (Atom) include.getHead();
-					if (head.getValue().equals("no-include")) {
-						if (stack.isEmpty()) {
-							for (final Node n : include.getTail()) {
-								n.accept(this);
-							}
+		protected ISExpression edit(final Seq cut) {
+			final Atom head = (Atom) cut.getHead();
+			if (head.getValue().equals("no-include")) {
+				return new ISExpression() {
+					@Override
+					public void accept(final ISExpressionVisitor visitor) {
+						for (final Node n : cut.getTail()) {
+							n.accept(visitor);
 						}
-						
-					} else {
-						final URI uri = resolver.convert(include, errors);
-						
-						if (stack.contains(uri)) {
-							errors.handle(BasicError.at(include, uri + " recursively includes itself"));
-						} else {
-							final ILocationReader reader = resolver.resolve(uri, errors);
-							final ISExpression real = 
-								Parser.source(include.getLocation(),
-											  reader.getLocation(), 
-											  reader.getReader(), 
-											  errors);
-							stack.push(uri);
-							real.accept(this);
-							stack.pop();
-						}
-						locate(include.getEndLocation());
 					}
+				};
+			} else {
+				try {
+					final URI uri = resolver.convert(cut, errors);
+					
+					if (stack.contains(uri)) {
+						errors.handle(BasicError.at(cut, uri + " recursively includes itself"));
+					} else {
+						final ILocationReader reader = resolver.resolve(uri, errors);
+						final ISExpression real = 
+							Parser.source(cut.getLocation(),
+										  reader.getLocation(), 
+										  reader.getReader(), 
+										  errors);
+						
+						// this is a bit hacky
+						stack.push(uri);
+						real.accept(this);
+						stack.pop();
+					}
+					locate(cut.getEndLocation());
+					
+				} catch (final ResolutionException e) {
+					errors.handle(BasicError.at(cut, "Unable to resolve include - " + e.getMessage()));
 				}
-			} catch (final ResolutionException e) {
-				errors.handle(BasicError.at(node, "Unable to resolve include - " + e.getMessage()));
 			}
+			
+			return ISExpression.EMPTY;
 		}
 	}
+		
 
 	public static final URI root = URI.create("root:root");
 	
