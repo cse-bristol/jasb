@@ -905,6 +905,17 @@ class InvocationReaderLoader<T> extends ClassLoader implements Opcodes {
 			// stack = list from target,
 
 			mv.visitVarInsn(ALOAD, 2);
+			// invoke list.clear()
+			mv.visitMethodInsn(INVOKEINTERFACE, 
+					Type.getInternalName(List.class),
+					"clear", 
+					Type.getMethodDescriptor(
+							Type.getType(Void.TYPE),
+							new Type[] {}
+							));
+			// stack = list from target
+			
+			mv.visitVarInsn(ALOAD, 2);
 			mv.visitVarInsn(ALOAD, 1);
 			// stack = list from target, result list
 			// listFromTarget.addAll(resultList)
