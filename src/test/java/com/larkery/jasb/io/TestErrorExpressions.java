@@ -10,6 +10,7 @@ import org.junit.Test;
 import com.google.common.collect.ImmutableList;
 import com.larkery.jasb.io.testmodel.Arithmetic;
 import com.larkery.jasb.sexp.errors.IErrorHandler.IError;
+import com.larkery.jasb.sexp.errors.JasbErrorException;
 import com.larkery.jasb.sexp.parse.Parser;
 
 public class TestErrorExpressions extends JasbIOTest {
@@ -18,8 +19,8 @@ public class TestErrorExpressions extends JasbIOTest {
 			final String testName,
 			final String source) {
 		final ErrorCollector errors = new ErrorCollector();
-		
-		context.getReader().read(
+		try {
+			context.getReader().read(
 				out,
 				Parser.source(
 						URI.create("test:" + testName), 
@@ -27,7 +28,9 @@ public class TestErrorExpressions extends JasbIOTest {
 						errors),
 						errors
 				);
-		
+		} catch (final JasbErrorException jee) {
+			return ImmutableList.<IError>builder().addAll(errors.errors).addAll(jee.getErrors()).build();
+		}
 		return ImmutableList.copyOf(errors.errors);
 	}
 
@@ -63,6 +66,6 @@ public class TestErrorExpressions extends JasbIOTest {
 				runWithErrors(Arithmetic.class, "wrongBracketsProduceErrors2",
 						"())");
 		
-		Assert.assertEquals("There should be two errors (one about brackets and one from the reader)", 2, errors.size());
+		Assert.assertEquals("There should be one error, because the bad bracket has broken everything", 1, errors.size());
 	}
 }

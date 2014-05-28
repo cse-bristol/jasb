@@ -14,7 +14,6 @@ import com.larkery.jasb.sexp.ISExpression;
 import com.larkery.jasb.sexp.ISExpressionVisitor;
 import com.larkery.jasb.sexp.Location;
 import com.larkery.jasb.sexp.NodeBuilder;
-import com.larkery.jasb.sexp.PrintVisitor;
 import com.larkery.jasb.sexp.errors.IErrorHandler;
 import com.larkery.jasb.sexp.errors.IErrorHandler.IError;
 
@@ -136,8 +135,6 @@ public class VisitingTest {
 					}
 				});
 		} catch (final Throwable e) {
-				Parser.source(createTestURI(name), new StringReader(src), IErrorHandler.SLF4J).accept(new PrintVisitor(System.out));
-			
 			throw e;
 		}
 	}

@@ -1,7 +1,7 @@
 package com.larkery.jasb.sexp;
 
 public enum Delim {
-	Paren('(', ')'), Bracket('[', ']');//, Brace('{', '}');
+	Paren('(', ')'), Bracket('[', ']');
 
 	public final char open, close;
 

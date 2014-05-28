@@ -55,6 +55,10 @@ public class BasicError implements IError {
 	public static IError at(final Location location, final String message) {
 		return new BasicError(ImmutableSet.<Location>of(location), ImmutableSet.<Node>of(), message, Type.ERROR);
 	}
+	
+	public static IError atSeveral(final String message, final Location... locations) {
+		return new BasicError(ImmutableSet.<Location>copyOf(locations), ImmutableSet.<Node>of(), message, Type.ERROR);
+	}
 
 	@Override
 	public String toString() {
