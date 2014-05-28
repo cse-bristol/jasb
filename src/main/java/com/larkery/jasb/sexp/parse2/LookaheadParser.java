@@ -29,8 +29,8 @@ abstract class LookaheadParser {
 		final Lexeme eme = shift();
 		if (eme == null || eme.value.equals(string) == false) {
 			throw new JasbErrorException(
-					BasicError.at(eme.location, String.format("expected %s, but was %s",
-							string, eme)));
+					BasicError.at(eme == null ? lexer.location() : eme.location, String.format("expected %s, but was %s",
+							string, eme == null ? "end-of-file" : eme.toString())));
 		}
 	}
 	

@@ -3,6 +3,7 @@ package com.larkery.jasb.sexp.parse2;
 import java.util.LinkedList;
 
 import com.google.common.base.Optional;
+import com.larkery.jasb.sexp.Location;
 import com.larkery.jasb.sexp.parse2.Lexer.Lexeme;
 
 public class LookaheadLexer {
@@ -41,5 +42,9 @@ public class LookaheadLexer {
 	public void setSeparateColons(final boolean b) {
 		// but wait what if we looked ahead? we need to re-cut those bits
 		delegate.setSeparateColons(b);
+	}
+
+	public Location location() {
+		return delegate.location();
 	}
 }

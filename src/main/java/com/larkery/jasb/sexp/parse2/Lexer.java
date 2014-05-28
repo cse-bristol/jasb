@@ -223,7 +223,7 @@ public class Lexer {
 		}
 	}
 	
-	private Location location() {
+	public Location location() {
 		if (sourceLocation != null) {
 			return sourceLocation.appending(uri, line, column);
 		} else {

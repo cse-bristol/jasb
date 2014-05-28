@@ -96,6 +96,15 @@ public class TestSimpleExpressions extends JasbIOTest {
 	}
 	
 	@Test
+	public void readsListOfAtomsInfix() throws InterruptedException, ExecutionException {
+		final ListOfStrings node = read("{strings(values: hello)}", ListOfStrings.class);
+		Assert.assertEquals(ImmutableList.of("hello"), node.getStrings());
+		
+		final ListOfStrings node2 = read("{strings(values: [hello, world])}", ListOfStrings.class);
+		Assert.assertEquals(ImmutableList.of("hello", "world"), node2.getStrings());
+	}
+	
+	@Test
 	public void readsIdentitiesAndResolvesThem() throws InterruptedException, ExecutionException {
 		final Times read = read("(* (value name:a of:1) #a #b #a (value name:b of:1))", Times.class);
 		
@@ -107,10 +116,21 @@ public class TestSimpleExpressions extends JasbIOTest {
 		Assert.assertSame(read.terms.get(1), read.terms.get(3));
 		Assert.assertSame(read.terms.get(2), read.terms.get(4));
 	}
-
+	
 	@Test
 	public void readsListsOfListsOfStringsInRemainder() throws InterruptedException, ExecutionException {
 		final ListOfListsOfString read = read("(listoflists [x y z] [a b c] [d e f])", ListOfListsOfString.class);
+
+		Assert.assertEquals(ImmutableList.of("x", "y", "z"), read.getFirst());
+
+		Assert.assertEquals(ImmutableList.of(ImmutableList.of("a", "b", "c"),
+											 ImmutableList.of("d", "e", "f")),
+							read.getContents());
+	}
+	
+	@Test
+	public void readsListsOfListsOfStringsInRemainderInInfix() throws InterruptedException, ExecutionException {
+		final ListOfListsOfString read = read("{listoflists([x, y, z], [a, b, c], [d, e, f])}", ListOfListsOfString.class);
 
 		Assert.assertEquals(ImmutableList.of("x", "y", "z"), read.getFirst());
 
