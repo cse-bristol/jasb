@@ -314,7 +314,11 @@ class Reader implements IReader {
 		Switcher<T> out = (Switcher<T>) switchers.get(clazz);
 		
 		if (out == null) {
-			out = new Switcher<>(clazz, createReaders(clazz), createAtomReader(clazz));
+			out = new Switcher<>(
+					clazz, 
+					createReaders(clazz), 
+					createAtomReader(clazz)
+					);
 			switchers.put(clazz, out);
 		}
 		
@@ -344,11 +348,19 @@ class Reader implements IReader {
 
 	private <T> MultiAtomReader<T> createAtomReader(final Class<T> clazz) {
 		final ImmutableSet.Builder<IAtomReader> readers = ImmutableSet.builder();
+		
+		final ImmutableSet.Builder<Class<?>> fallbackClasses = ImmutableSet.builder();
+		for (final Class<?> sub : boundClasses) {
+			if (clazz.isAssignableFrom(sub)) {
+				fallbackClasses.add(sub);
+			}
+		}
+		
 		for (final IAtomReader reader : atomReaders) {
 			if (reader.canReadTo(clazz)) {
 				readers.add(reader);
 			}
 		}
-		return new MultiAtomReader<T>(clazz, readers.build());
+		return new MultiAtomReader<T>(clazz, readers.build(), fallbackClasses.build());
 	}
 }

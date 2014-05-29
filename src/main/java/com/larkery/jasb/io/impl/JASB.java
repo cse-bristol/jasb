@@ -36,8 +36,8 @@ public class JASB {
 				}
 				));
 		
-		this.reader = new Reader(concrete, atoms);
 		this.model = new Model(concrete, atoms);
+		this.reader = new Reader(concrete, atoms);
 		this.writer = new Writer(atoms);
 		
 		for (final Class<?> clazz : concrete) {
@@ -45,6 +45,7 @@ public class JASB {
 				classesByName.put(clazz.getAnnotation(Bind.class).value(), clazz);
 			}
 		}
+		
 		this.classesByName = classesByName.build();
 	}
 	
