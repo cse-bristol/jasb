@@ -162,7 +162,9 @@ public class Lexer {
 		final StringBuffer sb = new StringBuffer();
 		Location where = null;
 		int i;
+		int bytesRead = 0;
 		while ((i = read()) >= 0) {
+			bytesRead++;
 			if (where == null && !CharMatcher.WHITESPACE.matches((char) i)) {
 				where = location();
 			}
@@ -196,6 +198,7 @@ public class Lexer {
 			case Quoted:
 				if (i == '"') {
 					state = LexState.None;
+					return new Lexeme(where, sb.toString(), readComment(), false);
 				} else if (i == '\\') {
 					state = LexState.Escaped;
 				} else {
@@ -211,16 +214,12 @@ public class Lexer {
 			}
 		}
 
+		if (bytesRead == 0) return null;
 		return new Lexeme(where, sb.toString(), readComment(), false);
 	}
 	
 	private void advance() {
-		final Lexeme s = readChunk();
-		if (s.value.isEmpty() && !s.isComment && !s.comment.isPresent()) {
-			next = null;
-		} else {
-			next = s;
-		}
+		next = readChunk();
 	}
 	
 	public Location location() {

@@ -109,4 +109,9 @@ public class LexerTest {
 	public void commentedLines() {
 		check("(;asdf qwer\n;bibble\n)", e(s("(", "asdf qwer", "bibble"), s(")")));
 	}
+	
+	@Test
+	public void emptyString() {
+		check("thing:\"\"", e(s("thing:"), s("")));
+	}
 }
