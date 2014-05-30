@@ -11,8 +11,8 @@ import org.pojomatic.annotations.AutoProperty;
 import org.pojomatic.annotations.PojomaticPolicy;
 import org.pojomatic.annotations.Property;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.base.Optional;
+import com.google.common.collect.ImmutableList;
 
 
 @AutoProperty(autoDetect=AutoDetectPolicy.NONE)
@@ -137,7 +137,7 @@ public class Seq extends Node implements Iterable<Node> {
 		}
 		
 		public Builder add(final String atom) {
-			return add(Atom.create(atom));
+			return add(Atom.create(atom, start));
 		}
 		
 		public Builder add(final String atom, final Node value) {
