@@ -8,7 +8,7 @@ import com.google.common.base.CharMatcher;
 import com.larkery.jasb.sexp.Location.Position;
 
 public class BetterPrinter implements ISExpressionVisitor, AutoCloseable {
-	private BufferedWriter output;
+	private final BufferedWriter output;
 	
 	private int indentation = 0;
 	private Location whereAmI = null;
@@ -17,20 +17,20 @@ public class BetterPrinter implements ISExpressionVisitor, AutoCloseable {
 	private int column = 1;
 	private int line = 1;
 	
-	public BetterPrinter(Writer output) {
+	public BetterPrinter(final Writer output) {
 		this.output = new BufferedWriter(output);
 	}
 
 	public static void print(final ISExpression expression, final Writer output) {
 		try (BetterPrinter p = new BetterPrinter(output)) {
 			expression.accept(p);
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			throw new RuntimeException(e.getMessage(), e);
 		}
 	}
 
 	@Override
-	public void locate(Location loc) {
+	public void locate(final Location loc) {
 		toShift = loc;
 	}
 
@@ -38,7 +38,7 @@ public class BetterPrinter implements ISExpressionVisitor, AutoCloseable {
 		shift(toShift);
 	}
 	
-	private void shift(Location loc) {	
+	private void shift(final Location loc) {	
 		if (whereAmI != null && loc != null) {
 			if (!(loc.positions.isEmpty() || whereAmI.positions.isEmpty())) {
 				final Position prevPosition = whereAmI.getTailPosition();
@@ -64,14 +64,14 @@ public class BetterPrinter implements ISExpressionVisitor, AutoCloseable {
 		whereAmI = loc;
 	}
 
-	private void shiftColumn(int column) {
+	private void shiftColumn(final int column) {
 		try {
 			while (this.column < column) {
 				this.column++;
 				output.write(" ");
+				inSpace = true;
 			}
-			inSpace = true;
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			throw new RuntimeException(e.getMessage(), e);
 		}
 	}
@@ -85,16 +85,16 @@ public class BetterPrinter implements ISExpressionVisitor, AutoCloseable {
 					output.write("\t");
 				}
 				j--;
+				inSpace = true;
 			}
-			inSpace = true;
 			column = 1;
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			throw new RuntimeException(e.getMessage(), e);
 		}
 	}
 
 	@Override
-	public void open(Delim delimeter) {
+	public void open(final Delim delimeter) {
 		doShift();
 		write(""+delimeter.open);
 		indentation++;
@@ -126,11 +126,14 @@ public class BetterPrinter implements ISExpressionVisitor, AutoCloseable {
 	private static final CharMatcher END_TOKEN = CharMatcher.WHITESPACE.and(
 			CharMatcher.anyOf(":()[]"));
 	
-	private void write(String string) {
+	private void write(final String string) {
 		try {
 			if (!inSpace) {
-				shiftLine(1);
-				line++;
+				if (column > 100) {
+					shiftLine(1);
+				} else {
+					shiftColumn(1);
+				}
 			}
 			
 			if (string.contains("\n") || string.contains("\r")) {
@@ -143,25 +146,25 @@ public class BetterPrinter implements ISExpressionVisitor, AutoCloseable {
 			}
 			
 			inSpace = END_TOKEN.matches(string.charAt(string.length()-1));
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			throw new RuntimeException(e.getMessage(), e);
 		}
 	}
 
 	@Override
-	public void atom(String string) {
+	public void atom(final String string) {
 		doShift();
 		write(Atom.escape(string));
 	}
 
 	@Override
-	public void comment(String text) {
+	public void comment(final String text) {
 		doShift();
 		write(";" + text);
 	}
 
 	@Override
-	public void close(Delim delimeter) {
+	public void close(final Delim delimeter) {
 		indentation--;
 		doShift();
 		write(""+delimeter.close);
