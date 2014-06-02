@@ -2,6 +2,7 @@ package com.larkery.jasb.sexp;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
+import java.io.StringWriter;
 import java.io.Writer;
 
 import com.google.common.base.CharMatcher;
@@ -15,6 +16,7 @@ public class BetterPrinter implements ISExpressionVisitor, AutoCloseable {
 	private Location toShift = null;
 	private boolean inSpace = true;
 	private int column = 1;
+	private int columnDelta = 0;
 	private int line = 1;
 	
 	public BetterPrinter(final Writer output) {
@@ -46,18 +48,21 @@ public class BetterPrinter implements ISExpressionVisitor, AutoCloseable {
 				
 				if (prevPosition.name.equals(curPosition.name)) {
 					if (line == curPosition.line) {
-						shiftColumn(curPosition.column);
+						shiftColumn(curPosition.column - columnDelta);
 					} else if (line < curPosition.line) {
 						shiftLine(curPosition.line - line);
+						columnDelta = curPosition.column;
 					} else {
 						shiftLine(1);
+						columnDelta = curPosition.column;
 					}
 				} else {
 					shiftLine(1);
+					columnDelta = curPosition.column;
 				}
 				
 				line = curPosition.line;
-				column = curPosition.column;
+//				column = curPosition.column;
 			}
 		}
 		
@@ -86,8 +91,8 @@ public class BetterPrinter implements ISExpressionVisitor, AutoCloseable {
 				}
 				j--;
 				inSpace = true;
+				column = 1;
 			}
-			column = 1;
 		} catch (final IOException e) {
 			throw new RuntimeException(e.getMessage(), e);
 		}
@@ -123,16 +128,20 @@ public class BetterPrinter implements ISExpressionVisitor, AutoCloseable {
 		return c;
 	}
 	
-	private static final CharMatcher END_TOKEN = CharMatcher.WHITESPACE.and(
+	private static final CharMatcher END_TOKEN = CharMatcher.WHITESPACE.or(
 			CharMatcher.anyOf(":()[]"));
+	
+	private static final CharMatcher NO_PRESPACE_TOKEN = CharMatcher.WHITESPACE.or(
+			CharMatcher.anyOf(")]"));
+	
 	
 	private void write(final String string) {
 		try {
-			if (!inSpace) {
+			if (!inSpace && !NO_PRESPACE_TOKEN.matches(string.charAt(0))) {
 				if (column > 100) {
 					shiftLine(1);
 				} else {
-					shiftColumn(1);
+					shiftColumn(this.column + 1);
 				}
 			}
 			
@@ -173,5 +182,11 @@ public class BetterPrinter implements ISExpressionVisitor, AutoCloseable {
 	@Override
 	public void close() throws IOException {
 		this.output.close();
+	}
+
+	public static String print(final ISExpression expand) {
+		final StringWriter sw = new StringWriter();
+		print(expand, sw);
+		return sw.toString();
 	}
 }
