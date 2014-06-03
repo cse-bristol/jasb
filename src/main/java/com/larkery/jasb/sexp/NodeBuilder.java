@@ -24,7 +24,7 @@ public class NodeBuilder implements ISExpressionVisitor {
 	}
 	
 	public static NodeBuilder withoutComments() {
-		return new NodeBuilder(true);
+		return new NodeBuilder(false);
 	}
 	
 	@Override

@@ -119,14 +119,21 @@ public class Includer {
 		URI addr;
 		
 		/**
-		 * A visitor which pulls out includes and stucks them on the queue to process
+		 * Holds a single boolean, which indicates whether we want to recurse into no-includes when
+		 * looking for includes to stick in the output.
+		 */
+		final boolean[] shouldLookWithinNoInclude = new boolean[] {true};
+		
+		/**
+		 * A visitor which pulls out includes and sticks them on the queue to process
 		 */
 		final INodeVisitor addressCollector = new INodeVisitor(){
 			@Override
 			public boolean seq(final Seq seq) {
 				if (seq.size() >= 1) {
 					if (seq.getHead() instanceof Atom) {
-						if (((Atom)seq.getHead()).getValue().equals("include")) {
+						final String nameOfHead = ((Atom)seq.getHead()).getValue(); 
+						if (nameOfHead.equals("include")) {
 							URI addr;
 							try {
 								addr = resolver.convert(seq, errors);
@@ -141,6 +148,8 @@ public class Includer {
 								addrs.push(addr);
 							}
 							return false;
+						} else if (nameOfHead.equals("no-include")) {
+							return shouldLookWithinNoInclude[0];
 						}
 					}
 				}
@@ -167,6 +176,8 @@ public class Includer {
 				for (final Node n : nodes) {
 					n.accept(addressCollector);
 				}
+				
+				shouldLookWithinNoInclude[0] = false;
 			} catch (final IOException|ResolutionException|UnsupportedOperationException|UnfinishedExpressionException e) {
 				errors.handle(BasicError.nowhere(e.getMessage()));
 			}
