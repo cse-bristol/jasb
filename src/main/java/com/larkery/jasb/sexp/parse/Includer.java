@@ -22,6 +22,7 @@ import com.larkery.jasb.sexp.Comment;
 import com.larkery.jasb.sexp.INodeVisitor;
 import com.larkery.jasb.sexp.ISExpression;
 import com.larkery.jasb.sexp.ISExpressionVisitor;
+import com.larkery.jasb.sexp.Location;
 import com.larkery.jasb.sexp.Node;
 import com.larkery.jasb.sexp.Seq;
 import com.larkery.jasb.sexp.errors.BasicError;
@@ -114,8 +115,10 @@ public class Includer {
 		final HashMap<URI, String> builder = new HashMap<>();
 		
 		final Deque<URI> addrs = new LinkedList<>();		
+		final Deque<Location> includeLocation = new LinkedList<>();
 		
 		addrs.add(root);
+		includeLocation.add(null);
 		URI addr;
 		
 		/**
@@ -146,6 +149,7 @@ public class Includer {
 							if (builder.containsKey(addr)) {
 							} else {
 								addrs.push(addr);
+								includeLocation.push(seq.getLocation());
 							}
 							return false;
 						} else if (nameOfHead.equals("no-include")) {
@@ -166,12 +170,13 @@ public class Includer {
 		
 		while ((addr = addrs.poll()) != null) {
 			try {
+				final Location iloc = includeLocation.poll();
 				final ILocationReader loc = resolver.resolve(addr, errors);
 				String stringValue;
 				stringValue = IOUtils.toString(loc.getReader());
 				builder.put(addr, stringValue);
 		
-				final List<Node> nodes = Node.copyAll(Parser.source(loc.getLocation(), new StringReader(stringValue), errors));
+				final List<Node> nodes = Node.copyAll(Parser.source(iloc, loc.getLocation(), new StringReader(stringValue), errors));
 			
 				for (final Node n : nodes) {
 					n.accept(addressCollector);
