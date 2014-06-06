@@ -66,15 +66,19 @@ public abstract class SimpleMacro implements IMacro {
 		if (inv.remainder.size() < getMinimumArgumentCount()) {
 			errors.handle(BasicError.at(inv.node, 
 										inv.name + " expects at least " + 
-										getMinimumArgumentCount() + " unnamed arguments"));
+										getMinimumArgumentCount() + unnamedArgs(getMinimumArgumentCount())));
 			valid = false;
 		}
 
 		if (inv.remainder.size() > getMaximumArgumentCount()) {
-			errors.handle(BasicError.at(inv.remainder.get(getMaximumArgumentCount()), inv.name + " expects at most " + getMinimumArgumentCount() + " unnamed arguments, but there are " + inv.remainder.size()));
+			errors.handle(BasicError.at(inv.remainder.get(getMaximumArgumentCount()), inv.name + " expects at most " + getMaximumArgumentCount() + unnamedArgs(getMaximumArgumentCount()) + ", but there are " + inv.remainder.size()));
 			valid = false;
 		}
 
 		return valid;
+	}
+	
+	private String unnamedArgs(final int count) {
+		return count == 1 ? " unnamed argument" : " unnamed arguments";
 	}
 }
