@@ -10,13 +10,15 @@ import com.google.common.base.CharMatcher;
 
 @AutoProperty(autoDetect=AutoDetectPolicy.NONE)
 public class Atom extends Node {
+	private static final CharMatcher ESCAPE_PLEASE = CharMatcher.WHITESPACE.or(CharMatcher.anyOf("()[]{},"));
 	private final String value;
 	private final boolean quoted;
 
 	Atom(final Location location, final String value) {
 		super(location);
 		this.value = value;
-		this.quoted = CharMatcher.WHITESPACE.matchesAnyOf(value) || value.isEmpty();
+		this.quoted = ESCAPE_PLEASE.matchesAnyOf(value) || value.isEmpty() ||
+				value.substring(0, value.length()-1).contains(":");
 	}
 
 	public static String escape(final String s) {

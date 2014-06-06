@@ -22,6 +22,7 @@ import com.larkery.jasb.sexp.Comment;
 import com.larkery.jasb.sexp.INodeVisitor;
 import com.larkery.jasb.sexp.ISExpression;
 import com.larkery.jasb.sexp.ISExpressionVisitor;
+import com.larkery.jasb.sexp.Location;
 import com.larkery.jasb.sexp.Node;
 import com.larkery.jasb.sexp.Seq;
 import com.larkery.jasb.sexp.errors.BasicError;
@@ -114,19 +115,28 @@ public class Includer {
 		final HashMap<URI, String> builder = new HashMap<>();
 		
 		final Deque<URI> addrs = new LinkedList<>();		
+		final Deque<Location> includeLocation = new LinkedList<>();
 		
 		addrs.add(root);
+		includeLocation.add(null);
 		URI addr;
 		
 		/**
-		 * A visitor which pulls out includes and stucks them on the queue to process
+		 * Holds a single boolean, which indicates whether we want to recurse into no-includes when
+		 * looking for includes to stick in the output.
+		 */
+		final boolean[] shouldLookWithinNoInclude = new boolean[] {true};
+		
+		/**
+		 * A visitor which pulls out includes and sticks them on the queue to process
 		 */
 		final INodeVisitor addressCollector = new INodeVisitor(){
 			@Override
 			public boolean seq(final Seq seq) {
 				if (seq.size() >= 1) {
 					if (seq.getHead() instanceof Atom) {
-						if (((Atom)seq.getHead()).getValue().equals("include")) {
+						final String nameOfHead = ((Atom)seq.getHead()).getValue(); 
+						if (nameOfHead.equals("include")) {
 							URI addr;
 							try {
 								addr = resolver.convert(seq, errors);
@@ -139,8 +149,11 @@ public class Includer {
 							if (builder.containsKey(addr)) {
 							} else {
 								addrs.push(addr);
+								includeLocation.push(seq.getLocation());
 							}
 							return false;
+						} else if (nameOfHead.equals("no-include")) {
+							return shouldLookWithinNoInclude[0];
 						}
 					}
 				}
@@ -157,16 +170,19 @@ public class Includer {
 		
 		while ((addr = addrs.poll()) != null) {
 			try {
+				final Location iloc = includeLocation.poll();
 				final ILocationReader loc = resolver.resolve(addr, errors);
 				String stringValue;
 				stringValue = IOUtils.toString(loc.getReader());
 				builder.put(addr, stringValue);
 		
-				final List<Node> nodes = Node.copyAll(Parser.source(loc.getLocation(), new StringReader(stringValue), errors));
+				final List<Node> nodes = Node.copyAll(Parser.source(iloc, loc.getLocation(), new StringReader(stringValue), errors));
 			
 				for (final Node n : nodes) {
 					n.accept(addressCollector);
 				}
+				
+				shouldLookWithinNoInclude[0] = false;
 			} catch (final IOException|ResolutionException|UnsupportedOperationException|UnfinishedExpressionException e) {
 				errors.handle(BasicError.nowhere(e.getMessage()));
 			}
