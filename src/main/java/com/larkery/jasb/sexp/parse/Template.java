@@ -520,13 +520,14 @@ public class Template extends SimpleMacro {
 			final Map<String, List<Node>> numbered = new HashMap<String, List<Node>>();
 			putAll(numbered, defaults);
 			
-			for (Integer i = 0; i < count && i < remaining.size(); i++) {
+			for (int i = 0; i < count && i < remaining.size(); i++) {
 				numbered.put(
 						Integer.toString(i + 1), /* Arguments are 1-indexed, lists are 0-indexed. */ 
 						ImmutableList.of(remaining.get(i)));
 			}
 			
-			return new TransformResult(numbered, remaining.subList(count, remaining.size()));
+			return new TransformResult(numbered, remaining.subList(
+					Math.min(count, remaining.size()), remaining.size()));
 		}
 
 		@Override

@@ -23,26 +23,21 @@ public abstract class SimpleMacro implements IMacro {
 	
 	@Override
 	public ISExpression transform(
-			final Seq input,
+			final Seq unexpanded,
 			final IMacroExpander expander, 
 			final IErrorHandler errors) {
-		if (input instanceof Seq) {
-			final Seq unexpanded = input;
-			
-			if (unexpanded.isEmpty()) {
-				throw new RuntimeException("This should never happen - if pasting part of a macro, it should at least have a macro name");
-			} else {
+		
+		if (unexpanded.isEmpty()) {
+			throw new RuntimeException("This should never happen - if pasting part of a macro, it should at least have a macro name");
+		} else {
 
-				final Invocation inv = Invocation.of(unexpanded, errors);
+			final Invocation inv = Invocation.of(unexpanded, errors);
 
-				if (inv != null) {
-					if (validateMacroParameters(inv, errors)) {
-						return expandResult(expander, doTransform(inv, expander, errors));
-					}
+			if (inv != null) {
+				if (validateMacroParameters(inv, errors)) {
+					return expandResult(expander, doTransform(inv, expander, errors));
 				}
 			}
-		} else {
-			throw new RuntimeException("This should never happen - if pasting a macro, we should see a Seq");
 		}
 		
 		return ISExpression.EMPTY;
