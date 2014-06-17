@@ -1,6 +1,7 @@
 package com.larkery.jasb.io.impl;
 
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Set;
 
 import com.google.common.base.Optional;
@@ -8,6 +9,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.larkery.jasb.bind.AfterReading;
 import com.larkery.jasb.bind.Bind;
 import com.larkery.jasb.io.IAtomReader;
 import com.larkery.jasb.io.IReadContext;
@@ -51,7 +53,15 @@ class MultiAtomReader<T> {
 		
 		if (fallbacks.containsKey(atom.getValue())) {
 			try {
-				return Futures.immediateFuture(clazz.cast(fallbacks.get(atom.getValue()).getConstructor().newInstance()));
+				final T fallbackValue = clazz.cast(fallbacks.get(atom.getValue()).getConstructor().newInstance());
+				for (final Method m : clazz.getMethods()) {
+					if (m.isAnnotationPresent(AfterReading.class)) {
+						if (m.getParameterTypes().length == 1 && m.getParameterTypes()[0].isAssignableFrom(Atom.class)) {
+							m.invoke(fallbackValue, atom);
+						}
+					}
+				}
+				return Futures.immediateFuture(fallbackValue);
 			} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException e) {
 			}
 		}
