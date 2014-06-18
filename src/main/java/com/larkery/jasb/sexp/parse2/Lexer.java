@@ -245,4 +245,8 @@ public class Lexer {
 	public void setSeparateColons(final boolean b) {
 		this.separateColons = b;
 	}
+	
+	public boolean isSeparateColons() {
+		return separateColons;
+	}
 }

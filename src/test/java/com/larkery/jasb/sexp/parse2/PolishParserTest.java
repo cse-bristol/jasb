@@ -30,4 +30,9 @@ public class PolishParserTest {
 	public void withInfixInside() throws Exception {
 		check("(hello {1 + 2 * 3})", "(hello (+ 1 (* 2 3)))");
 	}
+	
+	@Test
+	public void withInfixInsideAndColonsOutside() throws Exception {
+		check("(hello a:{1 + 2 * 3} b:{9})", "(hello a: (+ 1 (* 2 3)) b: 9)");
+	}
 }
