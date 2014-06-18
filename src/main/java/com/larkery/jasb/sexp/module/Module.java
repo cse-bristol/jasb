@@ -38,7 +38,7 @@ public class Module implements IMacro {
 		
 		final List<Node> parts = input.exceptComments();
 		if (parts.size() < 2 || !(parts.get(1) instanceof Atom)) {
-			errors.handle(
+			errors.error(
 					parts.size() < 2 ? input : parts.get(1)
 					, "a module must have a name as its first argument");
 			return SExpressions.empty();
@@ -55,23 +55,23 @@ public class Module implements IMacro {
 			if (n instanceof Seq) {
 				final Seq s = (Seq) n;
 				if (s.getDelimeter() != Delim.Paren) {
-					errors.handle(n, NOT_A_TEMPLATE);
+					errors.error(n, NOT_A_TEMPLATE);
 					return SExpressions.empty();
 				}
 				final List<Node> children = s.exceptComments();
 				
 				if (children.isEmpty() || !(children.get(0) instanceof Atom) || !((Atom)children.get(0)).getValue().equals("template")) {
-					errors.handle(n, NOT_A_TEMPLATE);
+					errors.error(n, NOT_A_TEMPLATE);
 					return SExpressions.empty();
 				}
 				
 				if (children.size()<2 || !(children.get(1) instanceof Atom)) {
-					errors.handle(n, NOT_A_TEMPLATE);
+					errors.error(n, NOT_A_TEMPLATE);
 					return SExpressions.empty();
 				}
 				
 				if (children.size()<3 || !(children.get(2) instanceof Seq)) {
-					errors.handle(n, NOT_A_TEMPLATE);
+					errors.error(n, NOT_A_TEMPLATE);
 					return SExpressions.empty();
 				}
 				
@@ -79,7 +79,7 @@ public class Module implements IMacro {
 				
 				templateNames.add(new Renamer(name, moduleName + "/" + name));
 			} else {
-				errors.handle(n, NOT_A_TEMPLATE);
+				errors.error(n, NOT_A_TEMPLATE);
 				return SExpressions.empty();
 			}
 		}

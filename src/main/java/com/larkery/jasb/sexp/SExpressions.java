@@ -41,7 +41,7 @@ public class SExpressions {
 		return new ISExpression() {
 			@Override
 			public void accept(final ISExpressionVisitor visitor) {
-				errors.handle(input, valueOf);
+				errors.error(input, valueOf);
 			}
 		};
 	}

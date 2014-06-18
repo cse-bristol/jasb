@@ -55,12 +55,12 @@ class Template extends SimpleMacro {
 				final Optional<ISExpression> defaultValue,
 				final IErrorHandler errors) {
 			if (!externalName.startsWith("@")) {
-				errors.handle(location, "template argument %s does not start with @", externalName);
+				errors.error(location, "template argument %s does not start with @", externalName);
 				return Optional.absent();
 			}
 			
 			if (internalName.isEmpty()) {
-				errors.handle(location, "internal name for %s is empty, or missing and external name is empty", externalName);
+				errors.error(location, "internal name for %s is empty, or missing and external name is empty", externalName);
 				return Optional.absent();
 			}
 			
@@ -68,7 +68,7 @@ class Template extends SimpleMacro {
 			try {
 				final int position = Integer.parseInt(externalNameWithoutAt);
 				if (position < 1) {
-					errors.handle(location, "cannot have a numbered argument whose number is less than 1");
+					errors.error(location, "cannot have a numbered argument whose number is less than 1");
 					return Optional.absent();
 				}
 				return Optional.of(new NumberedArgument(internalName, externalNameWithoutAt, defaultValue, location));

@@ -59,7 +59,7 @@ public class Templates {
 				if (template.isPresent()) {
 					final IMacro template_ = template.get();
 					if (names.contains(template_.getName())) {
-						errors.handle(cut, "redefinition of template %s", template_.getName());
+						errors.error(cut, "redefinition of template %s", template_.getName());
 					} else {
 						names.add(template_.getName());
 						templates.add(template_);
@@ -175,12 +175,12 @@ public class Templates {
 						final Argument parsedArgument2 = parsedArgument.get();
 						
 						if (usedInternalNames.contains(parsedArgument2.getInternalName())) {
-							errors.handle(l, "two arguments have been given the internal name %s", parsedArgument2.getInternalName());
+							errors.error(l, "two arguments have been given the internal name %s", parsedArgument2.getInternalName());
 							return Optional.absent();
 						}
 													
 						if (usedExternalNames.contains(parsedArgument2.getExternalName())) {
-							errors.handle(l, "two arguments have been given the external name %s", parsedArgument2.getExternalName());
+							errors.error(l, "two arguments have been given the external name %s", parsedArgument2.getExternalName());
 							return Optional.absent();
 						}
 						
@@ -213,14 +213,14 @@ public class Templates {
 			final NumberedArgument narg = it2.next();
 			
 			if (narg.getIndex() != it2.nextIndex()) {
-				errors.handle(narg.getLocation(), "numbered argument %d is missing, but %d is defined - numbered arguments should be contiguous", it2.nextIndex(), narg.getIndex());
+				errors.error(narg.getLocation(), "numbered argument %d is missing, but %d is defined - numbered arguments should be contiguous", it2.nextIndex(), narg.getIndex());
 				return Optional.absent();
 			}
 			
 			if (narg.hasDefault()) {
 				hadDefaultValue = true;
 			} else if (hadDefaultValue) {
-				errors.handle(narg.getLocation(), "numbered argument %d has no default value, but a preceding numbered argument has a default value, which is not allowed", narg.getIndex());
+				errors.error(narg.getLocation(), "numbered argument %d has no default value, but a preceding numbered argument has a default value, which is not allowed", narg.getIndex());
 				return Optional.absent();
 			}
 		}
@@ -249,7 +249,7 @@ public class Templates {
 			@Override
 			public void atom(final String string) {
 				if (string.startsWith("@") && !(usedInternalNames.contains(string.substring(1)))) {
-					errors.handle(loc, "template argument list does not contain an argument named %s", string);
+					errors.error(loc, "template argument list does not contain an argument named %s", string);
 				}
 			}
 		});

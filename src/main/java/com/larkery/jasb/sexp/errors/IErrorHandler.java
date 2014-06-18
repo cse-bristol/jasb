@@ -51,7 +51,6 @@ public interface IErrorHandler {
 	};
 	
 	public void handle(final IError error);
-	
-	public void handle(final Location location, final String format, final Object... interpolate);
-	public void handle(final Node location, final String format, final Object... interpolate);
+	public void error(final ILocated location, final String format, final Object... interpolate);
+	public void warn(final ILocated location, final String string, final Object... interpolate);
 }

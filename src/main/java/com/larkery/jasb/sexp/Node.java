@@ -1,9 +1,11 @@
 package com.larkery.jasb.sexp;
 
-import com.larkery.jasb.sexp.errors.UnfinishedExpressionException;
 import java.util.List;
 
-public abstract class Node implements ISExpression {
+import com.larkery.jasb.sexp.errors.ILocated;
+import com.larkery.jasb.sexp.errors.UnfinishedExpressionException;
+
+public abstract class Node implements ISExpression, ILocated {
 	private final Location location;
 	
 	protected Node(final Location location) {
@@ -11,6 +13,7 @@ public abstract class Node implements ISExpression {
 		this.location = location;
 	}
 
+	@Override
 	public Location getLocation() {
 		return location;
 	}
@@ -38,5 +41,5 @@ public abstract class Node implements ISExpression {
 		return visitor.getAll();
 	}
 	
-	public abstract void accept(INodeVisitor visitor); 
+	public abstract void accept(final INodeVisitor visitor); 
 }

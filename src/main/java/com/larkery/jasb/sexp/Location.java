@@ -5,6 +5,7 @@ import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
+import com.larkery.jasb.sexp.errors.ILocated;
 
 /**
  * Represents a location for an event in an s-expression event stream,
@@ -12,7 +13,7 @@ import com.google.common.collect.ImmutableList.Builder;
  * include, or a template expansion, the location can be in several
  * places.
  */
-public class Location {
+public class Location implements ILocated {
 	public enum Type {
 		Normal,
 		Include,
@@ -103,5 +104,10 @@ public class Location {
 		} else {
 			return positions.get(positions.size()-1);
 		}
+	}
+	
+	@Override
+	public Location getLocation() {
+		return this;
 	}
 }

@@ -64,4 +64,8 @@ public class BasicError implements IError {
 	public String toString() {
 		return locations + " " + getMessage();
 	}
+
+	public static IError warningAt(final Location location, final String format) {
+		return new BasicError(location == null ? ImmutableSet.<Location>of() : ImmutableSet.of(location), ImmutableSet.<Node>of(), format, Type.WARNING);
+	}
 }
