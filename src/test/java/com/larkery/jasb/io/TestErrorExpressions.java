@@ -9,6 +9,7 @@ import org.junit.Test;
 
 import com.google.common.collect.ImmutableList;
 import com.larkery.jasb.io.testmodel.Arithmetic;
+import com.larkery.jasb.sexp.errors.ErrorCollector;
 import com.larkery.jasb.sexp.errors.IErrorHandler.IError;
 import com.larkery.jasb.sexp.errors.JasbErrorException;
 import com.larkery.jasb.sexp.parse.Parser;
@@ -29,9 +30,9 @@ public class TestErrorExpressions extends JasbIOTest {
 						errors
 				);
 		} catch (final JasbErrorException jee) {
-			return ImmutableList.<IError>builder().addAll(errors.errors).addAll(jee.getErrors()).build();
+			return ImmutableList.<IError>builder().addAll(errors.getErrors()).addAll(jee.getErrors()).build();
 		}
-		return ImmutableList.copyOf(errors.errors);
+		return ImmutableList.copyOf(errors.getErrors());
 	}
 
 	@Test

@@ -10,12 +10,12 @@ import com.larkery.jasb.sexp.errors.BasicError;
 import com.larkery.jasb.sexp.errors.IErrorHandler;
 
 public class Invocation {
-	public final Node node;
+	public final Seq node;
 	public final String name;
 	public final Map<String, Node> arguments;
 	public final List<Node> remainder;
 	
-	public Invocation(final Node node, final String name, final Map<String, Node> arguments,
+	public Invocation(final Seq node, final String name, final Map<String, Node> arguments,
 			final List<Node> remainder) {
 		super();
 		this.node = node;
@@ -85,7 +85,7 @@ public class Invocation {
 					if (key != null) {
 						errors.handle(BasicError.at(node, "unused keyword " + key +" at end of " +name.getValue()));
 					}
-					return new Invocation(node, name.getValue(), arguments.build(), rest.build());
+					return new Invocation(seq, name.getValue(), arguments.build(), rest.build());
 				} else {
 					if (head == null) {
 						errors.handle(BasicError.at(node, "An empty list was not expected here"));

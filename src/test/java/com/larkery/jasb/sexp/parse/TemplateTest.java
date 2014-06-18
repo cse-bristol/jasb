@@ -16,12 +16,13 @@ import com.larkery.jasb.sexp.Seq;
 import com.larkery.jasb.sexp.errors.IErrorHandler;
 import com.larkery.jasb.sexp.errors.JasbErrorException;
 import com.larkery.jasb.sexp.errors.UnfinishedExpressionException;
+import com.larkery.jasb.sexp.template.Templates;
 
 public class TemplateTest extends VisitingTest {
 	@Test
 	public void templateCreationWorksForValidTemplate() throws Exception {
 		final NodeBuilder nb = NodeBuilder.create();
-		final List<IMacro> macros = Template.stripTemplates(source("templateCreation", "(top (template hello [@thing [@other-thing] [@third a]]))"),
+		final List<IMacro> macros = Templates.extract(source("templateCreation", "(top (template hello [@thing [@other-thing] [@third a]]))"),
 															nb, 
 															IErrorHandler.RAISE);
 
@@ -30,11 +31,11 @@ public class TemplateTest extends VisitingTest {
 
 		Assert.assertEquals("thing, other-thing and third define all the args",
 							ImmutableSet.of("thing", "other-thing", "third"),
-							((Template)mac).getAllowedArgumentNames());
+							((SimpleMacro)mac).getAllowedArgumentNames());
 
 		Assert.assertEquals("thing is a required argument", 
 							ImmutableSet.of("thing"),
-							((Template)mac).getRequiredArgumentNames());
+							((SimpleMacro)mac).getRequiredArgumentNames());
 
 		final Node node = nb.getBestEffort();
 		Assert.assertEquals("template is stripped out", Seq.builder(null, Delim.Paren).add(Atom.create("top")).build(null), node);
@@ -43,13 +44,13 @@ public class TemplateTest extends VisitingTest {
 	@Test
 	public void expansionWorksAsExpected() throws Exception {
 		final NodeBuilder nb = NodeBuilder.create();
-		final List<IMacro> macros = Template.stripTemplates(source("templateCreation", 
+		final List<IMacro> macros = Templates.extract(source("templateCreation", 
 																   "(top (template hello [@thing [@other-thing] [@third a]] (@thing @other-thing @third @third)))"),
 															nb, 
 															IErrorHandler.RAISE);
 		
 		final IMacro mac = macros.get(0);
-		final ISExpression e = ((Template)mac).doTransform(Invocation.of(Node.copy(source("templateInput", "(hello thing:99)")), IErrorHandler.RAISE), null, IErrorHandler.RAISE);
+		final ISExpression e = ((SimpleMacro)mac).doTransform(Invocation.of(Node.copy(source("templateInput", "(hello thing:99)")), IErrorHandler.RAISE), null, IErrorHandler.RAISE);
 
 		final Node node = Node.copy(e);
 
@@ -59,13 +60,13 @@ public class TemplateTest extends VisitingTest {
 	@Test
 	public void canExpandOneArgumentWithinAnother() throws Exception {
 		final NodeBuilder nb = NodeBuilder.create();
-		final List<IMacro> macros = Template.stripTemplates(source("templateCreation", 
+		final List<IMacro> macros = Templates.extract(source("templateCreation", 
 																   "(top (template hello [@thing [@other-thing (+ 1 @thing)] [@third a]] (@thing @other-thing @third @third)))"),
 															nb, 
 															IErrorHandler.RAISE);
 		
 		final IMacro mac = macros.get(0);
-		final ISExpression e = ((Template)mac).doTransform(Invocation.of(Node.copy(source("templateInput", "(hello thing:99)")), IErrorHandler.RAISE), null, IErrorHandler.RAISE);
+		final ISExpression e = ((SimpleMacro)mac).doTransform(Invocation.of(Node.copy(source("templateInput", "(hello thing:99)")), IErrorHandler.RAISE), null, IErrorHandler.RAISE);
 
 		final Node node = Node.copy(e);
 
@@ -77,7 +78,7 @@ public class TemplateTest extends VisitingTest {
 	@Test(expected=JasbErrorException.class)
 	public void templateCreationFailsForUndeclaredArgument() throws Exception {
 		final NodeBuilder nb = NodeBuilder.create();
-		Template.stripTemplates(source("missingArgument", "(top (template hello [] @banana))"),
+		Templates.extract(source("missingArgument", "(top (template hello [] @banana))"),
 															nb, 
 															IErrorHandler.RAISE);
 
@@ -86,7 +87,7 @@ public class TemplateTest extends VisitingTest {
 	@Test(expected=JasbErrorException.class)
 	public void templateCreationFailsForDuplicateArgument() throws Exception {
 		final NodeBuilder nb = NodeBuilder.create();
-		Template.stripTemplates(source("missingArgument", "(top (template hello [@x @x] ))"),
+		Templates.extract(source("missingArgument", "(top (template hello [@x @x] ))"),
 															nb, 
 															IErrorHandler.RAISE);
 
@@ -95,7 +96,7 @@ public class TemplateTest extends VisitingTest {
 	@Test(expected=JasbErrorException.class)
 	public void templateCreationFailsForDuplicateArgumentAgain() throws Exception {
 		final NodeBuilder nb = NodeBuilder.create();
-		Template.stripTemplates(source("missingArgument", "(top (template hello [@x [@x]] ))"),
+		Templates.extract(source("missingArgument", "(top (template hello [@x [@x]] ))"),
 															nb, 
 															IErrorHandler.RAISE);
 
@@ -104,7 +105,7 @@ public class TemplateTest extends VisitingTest {
 	@Test(expected=JasbErrorException.class)
 	public void templateCreationFailsForMalformedArgumentName() throws Exception {
 		final NodeBuilder nb = NodeBuilder.create();
-		Template.stripTemplates(source("missingArgument", "(top (template hello [badarg] ))"),
+		Templates.extract(source("missingArgument", "(top (template hello [badarg] ))"),
 															nb, 
 															IErrorHandler.RAISE);
 
@@ -113,7 +114,7 @@ public class TemplateTest extends VisitingTest {
 	@Test(expected=JasbErrorException.class)
 	public void templateCreationFailsForMalformedArgumentWithDefault() throws Exception {
 		final NodeBuilder nb = NodeBuilder.create();
-		Template.stripTemplates(source("missingArgument", "(top (template hello [(badarg)] ))"),
+		Templates.extract(source("missingArgument", "(top (template hello [(badarg)] ))"),
 															nb, 
 															IErrorHandler.RAISE);
 
@@ -122,7 +123,7 @@ public class TemplateTest extends VisitingTest {
 	@Test(expected=JasbErrorException.class)
 	public void templateCreationFailsForMalformedArgumentWithDefault2() throws Exception {
 		final NodeBuilder nb = NodeBuilder.create();
-		Template.stripTemplates(source("missingArgument", "(top (template hello [[]] ))"),
+		Templates.extract(source("missingArgument", "(top (template hello [[]] ))"),
 															nb, 
 															IErrorHandler.RAISE);
 
@@ -130,49 +131,49 @@ public class TemplateTest extends VisitingTest {
 	
 	@Test(expected=JasbErrorException.class)
 	public void templateCreationFailsIfUsingRestTwice() throws Exception {
-		Template.stripTemplates(source("restTwice", "(template t [@rest @rest] )"), 
+		Templates.extract(source("restTwice", "(template t [@rest @rest] )"), 
 				NodeBuilder.create(), 
 				IErrorHandler.RAISE);
 	}
 	
 	@Test(expected=JasbErrorException.class)
 	public void templateCreationFailsIfUsingRestInBodyOnly() throws Exception {
-		Template.stripTemplates(source("missingRest", "(template t [] @rest)"), 
+		Templates.extract(source("missingRest", "(template t [] @rest)"), 
 				NodeBuilder.create(), 
 				IErrorHandler.RAISE);
 	}
 	
 	@Test(expected=JasbErrorException.class)
 	public void templateCreationFailsIfUsingNumberedArgInBodyonly() throws Exception {
-		Template.stripTemplates(source("missingNumbered", "(template t [] @1)"), 
+		Templates.extract(source("missingNumbered", "(template t [] @1)"), 
 				NodeBuilder.create(), 
 				IErrorHandler.RAISE);
 	}
 	
 	@Test(expected=JasbErrorException.class)
 	public void templateCreationFailsIfWronglyNumberedArg() throws Exception {
-		Template.stripTemplates(source("wrongNumber", "(template t [@0])"), 
+		Templates.extract(source("wrongNumber", "(template t [@0])"), 
 				NodeBuilder.create(), 
 				IErrorHandler.RAISE);
 	}
 	
 	@Test(expected=JasbErrorException.class)
 	public void templateCreationFailsIfGapInNumberedArgs() throws Exception {
-		Template.stripTemplates(source("numberingGap", "(template t [@1 @3])"), 
+		Templates.extract(source("numberingGap", "(template t [@1 @3])"), 
 				NodeBuilder.create(), 
 				IErrorHandler.RAISE);
 	}
 	
 	@Test(expected=JasbErrorException.class)
 	public void templateCreationFailsIfOptionalNumberedFollowedByMandatoryNumbered() throws Exception {
-		Template.stripTemplates(source("numberingIllegalOptional", "(template t [[@1] @2])"), 
+		Templates.extract(source("numberingIllegalOptional", "(template t [[@1] @2])"), 
 				NodeBuilder.create(), 
 				IErrorHandler.RAISE);
 	}
 	
 	@Test
 	public void canUseRestArgs() throws UnfinishedExpressionException {
-		final Template t = (Template) Template.stripTemplates(source("restArgs", "(template t [@rest] @rest)"), 
+		final SimpleMacro t = (SimpleMacro) Templates.extract(source("restArgs", "(template t [@rest] @rest)"), 
 				NodeBuilder.create(), 
 				IErrorHandler.RAISE).get(0);
 		
@@ -189,7 +190,7 @@ public class TemplateTest extends VisitingTest {
 	
 	@Test
 	public void canUseNumberedArgs() throws UnfinishedExpressionException {
-		final Template t = (Template) Template.stripTemplates(
+		final SimpleMacro t = (SimpleMacro) Templates.extract(
 				node("(template t [@1 @2] @2 @1)"), 
 				NodeBuilder.create(), 
 				IErrorHandler.RAISE).get(0);
@@ -202,7 +203,7 @@ public class TemplateTest extends VisitingTest {
 	
 	@Test
 	public void canUseOptionalArguments() throws UnfinishedExpressionException {
-		final Template t = (Template) Template.stripTemplates(
+		final SimpleMacro t = (SimpleMacro) Templates.extract(
 				node("(template t [[@a]] @a)"), 
 				NodeBuilder.create(), 
 				IErrorHandler.RAISE).get(0);
@@ -215,7 +216,7 @@ public class TemplateTest extends VisitingTest {
 	
 	@Test
 	public void canUseOptionalNumberedArguments() throws UnfinishedExpressionException {
-		final Template t = (Template) Template.stripTemplates(
+		final SimpleMacro t = (SimpleMacro) Templates.extract(
 				node("(template t [[@1]] @1)"), 
 				NodeBuilder.create(), 
 				IErrorHandler.RAISE).get(0);
@@ -224,5 +225,47 @@ public class TemplateTest extends VisitingTest {
 		final Node node = Node.copy(e);
 		
 		Assert.assertEquals("Expanded node is what we were expecting", node("thing"), node);
+	}
+	
+	@Test
+	public void canUseInternalNamesForNumberedArguments() throws Exception {
+		final SimpleMacro t = (SimpleMacro) Templates.extract(
+				node("(template t [[@1:internal]] @internal)"), 
+				NodeBuilder.create(), 
+				IErrorHandler.RAISE).get(0);
+		
+		final ISExpression e = t.doTransform(Invocation.of(node("(t thing)"), IErrorHandler.RAISE), null, IErrorHandler.RAISE);
+		final Node node = Node.copy(e);
+		
+		Assert.assertEquals("Expanded node is what we were expecting", node("thing"), node);
+	}
+	
+	@Test
+	public void canMakeHiddenArguments() throws Exception {
+		final SimpleMacro t = (SimpleMacro) Templates.extract(
+				node("(template t [[@:internal 1]] @internal)"), 
+				NodeBuilder.create(), 
+				IErrorHandler.RAISE).get(0);
+		
+		final ISExpression e = t.doTransform(Invocation.of(node("(t)"), IErrorHandler.RAISE), null, IErrorHandler.RAISE);
+		final Node node = Node.copy(e);
+		
+		Assert.assertEquals("Expanded node is what we were expecting", node("1"), node);
+	}
+	
+	@Test(expected=JasbErrorException.class)
+	public void cannotMakeUnnamedArguments() throws Exception {
+		Templates.extract(
+				node("(template t [[@:]])"), 
+				NodeBuilder.create(), 
+				IErrorHandler.RAISE);
+	}
+	
+	@Test(expected=JasbErrorException.class)
+	public void cannotMakeUnnamedArguments2() throws Exception {
+		Templates.extract(
+				node("(template t [[@]])"), 
+				NodeBuilder.create(), 
+				IErrorHandler.RAISE);
 	}
 }

@@ -8,6 +8,7 @@ import com.google.common.collect.ImmutableList;
 import com.larkery.jasb.sexp.ISExpression;
 import com.larkery.jasb.sexp.ISExpressionSource;
 import com.larkery.jasb.sexp.errors.IErrorHandler;
+import com.larkery.jasb.sexp.module.Module;
 import com.larkery.jasb.sexp.parse.Includer.IResolver;
 
 /**
@@ -43,7 +44,11 @@ public class StandardSource implements ISExpressionSource {
 	public ISExpression get(final URI address, final IErrorHandler errors) {
 		if (expandTemplates) {
 			return withMacros(TemplateExpander.expand(
-				Includer.source(resolver, address, errors), errors), errors);
+					Module.transform(
+							Includer.source(resolver, address, errors), 
+							errors), 
+						errors), 
+					errors);
 		} else {
 			return withMacros(Includer.source(resolver, address, errors), errors);
 		}

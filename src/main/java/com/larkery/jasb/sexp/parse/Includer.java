@@ -24,6 +24,7 @@ import com.larkery.jasb.sexp.ISExpression;
 import com.larkery.jasb.sexp.ISExpressionVisitor;
 import com.larkery.jasb.sexp.Location;
 import com.larkery.jasb.sexp.Node;
+import com.larkery.jasb.sexp.SExpressions;
 import com.larkery.jasb.sexp.Seq;
 import com.larkery.jasb.sexp.errors.BasicError;
 import com.larkery.jasb.sexp.errors.IErrorHandler;
@@ -296,7 +297,7 @@ public class Includer {
 				}
 			}
 			
-			return ISExpression.EMPTY;
+			return SExpressions.empty();
 		}
 	}
 		

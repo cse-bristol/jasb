@@ -3,7 +3,6 @@ package com.larkery.jasb.sexp.parse;
 import java.io.StringReader;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.HashSet;
 import java.util.Set;
 
 import org.junit.Assert;
@@ -14,22 +13,15 @@ import com.larkery.jasb.sexp.ISExpression;
 import com.larkery.jasb.sexp.ISExpressionVisitor;
 import com.larkery.jasb.sexp.Location;
 import com.larkery.jasb.sexp.NodeBuilder;
-import com.larkery.jasb.sexp.errors.IErrorHandler;
+import com.larkery.jasb.sexp.errors.ErrorCollector;
 import com.larkery.jasb.sexp.errors.IErrorHandler.IError;
 
 public class VisitingTest {
-	final IErrorHandler RECORD = new IErrorHandler() {
-		@Override
-		public void handle(final IError error) {
-			errors.add(error);
-		}
-	};
-	
-	final Set<IError> errors = new HashSet<>();
+	final ErrorCollector record = new ErrorCollector();
 	
 	@Before
 	public void resetErrors() {
-		 errors.clear();
+		 record.clear();
 	}
 	
 	static class E implements ISExpressionVisitor {
@@ -85,7 +77,7 @@ public class VisitingTest {
 		return Parser.source(
 				createTestURI(name),
 				new StringReader(src),
-				RECORD);
+				record);
 	}
 	
 	protected void check(final String name, final String src, final Set<Class<? extends IError>> errorTypes) {
@@ -94,7 +86,7 @@ public class VisitingTest {
 		} finally {
 			outer:
 			for (final Class<? extends IError> e : errorTypes) {
-				for (final IError err : errors) {
+				for (final IError err : record.getErrors()) {
 					if (e.isInstance(err)) {
 						continue outer;
 					}

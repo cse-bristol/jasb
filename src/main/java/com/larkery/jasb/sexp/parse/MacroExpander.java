@@ -8,6 +8,7 @@ import com.larkery.jasb.sexp.Atom;
 import com.larkery.jasb.sexp.ISExpression;
 import com.larkery.jasb.sexp.ISExpressionVisitor;
 import com.larkery.jasb.sexp.Node;
+import com.larkery.jasb.sexp.SExpressions;
 import com.larkery.jasb.sexp.Seq;
 import com.larkery.jasb.sexp.errors.BasicError;
 import com.larkery.jasb.sexp.errors.IErrorHandler;
@@ -74,7 +75,7 @@ public class MacroExpander implements IMacroExpander {
 						}
 					}
 					
-					return ISExpression.EMPTY;
+					return SExpressions.empty();
 				}
 			});
 		}

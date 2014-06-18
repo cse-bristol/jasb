@@ -10,12 +10,13 @@ import com.larkery.jasb.sexp.Node;
 import com.larkery.jasb.sexp.NodeBuilder;
 import com.larkery.jasb.sexp.Seq;
 import com.larkery.jasb.sexp.errors.IErrorHandler;
+import com.larkery.jasb.sexp.template.Templates;
 
 public class MacroExpanderTest extends VisitingTest {
 	@Test
 	public void macroExpanderExpandsMacros() throws Exception {
 		final NodeBuilder nb = NodeBuilder.create();
-		final List<IMacro> macs = Template.stripTemplates(source("macExTest", 
+		final List<IMacro> macs = Templates.extract(source("macExTest", 
 																 "(top (template test [@a [@b]] (@a @b @a)) (test a:(this is some a)))"),
 														  nb, IErrorHandler.RAISE);
 

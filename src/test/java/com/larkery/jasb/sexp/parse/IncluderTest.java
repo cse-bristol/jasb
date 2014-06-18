@@ -47,7 +47,7 @@ public class IncluderTest extends VisitingTest {
 		return Includer.source(
 				resolver, 
 				URI.create("test://"+name),
-				RECORD
+				record
 				);
 	}
 	
@@ -67,13 +67,13 @@ public class IncluderTest extends VisitingTest {
 				"(include my-include)",
 				e("hello")
 				);
-		Assert.assertFalse(errors.isEmpty());
+		Assert.assertFalse(record.getErrors().isEmpty());
 	}
 	
 	@Test
 	public void collectingIncludesWorks() {
 		values.put(URI.create("test://my-include"), "hello world");
-		Includer.collectFromRoot(resolver, "(include my-include)", RECORD);
+		Includer.collectFromRoot(resolver, "(include my-include)", record);
 	}
 	
 	@Test

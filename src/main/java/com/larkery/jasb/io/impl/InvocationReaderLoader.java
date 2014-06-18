@@ -32,6 +32,7 @@ import com.larkery.jasb.io.IReadContext;
 import com.larkery.jasb.io.impl.JasbPropertyDescriptor.BoundTo;
 import com.larkery.jasb.sexp.Invocation;
 import com.larkery.jasb.sexp.Node;
+import com.larkery.jasb.sexp.Seq;
 
 /**
  * This is a class which generates subclasses of {@link InvocationReader} which handle
@@ -382,7 +383,7 @@ class InvocationReaderLoader<T> extends ClassLoader implements Opcodes {
 				mv.visitFieldInsn(GETFIELD, 
 						Type.getInternalName(Invocation.class),
 						"node",
-						Type.getDescriptor(Node.class));
+						Type.getDescriptor(Seq.class));
 				
 				// S: result invocation.node
 				mv.visitMethodInsn(

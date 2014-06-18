@@ -5,6 +5,7 @@ import java.util.Set;
 import com.google.common.collect.Sets;
 import com.larkery.jasb.sexp.ISExpression;
 import com.larkery.jasb.sexp.Invocation;
+import com.larkery.jasb.sexp.SExpressions;
 import com.larkery.jasb.sexp.Seq;
 import com.larkery.jasb.sexp.errors.BasicError;
 import com.larkery.jasb.sexp.errors.IErrorHandler;
@@ -40,7 +41,7 @@ public abstract class SimpleMacro implements IMacro {
 			}
 		}
 		
-		return ISExpression.EMPTY;
+		return SExpressions.empty();
 	}
 	
 	protected abstract ISExpression doTransform(final Invocation validated, final IMacroExpander expander, final IErrorHandler errors);

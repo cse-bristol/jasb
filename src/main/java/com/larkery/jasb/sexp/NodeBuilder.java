@@ -60,6 +60,23 @@ public class NodeBuilder implements ISExpressionVisitor {
 		}
 	}
 	
+	public ISExpression getOrEmpty() throws UnfinishedExpressionException {
+		if (inprogress.size() > 1) {
+			Node badNode = null;
+			while (inprogress.size() > 1){
+				close(Delim.Paren);
+				if (badNode == null) badNode = getLastNode();
+			}
+			final Seq build = top.build(null);
+			throw new UnfinishedExpressionException(badNode, build.isEmpty() ? build : build.getHead());
+		}
+		final Seq build = top.build(null);
+		if (build.isEmpty()) {
+			return SExpressions.empty();
+		}
+		return build.getHead();
+	}
+	
 	public Node get() throws UnfinishedExpressionException {
 		if (inprogress.size() > 1) {
 			Node badNode = null;
@@ -105,4 +122,6 @@ public class NodeBuilder implements ISExpressionVisitor {
 	public Node getLastNode() {
 		return lastNode;
 	}
+
+	
 }

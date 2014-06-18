@@ -26,6 +26,7 @@ import com.larkery.jasb.io.IReader;
 import com.larkery.jasb.sexp.Atom;
 import com.larkery.jasb.sexp.Comment;
 import com.larkery.jasb.sexp.ISExpression;
+import com.larkery.jasb.sexp.Location;
 import com.larkery.jasb.sexp.Node;
 import com.larkery.jasb.sexp.errors.BasicError;
 import com.larkery.jasb.sexp.errors.IErrorHandler;
@@ -238,6 +239,16 @@ class Reader implements IReader {
 		@Override
 		public void handle(final IError error) {
 			delegateErrorHandler.handle(error);
+		}
+		
+		@Override
+		public void handle(final Location location, final String format, final Object... interpolate) {
+			delegateErrorHandler.handle(location, format, interpolate);
+		}
+		
+		@Override
+		public void handle(final Node location, final String format, final Object... interpolate) {
+			delegateErrorHandler.handle(location, format, interpolate);
 		}
 
 		@Override

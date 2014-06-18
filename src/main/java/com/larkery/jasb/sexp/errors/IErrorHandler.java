@@ -21,7 +21,7 @@ public interface IErrorHandler {
 	}
 	
 	static final Logger log = LoggerFactory.getLogger(IErrorHandler.class);
-	public static final IErrorHandler SLF4J = new IErrorHandler() {
+	public static final IErrorHandler SLF4J = new BaseErrorHandler() {
 		@Override
 		public void handle(final IError error) {
 			switch (error.getType()) {
@@ -35,20 +35,23 @@ public interface IErrorHandler {
 		}
 	};
 
-	public static final IErrorHandler NOP = new IErrorHandler() {
+	public static final IErrorHandler NOP = new BaseErrorHandler() {
 		@Override
 		public void handle(final IError error) {}
 	};
-	static final IErrorHandler RAISE = new IErrorHandler(){
+	static final IErrorHandler RAISE = new BaseErrorHandler(){
 	
 		@Override
 		public void handle(final IError error) {
 			throw new JasbErrorException(error);
 		}
 	};
-	static final IErrorHandler IGNORE = new IErrorHandler() {
+	static final IErrorHandler IGNORE = new BaseErrorHandler() {
 		@Override public void handle(final IError error) {}
 	};
 	
 	public void handle(final IError error);
+	
+	public void handle(final Location location, final String format, final Object... interpolate);
+	public void handle(final Node location, final String format, final Object... interpolate);
 }

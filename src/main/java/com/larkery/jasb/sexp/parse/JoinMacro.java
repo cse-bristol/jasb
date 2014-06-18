@@ -10,14 +10,24 @@ import com.larkery.jasb.sexp.Comment;
 import com.larkery.jasb.sexp.ISExpression;
 import com.larkery.jasb.sexp.Invocation;
 import com.larkery.jasb.sexp.Node;
+import com.larkery.jasb.sexp.SExpressions;
 import com.larkery.jasb.sexp.errors.BasicError;
 import com.larkery.jasb.sexp.errors.IErrorHandler;
 import com.larkery.jasb.sexp.errors.UnfinishedExpressionException;
 
 public class JoinMacro extends SimpleMacro {
+	final String name;
+	public JoinMacro(final String name) {
+		this.name = name;
+	}
+	
+	public JoinMacro() {
+		this("join");
+	}
+	
 	@Override
 	public String getName() {
-		return "join";
+		return name;
 	}
 
 	@Override
@@ -65,7 +75,7 @@ public class JoinMacro extends SimpleMacro {
 			errors.handle(e.getError());
 		}
 		
-		return ISExpression.EMPTY;
+		return SExpressions.empty();
 	}
 
 	private String getSeparator(final Invocation expanded,
