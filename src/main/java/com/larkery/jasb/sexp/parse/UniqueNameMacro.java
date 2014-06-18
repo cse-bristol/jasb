@@ -2,6 +2,7 @@ package com.larkery.jasb.sexp.parse;
 
 import java.util.Collections;
 import java.util.Set;
+import java.util.UUID;
 
 import com.larkery.jasb.sexp.Atom;
 import com.larkery.jasb.sexp.ISExpression;
@@ -12,7 +13,6 @@ import com.larkery.jasb.sexp.errors.UnfinishedExpressionException;
 
 public class UniqueNameMacro extends SimpleMacro {
 	private final String name;
-	private int counter = 0;
 	
 	public UniqueNameMacro(final String name) {
 		super();
@@ -46,7 +46,7 @@ public class UniqueNameMacro extends SimpleMacro {
 
 	@Override
 	protected ISExpression doTransform(final Invocation validated, final IMacroExpander expander, final IErrorHandler errors) {
-		counter++;
+		final String uuid = UUID.randomUUID().toString();
 		if (!validated.remainder.isEmpty()) {
 		} else {
 			Node n;
@@ -55,7 +55,7 @@ public class UniqueNameMacro extends SimpleMacro {
 				
 				if (n instanceof Atom) {
 					return Atom.create(
-							String.format("*%s-%d*", ((Atom) n).getValue(), counter),
+							String.format("*%s-%s*", ((Atom) n).getValue(), uuid),
 							validated.node.getLocation()
 							);
 				}
@@ -64,7 +64,7 @@ public class UniqueNameMacro extends SimpleMacro {
 		}
 		
 		return Atom.create(
-				String.format("*unique-name-%d*", counter)
+				String.format("*unique-name-%s*", uuid)
 				,validated.node.getLocation());
 	}
 }
