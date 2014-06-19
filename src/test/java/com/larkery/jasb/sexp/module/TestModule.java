@@ -40,7 +40,7 @@ public class TestModule {
 	public void moduleHandlesLocalNames() throws Exception {
 		final Node result = Node.copy(Module.transform(p("(~module hello (template x [] (~local stuff)))"), IErrorHandler.RAISE));
 		Assert.assertEquals(
-				Node.copy(p("(template hello/x [] (join hello/stuff))")),
+				Node.copy(p("(template hello/x [] (~join hello/stuff))")),
 				result);
 	}
 	
@@ -48,7 +48,7 @@ public class TestModule {
 	public void moduleHandlesLocalReferences() throws Exception {
 		final Node result = Node.copy(Module.transform(p("(~module hello (template x [] (~local #stuff)))"), IErrorHandler.RAISE));
 		Assert.assertEquals(
-				Node.copy(p("(template hello/x [] (join #hello/stuff))")),
+				Node.copy(p("(template hello/x [] (~join #hello/stuff))")),
 				result);
 	}
 	
