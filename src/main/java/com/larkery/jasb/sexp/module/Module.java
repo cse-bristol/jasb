@@ -146,7 +146,7 @@ public class Module implements IMacro {
 		@Override
 		protected ISExpression doTransform(final Invocation validated, final IMacroExpander expander, final IErrorHandler errors) {
 			final Seq.Builder out = Seq.builder(validated.node.getLocation(), Delim.Paren);
-			out.add("join");
+			out.add("~join");
 			
 			final Node first = validated.remainder.get(0);
 			
