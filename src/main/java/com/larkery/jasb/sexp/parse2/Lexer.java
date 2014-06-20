@@ -38,31 +38,36 @@ public class Lexer {
 			}
 		}
 		public void accept(final ISExpressionVisitor visitor) {
-			visitor.locate(location);
-			switch (value) {
-			case "{":
-			case "}":
-				// this is in error
-				break;
-			case ",":// ignore as whitespace
-				break;
-			case "(":
-			case "[":
-				visitor.open(Delim.of(value.charAt(0)));
-				break;
-			case ")":
-			case "]":
-				visitor.close(Delim.of(value.charAt(0)));
-				break;
-			default:
-				if (isComment) {
-					visitor.comment(value);
-				} else {
-					visitor.atom(value);
+			if (isComment) {
+				comment(visitor);
+			} else {
+				visitor.locate(location);
+				
+				switch (value) {
+				case "{":
+				case "}":
+					// this is in error
+					break;
+				case ",":// ignore as whitespace
+					break;
+				case "(":
+				case "[":
+					visitor.open(Delim.of(value.charAt(0)));
+					break;
+				case ")":
+				case "]":
+					visitor.close(Delim.of(value.charAt(0)));
+					break;
+				default:
+					if (isComment) {
+						visitor.comment(value);
+					} else {
+						visitor.atom(value);
+					}
 				}
-			}
-			if (comment.isPresent()) {
-				comment.get().comment(visitor);
+				if (comment.isPresent()) {
+					comment.get().comment(visitor);
+				}
 			}
 		}
 	}
