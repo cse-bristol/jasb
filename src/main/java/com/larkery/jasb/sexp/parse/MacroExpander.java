@@ -5,6 +5,7 @@ import java.util.Map;
 
 import com.google.common.collect.ImmutableMap;
 import com.larkery.jasb.sexp.Atom;
+import com.larkery.jasb.sexp.Delim;
 import com.larkery.jasb.sexp.ISExpression;
 import com.larkery.jasb.sexp.ISExpressionVisitor;
 import com.larkery.jasb.sexp.Node;
@@ -19,6 +20,11 @@ public class MacroExpander implements IMacroExpander {
 
 	public static ISExpression expand(final List<IMacro> macros, final ISExpression input, final IErrorHandler errors) {
 		return new MacroExpander(macros, errors).expand(input);
+	}
+	
+	@Override
+	public ISExpression expandContents(final ISExpression transformed) {
+		return new ExpandedExpression(transformed, 1);
 	}
 
 	private MacroExpander(final List<IMacro> macros, final IErrorHandler errors) {
@@ -35,27 +41,46 @@ public class MacroExpander implements IMacroExpander {
 
 	@Override
 	public ISExpression expand(final ISExpression input) {
-		return new ExpandedExpression(input);
+		return new ExpandedExpression(input, 0);
 	}
-
+	
 	class ExpandedExpression implements ISExpression {
 		final ISExpression unexpanded;
+		private final int atDepth;
 
-		public ExpandedExpression(final ISExpression unexpanded) {
+		public ExpandedExpression(final ISExpression unexpanded, final int atDepth) {
 			this.unexpanded = unexpanded;
+			this.atDepth = atDepth;
 		}
 
 		@Override
 		public void accept(final ISExpressionVisitor visitor) {
 			unexpanded.accept(new Editor(visitor) {
+				int depth = 0;
+				
+				@Override
+				public void open(final Delim delimeter) {
+					depth++;
+					super.open(delimeter);
+				}
+				
+				@Override
+				public void close(final Delim delimeter) {
+					depth--;
+					super.close(delimeter);
+				}
+				
 				@Override
 				protected Action act(final String name) {
-					if (macros.containsKey(name)) {
+					// (   thingy     ( another
+					//   ^depth = 1    ^depth = 2
+					if (macros.containsKey(name) && (depth > ExpandedExpression.this.atDepth)) {
 						return Action.SingleEdit;
 					} else {
 						return Action.Pass;
 					}
 				}
+				
 				@Override
 				protected ISExpression edit(final Seq unexpanded) {
 					if (unexpanded.isEmpty()) {

@@ -4,6 +4,8 @@ import com.larkery.jasb.sexp.ISExpression;
 
 public interface IMacroExpander {
 
-	ISExpression expand(ISExpression input);
+	ISExpression expand(final ISExpression input);
+
+	ISExpression expandContents(final ISExpression transformed);
 
 }
