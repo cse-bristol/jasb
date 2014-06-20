@@ -54,6 +54,6 @@ public class TestModule {
 	
 	@Test(expected=JasbErrorException.class)
 	public void moduleOnlyContainsTemplates() throws Exception {
-		Node.copy(Module.transform(p("(~module hello (error) (template x [] (~local #stuff)))"), IErrorHandler.RAISE));
+		Node.copyAll(Module.transform(p("(~module hello (error) (template x [] (~local #stuff)))"), IErrorHandler.RAISE));
 	}
 }

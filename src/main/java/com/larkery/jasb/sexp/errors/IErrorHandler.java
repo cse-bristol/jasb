@@ -43,7 +43,7 @@ public interface IErrorHandler {
 	static final IErrorHandler RAISE = new BaseErrorHandler(){
 		@Override
 		public void handle(final IError error) {
-			if(error.getType() == Type.WARNING) {
+			if(error.getType() != Type.WARNING) {
 				throw new JasbErrorException(error);
 			}
 		}

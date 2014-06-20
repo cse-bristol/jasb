@@ -130,8 +130,8 @@ public class Templates {
 			final String[] names;
 			final Optional<ISExpression> defaultValue;
 			if (n instanceof Atom) {
-				it.previous();
 				defaultValue = Optional.absent();
+				it.previous();
 				names = readNames(it, errors);
 			} else if (n instanceof Seq) {
 				final Seq s = (Seq) n;
@@ -142,10 +142,12 @@ public class Templates {
 				final ListIterator<Node> it2 = s.exceptComments().listIterator();
 				if (!it2.hasNext()) {
 					errors.handle(BasicError.at(s, "unexpected empty list in template argument list"));
+					return Optional.absent();
+				} else {
+					names = readNames(it2, errors);
+					final ImmutableList<Node> remainder = ImmutableList.copyOf(it2);
+					defaultValue = Optional.of(SExpressions.inOrder(remainder));
 				}
-				names = readNames(it2, errors);
-				final ImmutableList<Node> remainder = ImmutableList.copyOf(it2);
-				defaultValue = Optional.of(SExpressions.inOrder(remainder));
 			} else {
 				names = null;
 				defaultValue = null;
