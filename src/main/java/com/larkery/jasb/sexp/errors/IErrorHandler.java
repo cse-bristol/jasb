@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 
 import com.larkery.jasb.sexp.Location;
 import com.larkery.jasb.sexp.Node;
+import com.larkery.jasb.sexp.errors.IErrorHandler.IError.Type;
 
 public interface IErrorHandler {
 	public interface IError {
@@ -40,10 +41,11 @@ public interface IErrorHandler {
 		public void handle(final IError error) {}
 	};
 	static final IErrorHandler RAISE = new BaseErrorHandler(){
-	
 		@Override
 		public void handle(final IError error) {
-			throw new JasbErrorException(error);
+			if(error.getType() == Type.WARNING) {
+				throw new JasbErrorException(error);
+			}
 		}
 	};
 	static final IErrorHandler IGNORE = new BaseErrorHandler() {
