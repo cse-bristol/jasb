@@ -17,9 +17,17 @@ public abstract class SimpleMacro implements IMacro {
 	protected abstract int getMaximumArgumentCount();
 
 	protected abstract int getMinimumArgumentCount();
-
+	
 	protected ISExpression expandResult(final IMacroExpander expander, final ISExpression transformed) {
 		return expander.expand(transformed);
+	}
+	
+	protected Set<String> getInvalidArguments(final Set<String> arguments) {
+		return Sets.difference(arguments, getAllowedArgumentNames());
+	}
+	
+	protected Set<String> getMissingArguments(final Set<String> arguments) {
+		return Sets.difference(getRequiredArgumentNames(), arguments);
 	}
 	
 	@Override
@@ -49,12 +57,12 @@ public abstract class SimpleMacro implements IMacro {
 	protected boolean validateMacroParameters(final Invocation inv, final IErrorHandler errors) {
 		boolean valid = true;
 
-		for (final String s : Sets.difference(getRequiredArgumentNames(), inv.arguments.keySet())) {
+		for (final String s : getMissingArguments(inv.arguments.keySet())) {
 			errors.handle(BasicError.at(inv.node, inv.name + " requires named argument " + s));
 			valid = false;
 		}
 
-		for (final String s : Sets.difference(inv.arguments.keySet(), getAllowedArgumentNames())) {
+		for (final String s : getInvalidArguments(inv.arguments.keySet())) {
 			valid = false;
 			errors.handle(BasicError.at(inv.arguments.get(s), inv.name + " does not expect argument " + s));
 		}
