@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Stack;
 
 import com.larkery.jasb.sexp.Seq.Builder;
+import com.larkery.jasb.sexp.errors.BasicError;
+import com.larkery.jasb.sexp.errors.JasbErrorException;
 import com.larkery.jasb.sexp.errors.UnfinishedExpressionException;
 
 public class NodeBuilder implements ISExpressionVisitor {
@@ -44,6 +46,9 @@ public class NodeBuilder implements ISExpressionVisitor {
 	}
 
 	private void push(final Node seq) {
+		if (inprogress.isEmpty()) {
+			throw new JasbErrorException(BasicError.at(seq, "Too many closing parentheses or brackets"));
+		}
 		inprogress.peek().add(seq);
 		lastNode = seq;
 	}
