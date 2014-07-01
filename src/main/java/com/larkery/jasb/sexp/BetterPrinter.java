@@ -4,6 +4,7 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.util.Objects;
 
 import com.google.common.base.CharMatcher;
 import com.larkery.jasb.sexp.Location.Position;
@@ -46,7 +47,7 @@ public class BetterPrinter implements ISExpressionVisitor, AutoCloseable {
 				final Position prevPosition = whereAmI.getTailPosition();
 				final Position curPosition = loc.getTailPosition();
 				
-				if (prevPosition.name.equals(curPosition.name)) {
+				if (Objects.equals(prevPosition.name, curPosition.name)) {
 					if (line == curPosition.line) {
 						shiftColumn(curPosition.column - columnDelta);
 					} else if (line < curPosition.line) {
@@ -62,7 +63,6 @@ public class BetterPrinter implements ISExpressionVisitor, AutoCloseable {
 				}
 				
 				line = curPosition.line;
-//				column = curPosition.column;
 			}
 		}
 		
