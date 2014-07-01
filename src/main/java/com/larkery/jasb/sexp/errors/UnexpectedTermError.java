@@ -1,11 +1,12 @@
 package com.larkery.jasb.sexp.errors;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Iterables;
 import com.larkery.jasb.sexp.Location;
 import com.larkery.jasb.sexp.Node;
@@ -32,9 +33,8 @@ public class UnexpectedTermError extends BasicError {
 	private static String createMessage(final String value, final Set<String> legalValues_) {
 		final String expected;
 		
-		final Set<String> legalValues = ImmutableSortedSet.copyOf(
-				Distance.to(value),
-				legalValues_);
+		final List<String> legalValues = new ArrayList<String>(legalValues_);
+		Collections.sort(legalValues, Distance.to(value));
 		
 		if (legalValues.isEmpty()) {
 			expected = "nothing here";
@@ -48,6 +48,7 @@ public class UnexpectedTermError extends BasicError {
 			sb.append("one of ");
 			
 			final Iterator<String> iterator = legalValues.iterator();
+			
 			String previous = iterator.next();
 			do {
 				sb.append(previous);
