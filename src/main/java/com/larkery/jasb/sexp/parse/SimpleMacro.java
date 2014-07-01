@@ -85,4 +85,33 @@ public abstract class SimpleMacro implements IMacro {
 	private String unnamedArgs(final int count) {
 		return count == 1 ? " unnamed argument" : " unnamed arguments";
 	}
+	
+	@Override
+	public MacroModel getModel() {
+		final MacroModel.Builder b = MacroModel.builder();
+		
+		b.desc("Undocumented");
+		
+		for (final String s : getAllowedArgumentNames()) {
+			b.keys().allow(s, "Undocumented");
+		}
+		
+		for (final String s : getRequiredArgumentNames()) {
+			b.keys().require(s, "Undocumented");
+		}
+		
+		for (int i = 0; i<getMinimumArgumentCount(); i++) {
+			b.pos().require("Undocumented");
+		}
+		
+		if (getMaximumArgumentCount() == Integer.MAX_VALUE) {
+			b.pos().remainder("Undocumented");	
+		} else {
+			for (int i = getMinimumArgumentCount(); i< getMaximumArgumentCount(); i++) {
+				b.pos().allow("Undocumented");
+			}
+		}
+		
+		return b.build();
+	}
 }

@@ -25,6 +25,11 @@ public class MacroExpanderTest extends VisitingTest {
 
 	static class TestMacro 	implements IMacro {
 		@Override
+		public MacroModel getModel() {
+			throw new UnsupportedOperationException();
+		}
+		
+		@Override
 		public String getName() {
 			return "test-macro";
 		}

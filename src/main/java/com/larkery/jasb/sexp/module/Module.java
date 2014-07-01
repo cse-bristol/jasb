@@ -16,6 +16,7 @@ import com.larkery.jasb.sexp.errors.IErrorHandler;
 import com.larkery.jasb.sexp.parse.IMacro;
 import com.larkery.jasb.sexp.parse.IMacroExpander;
 import com.larkery.jasb.sexp.parse.MacroExpander;
+import com.larkery.jasb.sexp.parse.MacroModel;
 import com.larkery.jasb.sexp.parse.SimpleMacro;
 
 public class Module implements IMacro {
@@ -170,6 +171,14 @@ public class Module implements IMacro {
 		protected ISExpression expandResult(final IMacroExpander expander, final ISExpression transformed) {
 			return transformed;
 		}
+		
+		@Override
+		public MacroModel getModel() {
+			return MacroModel.builder()
+					.desc("Creates module-specific names for variables, when used within ~module, by prefixing them with the modules name.")
+					.pos().remainder("The values to use when constructing the module specific name").and()
+					.build();
+		}
 	}
 	
 	static class Renamer implements IMacro {
@@ -202,5 +211,20 @@ public class Module implements IMacro {
 			
 			return expander.expand(b.build(input.getEndLocation()));
 		}
+		
+		@Override
+		public MacroModel getModel() {
+			return MacroModel.builder()
+					.desc("Renames uses of " + fromName + " to " + toName)
+					.build();
+		}
+	}
+	
+	@Override
+	public MacroModel getModel() {
+		return MacroModel.builder()
+				.desc("A special macro, which rewrites any templates inside it to be prefixed with a name")
+				.pos().require("A name for the module").and()
+				.build();
 	}
 }

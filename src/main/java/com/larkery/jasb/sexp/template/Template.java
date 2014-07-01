@@ -18,6 +18,7 @@ import com.larkery.jasb.sexp.SExpressions;
 import com.larkery.jasb.sexp.errors.BasicError;
 import com.larkery.jasb.sexp.errors.IErrorHandler;
 import com.larkery.jasb.sexp.parse.IMacroExpander;
+import com.larkery.jasb.sexp.parse.MacroModel;
 import com.larkery.jasb.sexp.parse.SimpleMacro;
 
 class Template extends SimpleMacro {
@@ -250,6 +251,12 @@ class Template extends SimpleMacro {
 		final ImmutableMap.Builder<String, ISExpression> internalNames = ImmutableMap.builder();
 		boolean hasError = false;
 		
+		//TODO expand arguments before substituting them in
+		// really we should probably go:
+		// for each argument:
+		//   copy the argument with substitutions of other arguments (recursively)
+		// return the body with the arguments substituted in
+		
 		for (final Argument argument : arguments) {
 			final Optional<? extends ISExpression> expression = argument.read(validated.arguments, remainder);
 			if (expression.isPresent()) {
@@ -271,5 +278,11 @@ class Template extends SimpleMacro {
 		} else {
 			return new Substitution(validated.node.getLocation(), body, internalNames.build());
 		}
+	}
+	
+	@Override
+	public MacroModel getModel() {
+		//TODO make better?
+		return MacroModel.builder().desc("A user-defined template macro").build();
 	}
 }

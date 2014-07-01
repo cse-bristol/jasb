@@ -93,4 +93,13 @@ public class JoinMacro extends SimpleMacro {
 			return "";
 		}
 	}
+	
+	@Override
+	public MacroModel getModel() {
+		return MacroModel.builder()
+				.desc("Allows the construction of new atoms by concatenating the values of other atoms together.")
+				.keys().allow("separator", "A value which will be interposed between the remaining arguments that will be joined. Expanded before use.").and()
+				.pos().remainder("A sequence of values which will be combined, separated with the separator, to produce the new atom. Expanded before use.").and()
+				.build();
+	}
 }

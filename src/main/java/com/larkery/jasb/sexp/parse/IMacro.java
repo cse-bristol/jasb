@@ -24,4 +24,6 @@ public interface IMacro {
 	 * Invoked to rewrite an {@link Invocation}
 	 */
 	public ISExpression transform(final Seq input, final IMacroExpander expander, final IErrorHandler errors);
+	
+	public MacroModel getModel();
 }

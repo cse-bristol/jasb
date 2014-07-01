@@ -48,7 +48,6 @@ public class UniqueNameMacro extends SimpleMacro {
 	protected ISExpression doTransform(final Invocation validated, final IMacroExpander expander, final IErrorHandler errors) {
 		final String uuid = UUID.randomUUID().toString();
 		if (!validated.remainder.isEmpty()) {
-		} else {
 			Node n;
 			try {
 				n = Node.copy(expander.expand(validated.remainder.get(0)));
@@ -66,5 +65,16 @@ public class UniqueNameMacro extends SimpleMacro {
 		return Atom.create(
 				String.format("*unique-name-%s*", uuid)
 				,validated.node.getLocation());
+	}
+	
+	@Override
+	public MacroModel getModel() {
+		return MacroModel.builder()
+				.desc("A macro which will expand to a globally unique name when used.")
+				.desc("This is useful for creating temporary variables within a template, in a way which will not conflict with any other templates")
+				.pos()
+					.allow("A string which will be used as part of the name - this will be expanded before use.")
+				.and()
+				.build();
 	}
 }
