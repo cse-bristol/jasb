@@ -181,7 +181,7 @@ public class Templates {
 							return Optional.absent();
 						}
 													
-						if (usedExternalNames.contains(parsedArgument2.getExternalName())) {
+						if (!parsedArgument2.getExternalName().equals("") && usedExternalNames.contains(parsedArgument2.getExternalName())) {
 							errors.error(l, "two arguments have been given the external name %s", parsedArgument2.getExternalName());
 							return Optional.absent();
 						}

@@ -1,20 +1,25 @@
  package com.larkery.jasb.sexp.template;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import com.larkery.jasb.sexp.Delim;
 import com.larkery.jasb.sexp.ISExpression;
 import com.larkery.jasb.sexp.ISExpressionVisitor;
 import com.larkery.jasb.sexp.Location;
+import com.larkery.jasb.sexp.parse.IMacroExpander;
 
 class Substitution implements ISExpression {
 	private final ISExpression body;
 	private final Map<String, ISExpression> arguments;
+	private final Map<String, ISExpression> expandedArguments = new HashMap<>();
 	private final Location baseLocation;
+	private final IMacroExpander expander;
 	
-	public Substitution(final Location baseLocation, final ISExpression body, final Map<String, ISExpression> arguments) {
+	public Substitution(final Location baseLocation, final ISExpression body, final Map<String, ISExpression> arguments, final IMacroExpander expander) {
 		this.body = body;
 		this.arguments = arguments;
+		this.expander = expander;
 		this.baseLocation = baseLocation.withTypeOfTail(Location.Type.Template);
 	}
 
@@ -54,13 +59,26 @@ class Substitution implements ISExpression {
 				// so we want to put that in for where we are; its
 				// source location is al ready OK so we don't need
 				// to rewrite it.
-				final ISExpression value = arguments.get(string);
-
+				
+				if (!expandedArguments.containsKey(string)) {
+					final ISExpression unexpanded = arguments.get(string);
+					final ISExpression expanded = expander.expand(
+						new ISExpression() {
+							@Override
+							public void accept(final ISExpressionVisitor visitor) {
+								unexpanded.accept(new SubbingVisitor(visitor));
+							}
+						}
+					);
+					expandedArguments.put(string, expanded);
+				}
+				
+				final ISExpression value = expandedArguments.get(string);
+				
 				// disable location rewriting because we are visiting the argument and we want the error there
 				rewritingLocation = false;
 				value.accept(this);
 				rewritingLocation = true;
-
 			} else {
 				delegate.atom(string);
 			}

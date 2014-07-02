@@ -1,5 +1,11 @@
 package com.larkery.jasb.sexp.parse;
 
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import java.util.List;
 
 import org.junit.Assert;
@@ -19,6 +25,19 @@ import com.larkery.jasb.sexp.errors.UnfinishedExpressionException;
 import com.larkery.jasb.sexp.template.Templates;
 
 public class TemplateTest extends VisitingTest {
+	private static final IMacroExpander DUMMY_EXPANDER = new IMacroExpander() {
+		
+		@Override
+		public ISExpression expandContents(final ISExpression transformed) {
+			return transformed;
+		}
+		
+		@Override
+		public ISExpression expand(final ISExpression input) {
+			return input;
+		}
+	};
+	
 	@Test
 	public void templateCreationWorksForValidTemplate() throws Exception {
 		final NodeBuilder nb = NodeBuilder.create();
@@ -50,7 +69,7 @@ public class TemplateTest extends VisitingTest {
 															IErrorHandler.RAISE);
 		
 		final IMacro mac = macros.get(0);
-		final ISExpression e = ((SimpleMacro)mac).doTransform(Invocation.of(Node.copy(source("templateInput", "(hello thing:99)")), IErrorHandler.RAISE), null, IErrorHandler.RAISE);
+		final ISExpression e = ((SimpleMacro)mac).doTransform(Invocation.of(Node.copy(source("templateInput", "(hello thing:99)")), IErrorHandler.RAISE), DUMMY_EXPANDER, IErrorHandler.RAISE);
 
 		final Node node = Node.copy(e);
 
@@ -66,7 +85,7 @@ public class TemplateTest extends VisitingTest {
 															IErrorHandler.RAISE);
 		
 		final IMacro mac = macros.get(0);
-		final ISExpression e = ((SimpleMacro)mac).doTransform(Invocation.of(Node.copy(source("templateInput", "(hello thing:99)")), IErrorHandler.RAISE), null, IErrorHandler.RAISE);
+		final ISExpression e = ((SimpleMacro)mac).doTransform(Invocation.of(Node.copy(source("templateInput", "(hello thing:99)")), IErrorHandler.RAISE), DUMMY_EXPANDER, IErrorHandler.RAISE);
 
 		final Node node = Node.copy(e);
 
@@ -177,7 +196,7 @@ public class TemplateTest extends VisitingTest {
 				NodeBuilder.create(), 
 				IErrorHandler.RAISE).get(0);
 		
-		final ISExpression e = t.doTransform(Invocation.of(node("(t a b c)"), IErrorHandler.RAISE), null, IErrorHandler.RAISE);
+		final ISExpression e = t.doTransform(Invocation.of(node("(t a b c)"), IErrorHandler.RAISE), DUMMY_EXPANDER, IErrorHandler.RAISE);
 		final Node node = Node.copy(e);
 		
 		Assert.assertEquals("Expanded node is what we were expecting", node("a b c"), node);
@@ -195,7 +214,7 @@ public class TemplateTest extends VisitingTest {
 				NodeBuilder.create(), 
 				IErrorHandler.RAISE).get(0);
 		
-		final ISExpression e = t.doTransform(Invocation.of(node("(t a b)"), IErrorHandler.RAISE), null, IErrorHandler.RAISE);
+		final ISExpression e = t.doTransform(Invocation.of(node("(t a b)"), IErrorHandler.RAISE), DUMMY_EXPANDER, IErrorHandler.RAISE);
 		final Node node = Node.copy(e);
 		
 		Assert.assertEquals("Expanded node is what we were expecting", node("b a"), node);
@@ -208,7 +227,7 @@ public class TemplateTest extends VisitingTest {
 				NodeBuilder.create(), 
 				IErrorHandler.RAISE).get(0);
 		
-		final ISExpression e = t.doTransform(Invocation.of(node("(t a: thing)"), IErrorHandler.RAISE), null, IErrorHandler.RAISE);
+		final ISExpression e = t.doTransform(Invocation.of(node("(t a: thing)"), IErrorHandler.RAISE), DUMMY_EXPANDER, IErrorHandler.RAISE);
 		final Node node = Node.copy(e);
 		
 		Assert.assertEquals("Expanded node is what we were expecting", node("thing"), node);
@@ -221,7 +240,7 @@ public class TemplateTest extends VisitingTest {
 				NodeBuilder.create(), 
 				IErrorHandler.RAISE).get(0);
 		
-		final ISExpression e = t.doTransform(Invocation.of(node("(t thing)"), IErrorHandler.RAISE), null, IErrorHandler.RAISE);
+		final ISExpression e = t.doTransform(Invocation.of(node("(t thing)"), IErrorHandler.RAISE), DUMMY_EXPANDER, IErrorHandler.RAISE);
 		final Node node = Node.copy(e);
 		
 		Assert.assertEquals("Expanded node is what we were expecting", node("thing"), node);
@@ -234,10 +253,30 @@ public class TemplateTest extends VisitingTest {
 				NodeBuilder.create(), 
 				IErrorHandler.RAISE).get(0);
 		
-		final ISExpression e = t.doTransform(Invocation.of(node("(t thing)"), IErrorHandler.RAISE), null, IErrorHandler.RAISE);
+		final ISExpression e = t.doTransform(Invocation.of(node("(t thing)"), IErrorHandler.RAISE), DUMMY_EXPANDER, IErrorHandler.RAISE);
 		final Node node = Node.copy(e);
 		
 		Assert.assertEquals("Expanded node is what we were expecting", node("thing"), node);
+	}
+	
+	@Test
+	public void expandsArgumentsButOnlyOnce() throws Exception {
+		final SimpleMacro t = (SimpleMacro) Templates.extract(
+				node("(template t [[@:internal zip] [@:internal-2 @internal]] (@internal @internal-2 @internal))"), 
+				NodeBuilder.create(), 
+				IErrorHandler.RAISE).get(0);
+		
+		final IMacroExpander mockExpander = mock(IMacroExpander.class);
+		
+		when(mockExpander.expand(any(ISExpression.class))).thenReturn(Atom.create("zap"));
+		
+		final ISExpression e = t.doTransform(Invocation.of(node("(t thing)"), IErrorHandler.RAISE), mockExpander, IErrorHandler.RAISE);
+		final Node node = Node.copy(e);
+		
+		Assert.assertEquals("Expanded node is what we were expecting", node("(zap zap zap)"), node);
+		
+		// we should have two expansion steps, one for @internal and one for @internal-2
+		verify(mockExpander, times(2)).expand(any(ISExpression.class));
 	}
 	
 	@Test
@@ -247,7 +286,7 @@ public class TemplateTest extends VisitingTest {
 				NodeBuilder.create(), 
 				IErrorHandler.RAISE).get(0);
 		
-		final ISExpression e = t.doTransform(Invocation.of(node("(t)"), IErrorHandler.RAISE), null, IErrorHandler.RAISE);
+		final ISExpression e = t.doTransform(Invocation.of(node("(t)"), IErrorHandler.RAISE), DUMMY_EXPANDER, IErrorHandler.RAISE);
 		final Node node = Node.copy(e);
 		
 		Assert.assertEquals("Expanded node is what we were expecting", node("1"), node);
