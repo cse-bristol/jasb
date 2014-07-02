@@ -42,8 +42,10 @@ class Substitution implements ISExpression {
 			// rewrite location to give location of error within template usage
 			// so that errors associate to the place the template is used, not where
 			// it is defined
-			if (rewritingLocation) {
+			if (rewritingLocation && loc != null) {
 				delegate.locate(baseLocation.appending(loc));
+			} else {
+				delegate.locate(loc);
 			}
 		}
 
