@@ -7,9 +7,13 @@ import java.util.List;
 import com.google.common.collect.ImmutableList;
 import com.larkery.jasb.sexp.ISExpression;
 import com.larkery.jasb.sexp.ISExpressionSource;
+import com.larkery.jasb.sexp.NodeBuilder;
+import com.larkery.jasb.sexp.SExpressions;
 import com.larkery.jasb.sexp.errors.IErrorHandler;
+import com.larkery.jasb.sexp.errors.UnfinishedExpressionException;
 import com.larkery.jasb.sexp.module.Module;
 import com.larkery.jasb.sexp.parse.Includer.IResolver;
+import com.larkery.jasb.sexp.template.Templates;
 
 /**
  * Chains together parser, expander and includer
@@ -35,22 +39,36 @@ public class StandardSource implements ISExpressionSource {
 		return new StandardSource(resolver, true, ImmutableList.copyOf(extraMacros));
 	}
 	
-	private ISExpression withMacros(final ISExpression output, final IErrorHandler errors) {
-		if (extraMacros.isEmpty()) return output;
-		else return MacroExpander.expand(extraMacros, output, errors);
-	}
-	
 	@Override
 	public ISExpression get(final URI address, final IErrorHandler errors) {
+		ISExpression source = Includer.source(resolver, address, errors);
+		
+		final ImmutableList.Builder<IMacro> macros = ImmutableList.builder();
+		
 		if (expandTemplates) {
-			return withMacros(TemplateExpander.expand(
-					Module.transform(
-							Includer.source(resolver, address, errors), 
-							errors), 
-						errors), 
-					errors);
+			// rewrite modules
+			source = Module.transform(source, errors);
+			
+			final NodeBuilder output = NodeBuilder.create();
+			
+			final List<IMacro> templates = Templates.extract(source, output, errors);
+			
+			try {
+				source = SExpressions.inOrder(output.getAll());
+			} catch (final UnfinishedExpressionException e) {
+				errors.handle(e.getError());
+			}
+			
+			macros.addAll(templates);
+		}
+		
+		macros.addAll(extraMacros);
+		
+		final List<IMacro> macros_ = macros.build();
+		if (macros_.isEmpty()) {
+			return source;
 		} else {
-			return withMacros(Includer.source(resolver, address, errors), errors);
+			return MacroExpander.expand(macros_, source, errors);
 		}
 	}
 
