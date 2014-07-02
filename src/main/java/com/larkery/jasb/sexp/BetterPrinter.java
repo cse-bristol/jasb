@@ -19,13 +19,17 @@ public class BetterPrinter implements ISExpressionVisitor, AutoCloseable {
 	private int column = 1;
 	private int columnDelta = 0;
 	private int line = 1;
+	private boolean inComment = false;
 	
-	public BetterPrinter(final Writer output) {
+	private final int maxSpacing;
+	
+	public BetterPrinter(final Writer output, final int maxSpacing) {
+		this.maxSpacing = maxSpacing;
 		this.output = new BufferedWriter(output);
 	}
 
-	public static void print(final ISExpression expression, final Writer output) {
-		try (BetterPrinter p = new BetterPrinter(output)) {
+	public static void print(final ISExpression expression, final Writer output, final int maxLineSkip) {
+		try (BetterPrinter p = new BetterPrinter(output, maxLineSkip)) {
 			expression.accept(p);
 		} catch (final IOException e) {
 			throw new RuntimeException(e.getMessage(), e);
@@ -39,9 +43,10 @@ public class BetterPrinter implements ISExpressionVisitor, AutoCloseable {
 
 	private void doShift() {
 		shift(toShift);
+		inComment = false;
 	}
 	
-	private void shift(final Location loc) {	
+	private void shift(final Location loc) {
 		if (whereAmI != null && loc != null) {
 			if (!(loc.positions.isEmpty() || whereAmI.positions.isEmpty())) {
 				final Position prevPosition = whereAmI.getTailPosition();
@@ -64,6 +69,10 @@ public class BetterPrinter implements ISExpressionVisitor, AutoCloseable {
 				
 				line = curPosition.line;
 			}
+		} else if (inComment) {
+			shiftLine(1);
+		} else if (loc != null) {
+			shiftLine(loc.getTailPosition().line - line);
 		}
 		
 		whereAmI = loc;
@@ -82,10 +91,11 @@ public class BetterPrinter implements ISExpressionVisitor, AutoCloseable {
 	}
 
 	private void shiftLine(int j) {
+		line += j;
+		j = Math.min(j, maxSpacing);
 		try {
 			while (j > 0) {
 				output.write("\n");
-				line++;
 				for (int i = 0; i<indentation; i++) {
 					output.write("\t");
 				}
@@ -169,7 +179,11 @@ public class BetterPrinter implements ISExpressionVisitor, AutoCloseable {
 	@Override
 	public void comment(final String text) {
 		doShift();
+		if (whereAmI == null) {
+			shiftLine(1);
+		}
 		write(";" + text);
+		inComment = true;
 	}
 
 	@Override
@@ -185,8 +199,12 @@ public class BetterPrinter implements ISExpressionVisitor, AutoCloseable {
 	}
 
 	public static String print(final ISExpression expand) {
+		return print(expand, Integer.MAX_VALUE);
+	}
+	
+	public static String print(final ISExpression expand, final int maxLineSkip) {
 		final StringWriter sw = new StringWriter();
-		print(expand, sw);
+		print(expand, sw, maxLineSkip);
 		return sw.toString();
 	}
 }

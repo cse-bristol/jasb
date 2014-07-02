@@ -44,4 +44,8 @@ public class Comment extends Node {
 	public static Comment create(final String string) {
 		return new Comment(null, string.replace("\n", " ").replace("\r", " "));
 	}
+	
+	public static Comment create(final Location loc, final String string) {
+		return new Comment(loc, string.replace("\n", " ").replace("\r", " "));
+	}
 }

@@ -31,7 +31,7 @@ class Substitution implements ISExpression {
 
 	class SubbingVisitor implements ISExpressionVisitor {
 		private final ISExpressionVisitor delegate;
-		private boolean rewritingLocation = true;
+		private final boolean rewritingLocation = true;
 		
 		public SubbingVisitor(final ISExpressionVisitor delegate) {
 			this.delegate = delegate;
@@ -76,9 +76,10 @@ class Substitution implements ISExpression {
 				final ISExpression value = expandedArguments.get(string);
 				
 				// disable location rewriting because we are visiting the argument and we want the error there
-				rewritingLocation = false;
+				// actually, don't do that.
+//				rewritingLocation = false;
 				value.accept(this);
-				rewritingLocation = true;
+//				rewritingLocation = true;
 			} else {
 				delegate.atom(string);
 			}
