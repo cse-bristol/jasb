@@ -35,7 +35,6 @@ public abstract class SimpleMacro implements IMacro {
 			final Seq unexpanded,
 			final IMacroExpander expander, 
 			final IErrorHandler errors) {
-		
 		if (unexpanded.isEmpty()) {
 			throw new RuntimeException("This should never happen - if pasting part of a macro, it should at least have a macro name");
 		} else {

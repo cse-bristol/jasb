@@ -31,14 +31,24 @@ public interface IErrorHandler {
 				break;
 			case WARNING:
 				log.warn("{} : {}", error.getLocations(), error.getMessage());
-				break;			
+				break;
 			}
+		}
+		
+		@Override
+		public String toString() {
+			return "IErrorHandler.SLF4J";
 		}
 	};
 
 	public static final IErrorHandler NOP = new BaseErrorHandler() {
 		@Override
 		public void handle(final IError error) {}
+		
+		@Override
+		public String toString() {
+			return "IErrorHandler.NOP";
+		}
 	};
 	static final IErrorHandler RAISE = new BaseErrorHandler(){
 		@Override
@@ -47,10 +57,13 @@ public interface IErrorHandler {
 				throw new JasbErrorException(error);
 			}
 		}
+		
+		@Override
+		public String toString() {
+			return "IErrorHandler.RAISE";
+		}
 	};
-	static final IErrorHandler IGNORE = new BaseErrorHandler() {
-		@Override public void handle(final IError error) {}
-	};
+	static final IErrorHandler IGNORE = NOP;
 	
 	public void handle(final IError error);
 	public void error(final ILocated location, final String format, final Object... interpolate);

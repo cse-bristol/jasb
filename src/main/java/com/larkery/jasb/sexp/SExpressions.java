@@ -45,4 +45,20 @@ public class SExpressions {
 			}
 		};
 	}
+	
+	/**
+	 * Makes a warning in the given error stream when the s-expression is actually looked at.
+	 * @param input
+	 * @param valueOf
+	 * @param errors
+	 * @return
+	 */
+	public static ISExpression warning(final Seq input, final String valueOf, final IErrorHandler errors) {
+		return new ISExpression() {
+			@Override
+			public void accept(final ISExpressionVisitor visitor) {
+				errors.warn(input, valueOf);
+			}
+		};
+	}
 }
