@@ -15,19 +15,31 @@ public class SExpressions {
 		return EMPTY;
 	}
 	
+	public static class InOrder implements ISExpression {
+		private final List<ISExpression> list;
+
+		private InOrder(final List<ISExpression> list) {
+			this.list = list;
+		}
+		
+		public List<ISExpression> getList() {
+			return list;
+		}
+
+		@Override
+		public void accept(final ISExpressionVisitor visitor) {
+			for (final ISExpression se : list) {
+				se.accept(visitor);
+			}
+		}
+	}
+	
 	public static ISExpression inOrder(final Iterable<? extends ISExpression> expressions) {
 		final List<ISExpression> list = ImmutableList.copyOf(expressions);
 		if (list.isEmpty()) {
 			return empty();
 		}
-		return new ISExpression() {
-			@Override
-			public void accept(final ISExpressionVisitor visitor) {
-				for (final ISExpression se : list) {
-					se.accept(visitor);
-				}
-			}
-		};
+		return new InOrder(list);
 	}
 
 	/**
