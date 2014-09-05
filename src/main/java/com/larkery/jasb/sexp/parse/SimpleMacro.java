@@ -2,9 +2,11 @@ package com.larkery.jasb.sexp.parse;
 
 import java.util.Set;
 
+import com.google.common.base.Optional;
 import com.google.common.collect.Sets;
 import com.larkery.jasb.sexp.ISExpression;
 import com.larkery.jasb.sexp.Invocation;
+import com.larkery.jasb.sexp.Node;
 import com.larkery.jasb.sexp.SExpressions;
 import com.larkery.jasb.sexp.Seq;
 import com.larkery.jasb.sexp.errors.BasicError;
@@ -112,5 +114,10 @@ public abstract class SimpleMacro implements IMacro {
 		}
 		
 		return b.build();
+	}
+	
+	@Override
+	public Optional<Node> getDefiningNode() {
+		return Optional.absent();
 	}
 }

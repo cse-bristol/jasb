@@ -1,5 +1,6 @@
 package com.larkery.jasb.sexp.parse;
 
+import com.google.common.base.Optional;
 import com.larkery.jasb.sexp.ISExpression;
 import com.larkery.jasb.sexp.Invocation;
 import com.larkery.jasb.sexp.Node;
@@ -26,4 +27,6 @@ public interface IMacro {
 	public ISExpression transform(final Seq input, final IMacroExpander expander, final IErrorHandler errors);
 	
 	public MacroModel getModel();
+	
+	public Optional<Node> getDefiningNode();
 }

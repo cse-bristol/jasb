@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.junit.Test;
 
+import com.google.common.base.Optional;
 import com.larkery.jasb.sexp.ISExpression;
 import com.larkery.jasb.sexp.ISExpressionVisitor;
 import com.larkery.jasb.sexp.Node;
@@ -43,6 +44,11 @@ public class MacroExpanderTest extends VisitingTest {
 					v.atom("b");
 				}
 			};
+		}
+		
+		@Override
+		public Optional<Node> getDefiningNode() {
+			return Optional.absent();
 		}
 	}
 }

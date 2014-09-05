@@ -112,10 +112,10 @@ public class Templates {
 		final Atom templateName = (Atom) exceptComments.get(1);
 		final Seq templateArguments = (Seq) exceptComments.get(2);
 		
-		return parse(templateName.getValue(), templateArguments.exceptComments(), exceptComments.subList(3, exceptComments.size()), errors);
+		return parse(definition, templateName.getValue(), templateArguments.exceptComments(), exceptComments.subList(3, exceptComments.size()), errors);
 	}
 	
-	private static Optional<? extends IMacro> parse(final String name, final List<Node> arguments, final List<Node> body, final IErrorHandler errors) {
+	private static Optional<? extends IMacro> parse(final Seq definition, final String name, final List<Node> arguments, final List<Node> body, final IErrorHandler errors) {
 		final ImmutableList.Builder<NamedArgument> namedArguments = ImmutableList.builder();
 		final ArrayList<NumberedArgument> numberedArguments = new ArrayList<>();
 		Optional<RestArgument> restArgument = Optional.absent();
@@ -256,7 +256,7 @@ public class Templates {
 			}
 		});
 		
-		return Optional.of(new Template(name, body_, namedArguments.build(), numberedArguments, restArgument));
+		return Optional.of(new Template(definition, name, body_, namedArguments.build(), numberedArguments, restArgument));
 	}
 
 	

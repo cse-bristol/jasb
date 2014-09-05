@@ -15,6 +15,7 @@ import com.larkery.jasb.sexp.Invocation;
 import com.larkery.jasb.sexp.Location;
 import com.larkery.jasb.sexp.Node;
 import com.larkery.jasb.sexp.SExpressions;
+import com.larkery.jasb.sexp.Seq;
 import com.larkery.jasb.sexp.errors.BasicError;
 import com.larkery.jasb.sexp.errors.IErrorHandler;
 import com.larkery.jasb.sexp.parse.IMacroExpander;
@@ -175,11 +176,13 @@ class Template extends SimpleMacro {
 	private final ImmutableSet<String> allowedNames;
 	private final int minimumArgumentCount;
 	private final int allowedArgumentCount;
+	private final Seq definition;
 	
-	public Template(final String name, final ISExpression body, 
+	public Template(final Seq definition, final String name, final ISExpression body, 
 			final List<NamedArgument> named,
 			final List<NumberedArgument> numbered,
 			final Optional<RestArgument> rest) {
+		this.definition = definition;
 		this.templateName = name;
 		this.body = body;
 		
@@ -277,5 +280,10 @@ class Template extends SimpleMacro {
 		} else {
 			return new Substitution(validated.node.getLocation(), body, internalNames.build(), expander);
 		}
+	}
+	
+	@Override
+	public Optional<Node> getDefiningNode() {
+		return Optional.<Node>of(definition);
 	}
 }

@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
+import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.larkery.jasb.sexp.Atom;
 import com.larkery.jasb.sexp.Delim;
@@ -218,6 +219,11 @@ public class Module implements IMacro {
 					.desc("Renames uses of " + fromName + " to " + toName)
 					.build();
 		}
+		
+		@Override
+		public Optional<Node> getDefiningNode() {
+			return Optional.absent();
+		}
 	}
 	
 	@Override
@@ -226,5 +232,10 @@ public class Module implements IMacro {
 				.desc("A special macro, which rewrites any templates inside it to be prefixed with a name")
 				.pos().require("A name for the module").and()
 				.build();
+	}
+	
+	@Override
+	public Optional<Node> getDefiningNode() {
+		return Optional.absent();
 	}
 }
