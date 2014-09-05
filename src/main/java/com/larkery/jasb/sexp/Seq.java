@@ -20,6 +20,7 @@ public class Seq extends Node implements Iterable<Node> {
 	private final List<Node> nodes;
 	private final Location end;
 	private final Delim marker;
+	private transient Node withoutComments; 
 	
 	private Seq(
 			final Delim marker,
@@ -30,6 +31,26 @@ public class Seq extends Node implements Iterable<Node> {
 		this.marker = marker;
 		this.end = end;
 		this.nodes = ImmutableList.copyOf(nodes);
+	}
+	
+	@Override
+	protected Node removeComments() {
+		if (withoutComments == null) {
+			final ImmutableList.Builder<Node> removedComments = ImmutableList.builder();
+			boolean allSame = true;
+			for (final Node n : nodes) {
+				final Node n_ = n.removeComments();
+				if (n_ != null) removedComments.add(n_);
+				allSame = allSame && (n == n_);
+			}
+			if (allSame) {
+				withoutComments = this;
+			} else {
+				withoutComments = new Seq(this.getDelimeter(), this.getLocation(), this.getEndLocation(),
+						removedComments.build());
+			}
+		}
+		return withoutComments;
 	}
 	
 	public Delim getDelimeter() {

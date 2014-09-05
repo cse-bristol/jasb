@@ -25,11 +25,17 @@ public abstract class Node implements ISExpression, ILocated {
 	}
 	
 	public static Node copyStructure(final ISExpression source) throws UnfinishedExpressionException {
-		final NodeBuilder visitor = NodeBuilder.withoutComments();
-		source.accept(visitor);
-		return visitor.get();
+		if (source instanceof Node) {
+			return ((Node) source).removeComments();
+		} else {
+			final NodeBuilder visitor = NodeBuilder.withoutComments();
+			source.accept(visitor);
+			return visitor.get();
+		}
 	}
 	
+	protected abstract Node removeComments();
+
 	public static Node copy(final ISExpression source) throws UnfinishedExpressionException {
 		if (source instanceof Node) {
 			return (Node) source;

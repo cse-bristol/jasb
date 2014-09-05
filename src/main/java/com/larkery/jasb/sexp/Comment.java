@@ -48,4 +48,9 @@ public class Comment extends Node {
 	public static Comment create(final Location loc, final String string) {
 		return new Comment(loc, string.replace("\n", " ").replace("\r", " "));
 	}
+	
+	@Override
+	protected Node removeComments() {
+		return null;
+	}
 }

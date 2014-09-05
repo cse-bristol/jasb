@@ -71,4 +71,9 @@ public class Atom extends Node {
 	public static Node create(final String string) {
 		return new Atom(null,string);
 	}
+	
+	@Override
+	protected Node removeComments() {
+		return this;
+	}
 }
