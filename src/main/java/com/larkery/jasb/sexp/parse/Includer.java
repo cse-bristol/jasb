@@ -16,7 +16,6 @@ import java.util.Stack;
 import org.apache.commons.io.IOUtils;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Multimap;
 import com.larkery.jasb.sexp.Atom;
 import com.larkery.jasb.sexp.Comment;
 import com.larkery.jasb.sexp.INodeVisitor;
@@ -105,14 +104,15 @@ public class Includer {
 	}
 	
 	/**
-	 * Load a full scenario with includes, and also write dependencies into the given multimap
+	 * Given a resolver and a root address, construct a map which contains all of the included
+	 * things by URI that were found in the root document or any of its includes, and so on.
+	 * 
 	 * @param resolver
 	 * @param root
-	 * @param dag maps from scenario to includes that scenario contains
 	 * @param errors
 	 * @return
 	 */
-	public static Map<URI, String> collect(final IResolver resolver, final URI root, final Multimap<URI, URI> dag, final IErrorHandler errors) {
+	public static Map<URI, String> collect(final IResolver resolver, final URI root, final IErrorHandler errors) {
 		final HashMap<URI, String> builder = new HashMap<>();
 		
 		final Deque<URI> addrs = new LinkedList<>();		
@@ -144,8 +144,6 @@ public class Includer {
 							} catch (final ResolutionException e) {
 								return false;
 							}
-							
-							if (dag != null) dag.put(seq.getLocation().getTailPosition().name, addr);
 							
 							if (builder.containsKey(addr)) {
 							} else {
@@ -192,18 +190,7 @@ public class Includer {
 		return ImmutableMap.copyOf(builder);
 	}
 	
-	/**
-	 * Given a resolver and a root address, construct a map which contains all of the included
-	 * things by URI that were found in the root document or any of its includes, and so on.
-	 * 
-	 * @param resolver
-	 * @param root
-	 * @param errors
-	 * @return
-	 */
-	public static Map<URI, String> collect(final IResolver resolver, final URI root, final IErrorHandler errors) {
-		return collect(resolver, root, null, errors);
-	}
+	
 	
 	/**
 	 * Given a resolver and a root address, make an S-Expression by following all the includes.

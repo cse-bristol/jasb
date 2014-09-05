@@ -229,7 +229,7 @@ public class Lexer {
 	
 	public Location location() {
 		if (sourceLocation != null) {
-			return sourceLocation.appending(uri, line, column);
+			return Location.of(uri, line, column, Location.Via.Type.Include, sourceLocation);
 		} else {
 			return Location.of(uri, line, column);
 		}

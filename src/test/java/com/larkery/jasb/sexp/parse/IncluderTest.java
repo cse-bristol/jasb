@@ -84,9 +84,8 @@ public class IncluderTest extends VisitingTest {
 		Assert.assertTrue(node instanceof Seq);
 		final Seq seq = (Seq) node;
 
-		Assert.assertEquals(1, seq.getLocation().positions.size());
 		Assert.assertEquals(URI.create("test://includesHaveCorrectLocations"), 
-							seq.getLocation().positions.get(0).name);
+							seq.getLocation().name);
 
 		// so that is correct
 
@@ -98,10 +97,10 @@ public class IncluderTest extends VisitingTest {
 
 		// the atom should be the included bit, which is the word hello
 		Assert.assertEquals(URI.create("test://includesHaveCorrectLocations"),
-							atom.getLocation().positions.get(0).name);
+							atom.getLocation().sourceLocation.name);
 
 		Assert.assertEquals(URI.create("test://my-include"),
-							atom.getLocation().positions.get(1).name);
+							atom.getLocation().name);
 	}
 	
 	@Test

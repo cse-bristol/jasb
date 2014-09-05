@@ -7,7 +7,6 @@ import java.io.Writer;
 import java.util.Objects;
 
 import com.google.common.base.CharMatcher;
-import com.larkery.jasb.sexp.Location.Position;
 
 public class BetterPrinter implements ISExpressionVisitor, AutoCloseable {
 	private final BufferedWriter output;
@@ -48,31 +47,26 @@ public class BetterPrinter implements ISExpressionVisitor, AutoCloseable {
 	
 	private void shift(final Location loc) {
 		if (whereAmI != null && loc != null) {
-			if (!(loc.positions.isEmpty() || whereAmI.positions.isEmpty())) {
-				final Position prevPosition = whereAmI.getTailPosition();
-				final Position curPosition = loc.getTailPosition();
-				
-				if (Objects.equals(prevPosition.name, curPosition.name)) {
-					if (line == curPosition.line) {
-						shiftColumn(curPosition.column - columnDelta);
-					} else if (line < curPosition.line) {
-						shiftLine(curPosition.line - line);
-						columnDelta = curPosition.column;
-					} else {
-						shiftLine(1);
-						columnDelta = curPosition.column;
-					}
+			if (Objects.equals(whereAmI.name, loc.name)) {
+				if (line == loc.line) {
+					shiftColumn(loc.column - columnDelta);
+				} else if (line < loc.line) {
+					shiftLine(loc.line - line);
+					columnDelta = loc.column;
 				} else {
 					shiftLine(1);
-					columnDelta = curPosition.column;
+					columnDelta = loc.column;
 				}
-				
-				line = curPosition.line;
+			} else {
+				shiftLine(1);
+				columnDelta = loc.column;
 			}
+			
+			line = loc.line;
 		} else if (inComment) {
 			shiftLine(1);
 		} else if (loc != null) {
-			shiftLine(loc.getTailPosition().line - line);
+			shiftLine(loc.line - line);
 		}
 		
 		whereAmI = loc;

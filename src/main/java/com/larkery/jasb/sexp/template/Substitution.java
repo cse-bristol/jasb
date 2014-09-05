@@ -7,6 +7,7 @@ import com.larkery.jasb.sexp.Delim;
 import com.larkery.jasb.sexp.ISExpression;
 import com.larkery.jasb.sexp.ISExpressionVisitor;
 import com.larkery.jasb.sexp.Location;
+import com.larkery.jasb.sexp.Location.Via.Type;
 import com.larkery.jasb.sexp.parse.IMacroExpander;
 
 class Substitution implements ISExpression {
@@ -20,7 +21,7 @@ class Substitution implements ISExpression {
 		this.body = body;
 		this.arguments = arguments;
 		this.expander = expander;
-		this.baseLocation = baseLocation.withTypeOfTail(Location.Type.Template);
+		this.baseLocation = baseLocation;
 	}
 
 	@Override
@@ -43,7 +44,7 @@ class Substitution implements ISExpression {
 			// so that errors associate to the place the template is used, not where
 			// it is defined
 			if (rewritingLocation && loc != null) {
-				delegate.locate(baseLocation.appending(loc));
+				delegate.locate(loc.via(Type.Template, baseLocation));
 			} else {
 				delegate.locate(loc);
 			}
