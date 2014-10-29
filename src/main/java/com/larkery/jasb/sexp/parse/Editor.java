@@ -27,6 +27,10 @@ public abstract class Editor implements ISExpressionVisitor {
 		 */
 		Pass,
 		/**
+		 * Like pass, but where we also don't look at what is inside
+		 */
+		Ignore,
+		/**
 		 * Cut this stuff out and throw it away
 		 */
 		Remove,
@@ -62,7 +66,11 @@ public abstract class Editor implements ISExpressionVisitor {
 	protected abstract Action act(final String name);
 	protected abstract ISExpression edit(final Seq cut);
 	
-	private boolean editing() {
+	protected boolean afterOpen() {
+		return afterOpen;
+	}
+
+	protected boolean editing() {
 		return action != Action.Pass;
 	}
 	
@@ -122,6 +130,8 @@ public abstract class Editor implements ISExpressionVisitor {
 				editDepth = 1;
 				activeDelegate = NodeBuilder.create();
 				break;
+			case Ignore:
+				editDepth = 1;
 			case Pass:
 				activeDelegate = delegate;
 				break;
@@ -161,7 +171,7 @@ public abstract class Editor implements ISExpressionVisitor {
 		activeDelegate.locate(currentLocation);
 		activeDelegate.close(delimeter);
 
-		if (editing()) {	
+		if (editing()) {
 			editDepth--;
 			if (editDepth == 0) {
 				final Action old = this.action;
@@ -169,7 +179,7 @@ public abstract class Editor implements ISExpressionVisitor {
 				final ISExpressionVisitor oldDelegate = activeDelegate;
 				activeDelegate = delegate;
 				
-				if (oldDelegate instanceof NodeBuilder) {
+				if (oldDelegate instanceof NodeBuilder && oldDelegate != delegate) {
 					final NodeBuilder nb = (NodeBuilder) oldDelegate;
 					final Node node = nb.getBestEffort();
 					if (old == Action.RecursiveEdit) {

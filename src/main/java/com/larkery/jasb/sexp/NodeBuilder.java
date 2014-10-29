@@ -9,6 +9,8 @@ import com.larkery.jasb.sexp.errors.JasbErrorException;
 import com.larkery.jasb.sexp.errors.UnfinishedExpressionException;
 
 public class NodeBuilder implements ISExpressionVisitor {
+	static int howmany = 0;
+	final int me = howmany++;
 	private Location here;
 	private final Stack<Seq.Builder> inprogress = new Stack<>();
 	private final Builder top;

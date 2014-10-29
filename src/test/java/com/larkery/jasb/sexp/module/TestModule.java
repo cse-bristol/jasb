@@ -56,4 +56,25 @@ public class TestModule {
 	public void moduleOnlyContainsTemplates() throws Exception {
 		Node.copyAll(Module.transform(p("(~module hello (error) (template x [] (~local #stuff)))"), IErrorHandler.RAISE));
 	}
+
+	@Test
+	public void moduleHandlesShortLocalNames() throws Exception {
+		final Node result = Node.copy(Module.transform(p("(~module hello (template x [] /stuff))"), IErrorHandler.RAISE));
+		Assert.assertEquals(Node.copy(p("(template hello/x [] hello/stuff)")),
+							result);
+	}
+
+	@Test
+	public void moduleHandlesShortLocalRefs() throws Exception {
+		final Node result = Node.copy(Module.transform(p("(~module hello (template x [] #/stuff))"), IErrorHandler.RAISE));
+		Assert.assertEquals(Node.copy(p("(template hello/x [] #hello/stuff)")),
+							result);
+	}
+
+	@Test
+	public void moduleHandlesShortLocalFlags() throws Exception {
+		final Node result = Node.copy(Module.transform(p("(~module hello (template x [] !/stuff))"), IErrorHandler.RAISE));
+		Assert.assertEquals(Node.copy(p("(template hello/x [] !hello/stuff)")),
+							result);
+	}
 }

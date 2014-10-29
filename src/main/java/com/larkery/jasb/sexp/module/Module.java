@@ -3,16 +3,21 @@ package com.larkery.jasb.sexp.module;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.Objects;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.larkery.jasb.sexp.Atom;
 import com.larkery.jasb.sexp.Delim;
 import com.larkery.jasb.sexp.ISExpression;
+import com.larkery.jasb.sexp.ISExpressionVisitor;
 import com.larkery.jasb.sexp.Invocation;
 import com.larkery.jasb.sexp.Node;
 import com.larkery.jasb.sexp.SExpressions;
 import com.larkery.jasb.sexp.Seq;
+import com.larkery.jasb.sexp.Location;
 import com.larkery.jasb.sexp.errors.IErrorHandler;
 import com.larkery.jasb.sexp.parse.IMacro;
 import com.larkery.jasb.sexp.parse.IMacroExpander;
@@ -29,6 +34,12 @@ public class Module implements IMacro {
 	private static final String NAME = "~module";
 	private static final String NOT_A_TEMPLATE = "apart from the name, every statement in a module must be a template definition";
 
+	/**
+	 * This is so that redefining a module is not strictly an error, it's just
+	 * a warnable thing, if the URI is different
+	 */
+	private final Map<String, Location> firstDefinitions = new HashMap<>();
+
 	@Override
 	public String getName() {
 		return NAME;
@@ -36,7 +47,8 @@ public class Module implements IMacro {
 
 	@Override
 	public ISExpression transform(final Seq input, final IMacroExpander expander, final IErrorHandler errors) {
-		// module should have a name, and then a sequence of s-expressions which are the template definitions
+		// module should have a name, and then a sequence of s-expressions which are the
+		// template definitions
 		
 		final List<Node> parts = input.exceptComments();
 		if (parts.size() < 2 || !(parts.get(1) instanceof Atom)) {
@@ -48,6 +60,21 @@ public class Module implements IMacro {
 		
 		final String moduleName = ((Atom) parts.get(1)).getValue();
 		
+		if (firstDefinitions.containsKey(moduleName)) {
+			final Location originalLoc = firstDefinitions.get(moduleName);
+			// make warning if the definition locations differ
+			final Location thisLoc = input.getLocation();
+			if (!Objects.equals(originalLoc.name, thisLoc.name)) {
+				errors.warn(thisLoc, "The module %s was already defined at %s - these different versions may not be compatible.",
+							moduleName, originalLoc);
+			}
+
+			// chuck away this definition entirely.
+			return SExpressions.empty();
+		} else {
+			firstDefinitions.put(moduleName, input.getLocation());
+		}
+
 		final ImmutableList.Builder<Node> transformedBody = ImmutableList.builder(); 
 		
 		final ImmutableList.Builder<IMacro> templateNames = ImmutableList.builder(); 
@@ -107,9 +134,25 @@ public class Module implements IMacro {
 		
 		templateNames.add(new Variabler(moduleName));
 		
-		// we don't want to recursively expand modules within modules? or do we?
-		
-		return MacroExpander.expand(templateNames.build(), SExpressions.inOrder(transformedBody.build()), errors);
+		final ISExpression expanded = MacroExpander.expand(templateNames.build(), 
+														   SExpressions.inOrder(transformedBody.build()), errors);
+
+		// final step - replace any atoms that start with / with a module-specific version.
+		return new AtomFilter(expanded) {
+			@Override
+			protected void atom(final ISExpressionVisitor visitor, final String atom) {
+				if (atom.startsWith("/")) {
+					// rewrite atom!
+					visitor.atom(moduleName + atom);
+				} else if (atom.startsWith("#/")) {
+					visitor.atom("#" + moduleName + atom.substring(1));
+				} else if (atom.startsWith("!/")) {
+					visitor.atom("!" + moduleName + atom.substring(1));
+				} else {
+					visitor.atom(atom);
+				}
+			}
+		};
 	}
 	
 	static class Variabler extends SimpleMacro {

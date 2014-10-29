@@ -117,7 +117,7 @@ public class Includer {
 		
 		final Deque<URI> addrs = new LinkedList<>();		
 		final Deque<Location> includeLocation = new LinkedList<>();
-		
+
 		addrs.add(root);
 		includeLocation.add(null);
 		URI addr;
@@ -132,40 +132,40 @@ public class Includer {
 		 * A visitor which pulls out includes and sticks them on the queue to process
 		 */
 		final INodeVisitor addressCollector = new INodeVisitor(){
-			@Override
-			public boolean seq(final Seq seq) {
-				if (seq.size() >= 1) {
-					if (seq.getHead() instanceof Atom) {
-						final String nameOfHead = ((Atom)seq.getHead()).getValue(); 
-						if (nameOfHead.equals("include")) {
-							URI addr;
-							try {
-								addr = resolver.convert(seq, errors);
-							} catch (final ResolutionException e) {
-								return false;
-							}
+				@Override
+				public boolean seq(final Seq seq) {
+					if (seq.size() >= 1) {
+						if (seq.getHead() instanceof Atom) {
+							final String nameOfHead = ((Atom)seq.getHead()).getValue(); 
+							if (nameOfHead.equals("include") || nameOfHead.equals("include-modules")) {
+								URI addr;
+								try {
+									addr = resolver.convert(seq, errors);
+								} catch (final ResolutionException e) {
+									return false;
+								}
 							
-							if (builder.containsKey(addr)) {
-							} else {
-								addrs.push(addr);
-								includeLocation.push(seq.getLocation());
+								if (builder.containsKey(addr)) {
+								} else {
+									addrs.push(addr);
+									includeLocation.push(seq.getLocation());
+								}
+								return false;
+							} else if (nameOfHead.equals("no-include")) {
+								return shouldLookWithinNoInclude[0];
 							}
-							return false;
-						} else if (nameOfHead.equals("no-include")) {
-							return shouldLookWithinNoInclude[0];
 						}
 					}
-				}
 				
-				return true;
-			}
+					return true;
+				}
 		
-			@Override
-			public void comment(final Comment comment) {}
+				@Override
+				public void comment(final Comment comment) {}
 		
-			@Override
-			public void atom(final Atom atom) {}
-		};
+				@Override
+				public void atom(final Atom atom) {}
+			};
 		
 		while ((addr = addrs.poll()) != null) {
 			try {
@@ -190,8 +190,6 @@ public class Includer {
 		return ImmutableMap.copyOf(builder);
 	}
 	
-	
-	
 	/**
 	 * Given a resolver and a root address, make an S-Expression by following all the includes.
 	 * @param resolver
@@ -206,7 +204,7 @@ public class Includer {
 				try {
 					final ILocationReader reader = resolver.resolve(root, errors);
 					final ISExpression real = Parser.source(reader.getLocation(), reader.getReader(), errors);
-					real.accept(new IncludingVisitor(resolver, visitor, errors));
+					real.accept(new IncludingVisitor(resolver, new ModuleFilteringVisitor(visitor), errors));
 				} catch (final ResolutionException nse) {
 					errors.handle(BasicError.nowhere("Unable to resolve" + root + " (" + nse.getMessage() + ")"));
 				}
@@ -218,22 +216,69 @@ public class Includer {
 			}
 		};
 	}
+
+	static class ModuleFilteringVisitor extends Editor {
+		private boolean enableFilter = false;
+		public ModuleFilteringVisitor(final ISExpressionVisitor visitor) {
+			super(visitor);
+		}
+
+		public void setEnableFilter(final boolean enableFilter) {
+			this.enableFilter = enableFilter;
+		}
+
+		@Override
+		public void atom(final String name) {
+			if (editing() ||
+				afterOpen() ||
+				!enableFilter) {
+				super.atom(name);
+			}
+		}
+		
+		@Override
+		protected Action act(final String name) {
+			if (enableFilter) {
+				switch (name) {
+				case "~module":
+					return Action.Ignore; // ignore it but pass it through
+				default:
+					return Action.Remove; // throw it away entirely, it is bad
+				}
+			} else {
+				return Action.Pass;
+			}
+		}
+
+		@Override
+		protected ISExpression edit(final Seq cut) {
+			return cut;
+		}
+	}
 	
 	static class IncludingVisitor extends Editor {
 		private final IResolver resolver;
 		private final IErrorHandler errors;
 		private final Stack<URI> stack = new Stack<>();
-		
-		private IncludingVisitor(final IResolver resolver, final ISExpressionVisitor visitor, final IErrorHandler errors) {
+		private final ModuleFilteringVisitor delegate;
+		private int filterModules = 0;
+
+		private IncludingVisitor(final IResolver resolver, final ModuleFilteringVisitor visitor, final IErrorHandler errors) {
 			super(visitor);
+			this.delegate = visitor;
 			this.resolver = resolver;
 			this.errors = errors;
+		}
+
+		protected boolean isFilteringModules() {
+			return filterModules > 0;
 		}
 		
 		@Override
 		protected Action act(final String name) {
 			switch (name) {
 			case "include":
+			case "include-modules":
 				return Action.RecursiveEdit;
 			case "no-include":
 				if (stack.isEmpty()) {
@@ -248,8 +293,10 @@ public class Includer {
 		
 		@Override
 		protected ISExpression edit(final Seq cut) {
+			boolean filterModules = false;
 			final Atom head = (Atom) cut.getHead();
-			if (head.getValue().equals("no-include")) {
+			switch (head.getValue()) {
+			case "no-include":
 				return new ISExpression() {
 					@Override
 					public void accept(final ISExpressionVisitor visitor) {
@@ -258,12 +305,17 @@ public class Includer {
 						}
 					}
 				};
-			} else {
+			case "include-modules":
+				filterModules = true;
+			case "include":
+			default:
 				try {
 					final URI uri = resolver.convert(cut, errors);
 					
 					if (stack.contains(uri)) {
-						errors.handle(BasicError.at(cut, uri + " recursively includes itself"));
+						if (!isFilteringModules()) {
+							errors.handle(BasicError.at(cut, uri + " recursively includes itself"));
+						}
 					} else {
 						final ILocationReader reader = resolver.resolve(uri, errors);
 						final ISExpression real = 
@@ -274,7 +326,15 @@ public class Includer {
 						
 						// this is a bit hacky
 						stack.push(uri);
+						if (filterModules) {
+							this.filterModules++;
+							delegate.setEnableFilter(isFilteringModules());
+						}
 						real.accept(this);
+						if (filterModules) {
+							this.filterModules--;
+							delegate.setEnableFilter(isFilteringModules());
+						}
 						stack.pop();
 					}
 					locate(cut.getEndLocation());
@@ -282,6 +342,7 @@ public class Includer {
 				} catch (final ResolutionException e) {
 					errors.handle(BasicError.at(cut, "Unable to resolve include - " + e.getMessage()));
 				}
+				break;
 			}
 			
 			return SExpressions.empty();
@@ -298,15 +359,14 @@ public class Includer {
 	 * @param slf4j
 	 * @return
 	 */
-	public static Map<URI, String> collectFromRoot(
-			final IResolver resolver, 
-			final String scenarioXML,
-			final IErrorHandler errors) {
+	public static Map<URI, String> collectFromRoot(final IResolver resolver, 
+												   final String scenarioXML,
+												   final IErrorHandler errors) {
 		
 		return collect(new IResolver(){
 				@Override
 				public ILocationReader resolve(final URI href, final IErrorHandler errors)
-						throws ResolutionException {
+					throws ResolutionException {
 					if (href == root) return stringLocationReader(root, scenarioXML);
 					else return resolver.resolve(href, errors);
 				}
@@ -315,6 +375,6 @@ public class Includer {
 				public URI convert(final Seq include, final IErrorHandler errors) throws ResolutionException {
 					return resolver.convert(include, errors);
 				}
-		}, root, errors);
+			}, root, errors);
 	}
 }

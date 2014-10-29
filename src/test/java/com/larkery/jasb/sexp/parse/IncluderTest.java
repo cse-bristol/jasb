@@ -119,4 +119,25 @@ public class IncluderTest extends VisitingTest {
 		
 		Assert.assertEquals("Should strip out the contents of the no-include statement.", "(a b c m n o p q r 1 2 3)", n.toString()); 
 	}
+
+	@Test
+	public void includeModuleIncludesOnlyModules() throws Exception {
+		values.put(URI.create("test://module"), "stuff things (~module my-module x y z)");
+		final Node n = Node.copy(
+				source("includeModule", "(include-modules module)"));
+		Assert.assertEquals("Should only see the module definition",
+							"(~module my-module x y z)",
+							n.toString());
+	}
+
+	@Test
+	public void includeModuleAllowsRecursion() throws Exception {
+		values.put(URI.create("test://module1"), "(include-modules module2) (~module module1 x y z)");
+		values.put(URI.create("test://module2"), "(include-modules module1) (~module module2 x y z)");
+
+		final Node n = Node.copy(source("includeModule", "(test (include-modules module1))"));
+		Assert.assertEquals("Should see both modules, and not die " + n,
+							"(test (~module module2 x y z) (~module module1 x y z))",
+							n.toString());
+	}
 }
