@@ -141,7 +141,9 @@ public class Module implements IMacro {
 		return new AtomFilter(expanded) {
 			@Override
 			protected void atom(final ISExpressionVisitor visitor, final String atom) {
-				if (atom.startsWith("/")) {
+				if (atom.equals("/")) {
+                    visitor.atom(atom);
+                } else if (atom.startsWith("/")) {
 					// rewrite atom!
 					visitor.atom(moduleName + atom);
 				} else if (atom.startsWith("#/")) {

@@ -71,6 +71,7 @@ class Switcher<T> implements INodeReader<T> {
 		if (readersByName.containsKey(invocation.name)) {
 			return Futures.immediateFuture(clazz.cast(readersByName.get(invocation.name).read(context, invocation)));
 		} else {
+            // at this point it would be nice to work out what things can contain the given name
 			context.handle(new UnexpectedTermError(node, readersByName.keySet(), invocation.name));
 			return death("Expected " + readersByName.keySet() + ", not " + invocation.name +" - maybe your Bind annotated class is not in the set presented to the Reader?");
 		}
