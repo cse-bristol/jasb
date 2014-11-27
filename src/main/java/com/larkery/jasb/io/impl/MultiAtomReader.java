@@ -65,11 +65,14 @@ class MultiAtomReader<T> {
 			} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException e) {
 			}
 		}
-		
+
+        return context.getCrossReference(clazz, atom, atom.getValue());
+        /*        
 		context.handle(
 				new UnexpectedTermError(atom, legalValues, atom.getValue()));
 		
 		return Futures.immediateFailedFuture(new RuntimeException("Could not read " + atom + " as " + clazz));
+        */
 	}
 
 }
