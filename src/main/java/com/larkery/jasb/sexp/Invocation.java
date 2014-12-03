@@ -9,6 +9,7 @@ import com.google.common.collect.ImmutableMap;
 import com.larkery.jasb.sexp.errors.BasicError;
 import com.larkery.jasb.sexp.errors.IErrorHandler;
 
+
 public class Invocation {
 	public final Seq node;
 	public final String name;
@@ -32,9 +33,9 @@ public class Invocation {
 		if (node instanceof Seq) {
 			final Seq seq = (Seq) node;
 			if (seq.size() == 0) {
-				errors.handle(BasicError.at(node, "An invocation was expected here; invocations must have an atom at the start, but this is an empty list"));
+				errors.handle(BasicError.at(node, "An empty pair of parentheses was not expected here. A parenthesis will usually be followed by the name of a command."));
 			} else if (seq.getDelimeter() != Delim.Paren) {
-				errors.handle(BasicError.at(node, "An invocation was expected here; invocations must use parentheses ()"));
+				errors.handle(BasicError.at(node, "You have used an opening bracket - '[' - where a parenthesis '(' was expected. Possibly you are trying to supply multiple values in a place where a single value is required."));
 			} else {
 				final Node head = seq.getHead();
 				
@@ -90,7 +91,7 @@ public class Invocation {
 					if (head == null) {
 						errors.handle(BasicError.at(node, "An empty list was not expected here"));
 					} else {
-						errors.handle(BasicError.at(head, "The first element in an invocation must be a single atom, not a list"));
+						errors.handle(BasicError.at(head, "An opening parenthesis - '(' - should always be followed by the name of a command, and never by another parenthesis."));
 					}
 				}
 				

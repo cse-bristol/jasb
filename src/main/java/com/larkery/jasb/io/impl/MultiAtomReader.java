@@ -21,6 +21,7 @@ class MultiAtomReader<T> {
 	private final Class<T> clazz;
 	private final ImmutableSet<IAtomReader> delegates;
 	private final Set<String> legalValues;
+    private final Set<String> allLegalValues;
 	private final ImmutableMap<String, Class<?>> fallbacks;
 
 	public MultiAtomReader(final Class<T> clazz, final ImmutableSet<IAtomReader> build, final ImmutableSet<Class<?>> fallbacks) {
@@ -42,6 +43,9 @@ class MultiAtomReader<T> {
 		}
 		
 		this.fallbacks = fallbackBuilder.build();
+
+        this.allLegalValues = Sets.union(legalValues,
+                                         this.fallbacks.keySet());
 	}
 
 	protected ListenableFuture<T> read(final IReadContext context, final Atom atom) {
@@ -68,11 +72,11 @@ class MultiAtomReader<T> {
 		}
 
         if (!atom.getValue().endsWith(":")) {
-            return context.getCrossReference(clazz, atom, atom.getValue());
+            return context.getCrossReference(clazz, atom, atom.getValue(),
+                                             allLegalValues);
         } else {
             context.handle(new UnexpectedTermError(atom,
-                                                   Sets.union(legalValues,
-                                                              fallbacks.keySet()),
+                                                   allLegalValues,
                                                    atom.getValue()));
 		
 		return Futures.immediateFailedFuture(new RuntimeException("Could not read " + atom + " as " + clazz));

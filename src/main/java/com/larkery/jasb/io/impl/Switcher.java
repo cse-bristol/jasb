@@ -13,6 +13,7 @@ import com.larkery.jasb.sexp.Invocation;
 import com.larkery.jasb.sexp.Node;
 import com.larkery.jasb.sexp.Seq;
 import com.larkery.jasb.sexp.errors.UnexpectedTermError;
+import com.google.common.collect.ImmutableSet;
 
 
 /**
@@ -54,7 +55,8 @@ class Switcher<T> implements INodeReader<T> {
 				return context.getCrossReference(
 						clazz,
 						atom,
-						atom.getValue().substring(CROSS_REFERENCE_PREFIX.length()));
+						atom.getValue().substring(CROSS_REFERENCE_PREFIX.length()),
+                        ImmutableSet.<String>of());
 			} else {
 				return atoms.read(context, atom);
 			}

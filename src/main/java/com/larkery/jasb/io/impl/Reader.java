@@ -31,6 +31,8 @@ import com.larkery.jasb.sexp.errors.BasicError;
 import com.larkery.jasb.sexp.errors.IErrorHandler;
 import com.larkery.jasb.sexp.errors.ILocated;
 import com.larkery.jasb.sexp.errors.UnfinishedExpressionException;
+import com.larkery.jasb.sexp.errors.UnexpectedTermError;
+import com.google.common.collect.Sets;
 
 class Reader implements IReader {
 	private final Map<Class<?>, Switcher<?>> switchers = new HashMap<>();
@@ -102,8 +104,10 @@ class Reader implements IReader {
 		
 		final ListenableFuture<T> read = context.read(output, input);
 		
-		for (final Atom atom : context.unresolved) {
-			errors.handle(BasicError.at(atom, "The name " + atom + " could not be resolved"));
+		for (final Map.Entry<Atom, Set<String>> error : context.unresolved.entrySet()) {
+            errors.handle(new UnexpectedTermError(error.getKey(),
+                                                  Sets.union(error.getValue(), context.resolver.getDefinedNames()),
+                                                  error.getKey().getValue()));
 		}
 		
 		if (read.isDone()) {
@@ -229,7 +233,7 @@ class Reader implements IReader {
 	class Context implements IReadContext {
 		private final IErrorHandler delegateErrorHandler;
 		private final Resolver resolver = new Resolver();
-		private final Set<Atom> unresolved = Collections.newSetFromMap(new IdentityHashMap<Atom, Boolean>());
+		private final Map<Atom, Set<String>> unresolved = new IdentityHashMap<Atom, Set<String>>();
 		
 		Context(final IErrorHandler delegateErrorHandler) {
 			super();
@@ -252,10 +256,10 @@ class Reader implements IReader {
 		}
 
 		@Override
-		public <T> ListenableFuture<T> getCrossReference(final Class<T> clazz, final Atom where, final String identity) {
+		public <T> ListenableFuture<T> getCrossReference(final Class<T> clazz, final Atom where, final String identity, final Set<String> legalValues) {
 			final ListenableFuture<T> resolve = resolver.resolve(where, identity, clazz);
 			
-			unresolved.add(where);
+			unresolved.put(where, legalValues);
 			
 			Futures.addCallback(resolve, new FutureCallback<T>() {
 				@Override

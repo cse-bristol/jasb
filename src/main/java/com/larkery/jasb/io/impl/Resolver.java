@@ -10,6 +10,8 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.larkery.jasb.sexp.Atom;
+import java.util.Set;
+import java.util.HashSet;
 
 /**
  * Resolves a single big flat namespace
@@ -19,7 +21,12 @@ import com.larkery.jasb.sexp.Atom;
 class Resolver  {
 	private final Map<String, SettableFuture<?>> futures = new HashMap<>();
 	private final Multimap<String, Class<?>> futureClasses = HashMultimap.create();
-	
+	private final Set<String> definedNames = new HashSet<>();
+
+    public Set<String> getDefinedNames() {
+        return definedNames;
+    }
+    
 	@SuppressWarnings("unchecked")
 	public <Q> ListenableFuture<Q> resolve(final Atom cause, final String id, final Class<Q> type) {
 		if (!futures.containsKey(id)) {
@@ -58,6 +65,7 @@ class Resolver  {
 				((SettableFuture) futures.get(result)).set(o);
 			}
 		} else {
+            definedNames.add(result);
 			futures.put(result, SettableFuture.create());
 			futureClasses.put(result, o.getClass());
 			((SettableFuture) futures.get(result)).set(o);
