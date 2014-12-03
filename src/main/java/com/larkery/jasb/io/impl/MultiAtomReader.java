@@ -15,6 +15,7 @@ import com.larkery.jasb.io.IAtomReader;
 import com.larkery.jasb.io.IReadContext;
 import com.larkery.jasb.sexp.Atom;
 import com.larkery.jasb.sexp.errors.UnexpectedTermError;
+import com.google.common.collect.Sets;
 
 class MultiAtomReader<T> {
 	private final Class<T> clazz;
@@ -66,13 +67,18 @@ class MultiAtomReader<T> {
 			}
 		}
 
-        return context.getCrossReference(clazz, atom, atom.getValue());
-        /*        
-		context.handle(
-				new UnexpectedTermError(atom, legalValues, atom.getValue()));
+        if (!atom.getValue().endsWith(":")) {
+            return context.getCrossReference(clazz, atom, atom.getValue());
+        } else {
+            context.handle(new UnexpectedTermError(atom,
+                                                   Sets.union(legalValues,
+                                                              fallbacks.keySet()),
+                                                   atom.getValue()));
 		
 		return Futures.immediateFailedFuture(new RuntimeException("Could not read " + atom + " as " + clazz));
-        */
+        }
+        
+       
 	}
 
 }
