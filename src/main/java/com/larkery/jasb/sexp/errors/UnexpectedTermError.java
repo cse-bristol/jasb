@@ -17,20 +17,21 @@ public class UnexpectedTermError extends BasicError {
 	
 	public UnexpectedTermError(
 			final Node node,
+            final String type,
 			final Set<String> legalValues,
 			final String value
 			) {
 		
 		super(node.getLocation() == null ? Collections.<Location>emptySet() : ImmutableSet.of(node.getLocation()), 
 			  ImmutableSet.of(node), 
-			  createMessage(value, legalValues), 
+			  createMessage(type, value, legalValues), 
 			  Type.ERROR);
-		
+
 		this.legalValues = legalValues;
 		this.value = value;
 	}
 
-	private static String createMessage(final String value, final Set<String> legalValues_) {
+	private static String createMessage(final String type, final String value, final Set<String> legalValues_) {
 		final String expected;
 		
 		final List<String> legalValues = new ArrayList<String>(legalValues_);
@@ -65,7 +66,7 @@ public class UnexpectedTermError extends BasicError {
 			
 			expected = sb.toString();
 		}
-		return String.format("unexpected value %s; expected %s", value, expected);
+		return String.format("unexpected %s %s; expected %s", type, value, expected);
 	}
 
 	public Set<String> getLegalValues() {

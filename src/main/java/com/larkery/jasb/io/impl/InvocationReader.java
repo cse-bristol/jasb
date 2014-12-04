@@ -53,7 +53,7 @@ public abstract class InvocationReader<T> {
 	protected final void warnOnUnusedKeys(final IReadContext context, final Invocation invocation) {
 		for (final Map.Entry<String, Node> entry : invocation.arguments.entrySet()) {
 			if (expectedKeys.contains(entry.getKey())) continue;
-			context.handle(new UnexpectedTermError(entry.getValue(), expectedKeys, entry.getKey()));
+			context.handle(new UnexpectedTermError(entry.getValue(), "keyword", expectedKeys, entry.getKey()));
 		}
 	}
 	

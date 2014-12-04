@@ -106,6 +106,7 @@ class Reader implements IReader {
 		
 		for (final Map.Entry<Atom, Set<String>> error : context.unresolved.entrySet()) {
             errors.handle(new UnexpectedTermError(error.getKey(),
+                                                  "word",
                                                   Sets.union(error.getValue(), context.resolver.getDefinedNames()),
                                                   error.getKey().getValue()));
 		}

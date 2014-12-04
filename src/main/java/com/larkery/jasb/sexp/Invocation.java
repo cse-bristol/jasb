@@ -77,6 +77,7 @@ public class Invocation {
 								return null;
 							} else {
 								arguments.put(key, argument);
+                                seenArguments.add(key);
 							}
 							key = null;
 						} else {

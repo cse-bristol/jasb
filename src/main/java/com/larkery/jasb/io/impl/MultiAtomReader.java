@@ -76,6 +76,7 @@ class MultiAtomReader<T> {
                                              allLegalValues);
         } else {
             context.handle(new UnexpectedTermError(atom,
+                                                   atom.getValue().endsWith(":") ? "keyword" : "word",
                                                    allLegalValues,
                                                    atom.getValue()));
 		
