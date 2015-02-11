@@ -1,7 +1,9 @@
 package com.larkery.jasb.io.impl;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
 import com.google.common.collect.HashMultimap;
@@ -10,8 +12,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.larkery.jasb.sexp.Atom;
-import java.util.Set;
-import java.util.HashSet;
 
 /**
  * Resolves a single big flat namespace

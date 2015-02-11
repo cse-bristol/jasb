@@ -1,12 +1,12 @@
 package com.larkery.jasb.io;
 
 import java.util.List;
+import java.util.Set;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import com.larkery.jasb.sexp.Atom;
 import com.larkery.jasb.sexp.Node;
 import com.larkery.jasb.sexp.errors.IErrorHandler;
-import java.util.Set;
 
 public interface IReadContext extends IErrorHandler {
 	<T> ListenableFuture<T> getCrossReference(final Class<T> clazz, Atom where, String identity, final Set<String> legalValues);

@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.larkery.jasb.io.INodeReader;
@@ -13,7 +14,6 @@ import com.larkery.jasb.sexp.Invocation;
 import com.larkery.jasb.sexp.Node;
 import com.larkery.jasb.sexp.Seq;
 import com.larkery.jasb.sexp.errors.UnexpectedTermError;
-import com.google.common.collect.ImmutableSet;
 
 
 /**

@@ -6,9 +6,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
-import com.larkery.jasb.sexp.Location;
 import com.larkery.jasb.sexp.Node;
 
 public class UnexpectedTermError extends BasicError {
@@ -22,8 +20,7 @@ public class UnexpectedTermError extends BasicError {
 			final String value
 			) {
 		
-		super(node.getLocation() == null ? Collections.<Location>emptySet() : ImmutableSet.of(node.getLocation()), 
-			  ImmutableSet.of(node), 
+		super(node.getLocation(),
 			  createMessage(type, value, legalValues), 
 			  Type.ERROR);
 

@@ -50,7 +50,7 @@ public class PolishParser extends LookaheadParser {
 					final Delim openingDelim = Delim.of(opener.value.charAt(0));
 					final Delim closingDelim = Delim.of(next.value.charAt(0));
 					if (openingDelim != closingDelim) {
-						throw new JasbErrorException(BasicError.atSeveral(String.format("Opening %c closed with %c", openingDelim.open, closingDelim.close), opener.location, next.location));
+						throw new JasbErrorException(BasicError.at(opener.location, String.format("Opening %c closed with %c", openingDelim.open, closingDelim.close)));
 					}
 				}
 			default:

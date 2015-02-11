@@ -4,7 +4,6 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -15,6 +14,7 @@ import java.util.concurrent.ExecutionException;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -30,9 +30,8 @@ import com.larkery.jasb.sexp.Node;
 import com.larkery.jasb.sexp.errors.BasicError;
 import com.larkery.jasb.sexp.errors.IErrorHandler;
 import com.larkery.jasb.sexp.errors.ILocated;
-import com.larkery.jasb.sexp.errors.UnfinishedExpressionException;
 import com.larkery.jasb.sexp.errors.UnexpectedTermError;
-import com.google.common.collect.Sets;
+import com.larkery.jasb.sexp.errors.UnfinishedExpressionException;
 
 class Reader implements IReader {
 	private final Map<Class<?>, Switcher<?>> switchers = new HashMap<>();

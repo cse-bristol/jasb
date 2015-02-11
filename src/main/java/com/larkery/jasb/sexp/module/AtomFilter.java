@@ -1,9 +1,9 @@
 package com.larkery.jasb.sexp.module;
 
+import com.larkery.jasb.sexp.Delim;
 import com.larkery.jasb.sexp.ISExpression;
 import com.larkery.jasb.sexp.ISExpressionVisitor;
 import com.larkery.jasb.sexp.Location;
-import com.larkery.jasb.sexp.Delim;
 
 public class AtomFilter implements ISExpression {
 	private final ISExpression delegate;

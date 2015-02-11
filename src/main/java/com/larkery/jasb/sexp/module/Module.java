@@ -1,11 +1,11 @@
 package com.larkery.jasb.sexp.module;
 
 import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-import java.util.Map;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
@@ -14,10 +14,10 @@ import com.larkery.jasb.sexp.Delim;
 import com.larkery.jasb.sexp.ISExpression;
 import com.larkery.jasb.sexp.ISExpressionVisitor;
 import com.larkery.jasb.sexp.Invocation;
+import com.larkery.jasb.sexp.Location;
 import com.larkery.jasb.sexp.Node;
 import com.larkery.jasb.sexp.SExpressions;
 import com.larkery.jasb.sexp.Seq;
-import com.larkery.jasb.sexp.Location;
 import com.larkery.jasb.sexp.errors.IErrorHandler;
 import com.larkery.jasb.sexp.parse.IMacro;
 import com.larkery.jasb.sexp.parse.IMacroExpander;

@@ -7,6 +7,7 @@ import java.util.Set;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.larkery.jasb.bind.AfterReading;
@@ -15,7 +16,6 @@ import com.larkery.jasb.io.IAtomReader;
 import com.larkery.jasb.io.IReadContext;
 import com.larkery.jasb.sexp.Atom;
 import com.larkery.jasb.sexp.errors.UnexpectedTermError;
-import com.google.common.collect.Sets;
 
 class MultiAtomReader<T> {
 	private final Class<T> clazz;

@@ -1,18 +1,14 @@
 package com.larkery.jasb.sexp.errors;
 
-import java.util.Set;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.larkery.jasb.sexp.Location;
-import com.larkery.jasb.sexp.Node;
 import com.larkery.jasb.sexp.errors.IErrorHandler.IError.Type;
 
 public interface IErrorHandler {
 	public interface IError {
-		public Set<Location> getLocations();
-		public Set<Node> getNodes();
+		public Location getLocation();
 		public String getMessage();
 		public Type getType();
 		public enum Type {
@@ -27,10 +23,10 @@ public interface IErrorHandler {
 		public void handle(final IError error) {
 			switch (error.getType()) {
 			case ERROR:
-				log.error("{} : {}", error.getLocations(), error.getMessage());
+				log.error("{} : {}", error.getLocation(), error.getMessage());
 				break;
 			case WARNING:
-				log.warn("{} : {}", error.getLocations(), error.getMessage());
+				log.warn("{} : {}", error.getLocation(), error.getMessage());
 				break;
 			}
 		}
