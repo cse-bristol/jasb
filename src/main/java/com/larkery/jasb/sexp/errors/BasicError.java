@@ -1,32 +1,43 @@
 package com.larkery.jasb.sexp.errors;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
 import com.larkery.jasb.sexp.Location;
 import com.larkery.jasb.sexp.Node;
 import com.larkery.jasb.sexp.errors.IErrorHandler.IError;
 
+@JsonTypeInfo(use=Id.CLASS)
 public class BasicError implements IError {
 	private final Location location;
 	private final String message;
 	private final Type type;
 	
-	public BasicError(final Location location, final String message,
-					  final Type type) {
+	@JsonCreator
+	public BasicError(
+			@JsonProperty("location") final Location location, 
+			@JsonProperty("message") final String message,
+			@JsonProperty("type") final Type type) {
 		super();
 		this.location = location;
 		this.message = message;
 		this.type = type;
 	}
 	
+	@JsonProperty
 	@Override
 	public Location getLocation() {
 		return location;
 	}
 
+	@JsonProperty
 	@Override
 	public String getMessage() {
 		return message;
 	}
 
+	@JsonProperty
 	@Override
 	public Type getType() {
 		return type;
@@ -43,6 +54,7 @@ public class BasicError implements IError {
 	public static IError at(final Location location, final String message) {
 		return new BasicError(location, message, Type.ERROR);
 	}
+	
 	@Override
 	public String toString() {
 		return location + " " + getMessage();

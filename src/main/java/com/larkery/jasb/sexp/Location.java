@@ -2,6 +2,8 @@ package com.larkery.jasb.sexp;
 
 import java.net.URI;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Optional;
 import com.larkery.jasb.sexp.errors.ILocated;
 
@@ -19,22 +21,28 @@ public class Location implements ILocated {
 			Template
 		}
 		
-		public final Type type;
-		public final Location location;
-		private Via(final Type type, final Location location) {
+		@JsonProperty public final Type type;
+		@JsonProperty public final Location location;
+		@JsonCreator
+		public Via(@JsonProperty("type") final Type type, @JsonProperty("location") final Location location) {
 			super();
 			this.type = type;
 			this.location = location;
 		}
 	}
 	
-	public final URI name;
-	public final int line;
-	public final int column;
-	public final Optional<Via> via;
-	public final Location sourceLocation;
+	@JsonProperty public final URI name;
+	@JsonProperty public final int line;
+	@JsonProperty public final int column;
+	@JsonProperty public final Optional<Via> via;
+	@JsonProperty public final Location sourceLocation;
 	
-	private Location(final URI name, final int line, final int column, final Optional<Via> via) {
+	@JsonCreator
+	public Location(
+			@JsonProperty("name") final URI name, 
+			@JsonProperty("line") final int line, 
+			@JsonProperty("column") final int column, 
+			@JsonProperty("via") final Optional<Via> via) {
 		super();
 		this.name = name;
 		this.line = line;

@@ -3,10 +3,13 @@ package com.larkery.jasb.sexp.errors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
 import com.larkery.jasb.sexp.Location;
 import com.larkery.jasb.sexp.errors.IErrorHandler.IError.Type;
 
 public interface IErrorHandler {
+	@JsonTypeInfo(use=Id.CLASS)
 	public interface IError {
 		public Location getLocation();
 		public String getMessage();
