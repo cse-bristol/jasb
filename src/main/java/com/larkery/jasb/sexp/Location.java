@@ -14,6 +14,9 @@ import com.larkery.jasb.sexp.errors.ILocated;
  * places.
  */
 public class Location implements ILocated {
+	public static final Location NOWHERE = 
+			new Location(URI.create("nowhere:nowhere"), 1, 1, Optional.<Via>absent());
+	
 	public static class Via {
 		public enum Type {
 			Normal,

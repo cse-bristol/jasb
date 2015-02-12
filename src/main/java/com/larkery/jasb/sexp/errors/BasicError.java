@@ -20,7 +20,7 @@ public class BasicError implements IError {
 			@JsonProperty("message") final String message,
 			@JsonProperty("type") final Type type) {
 		super();
-		this.location = location;
+		this.location = location == null ? Location.NOWHERE : location;
 		this.message = message;
 		this.type = type;
 	}
@@ -48,7 +48,7 @@ public class BasicError implements IError {
 	}
 
 	public static IError nowhere(final String message) {
-		return new BasicError(null, message, Type.ERROR);
+		return new BasicError(Location.NOWHERE, message, Type.ERROR);
 	}
 
 	public static IError at(final Location location, final String message) {

@@ -16,7 +16,9 @@ public interface IErrorHandler {
 		public Type getType();
 		public enum Type {
 			ERROR,
-			WARNING
+			WARNING;
+			
+			public boolean isFatal() { return this == ERROR; }
 		}
 	}
 	
