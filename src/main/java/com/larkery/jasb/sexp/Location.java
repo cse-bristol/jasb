@@ -1,8 +1,10 @@
 package com.larkery.jasb.sexp;
 
 import java.net.URI;
+import java.util.Iterator;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Optional;
 import com.larkery.jasb.sexp.errors.ILocated;
@@ -13,7 +15,7 @@ import com.larkery.jasb.sexp.errors.ILocated;
  * include, or a template expansion, the location can be in several
  * places.
  */
-public class Location implements ILocated {
+public class Location implements ILocated, Iterable<Location> {
 	public static final Location NOWHERE = 
 			new Location(URI.create("nowhere:nowhere"), 1, 1, Optional.<Via>absent());
 	
@@ -82,5 +84,37 @@ public class Location implements ILocated {
 		} else {
 			return String.format("%s:%s:%s", name, line, column);
 		}
+	}
+
+	@JsonIgnore
+	public Via.Type getType() {
+		if (via.isPresent()) {
+			return via.get().type;
+		} else {
+			return Via.Type.Normal;
+		}
+	}
+	
+	@JsonIgnore
+	@Override
+	public Iterator<Location> iterator() {
+		return new Iterator<Location>() {
+			Location loc = Location.this;
+			
+			@Override
+			public boolean hasNext() {
+				return loc != null;
+			}
+
+			@Override
+			public Location next() {
+				final Location out = loc;
+				loc = out.via.isPresent() ? out.via.get().location : null;
+				return out;
+			}
+
+			@Override
+			public void remove() {throw new UnsupportedOperationException();}
+		};
 	}
 }
