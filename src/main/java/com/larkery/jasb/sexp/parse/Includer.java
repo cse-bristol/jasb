@@ -16,6 +16,7 @@ import java.util.Stack;
 import org.apache.commons.io.IOUtils;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Multimap;
 import com.larkery.jasb.sexp.Atom;
 import com.larkery.jasb.sexp.Comment;
 import com.larkery.jasb.sexp.INodeVisitor;
@@ -110,9 +111,24 @@ public class Includer {
 	 * @param resolver
 	 * @param root
 	 * @param errors
+	 * @param dependencyGraph if not null, build a dependency graph in here
 	 * @return
 	 */
 	public static Map<URI, String> collect(final IResolver resolver, final URI root, final IErrorHandler errors) {
+		return collect(resolver, root, errors, null);
+	}
+	
+	/**
+	 * Given a resolver and a root address, construct a map which contains all of the included
+	 * things by URI that were found in the root document or any of its includes, and so on.
+	 * 
+	 * @param resolver
+	 * @param root
+	 * @param errors
+	 * @param dependencyGraph if not null, build a dependency graph in here
+	 * @return
+	 */
+	public static Map<URI, String> collect(final IResolver resolver, final URI root, final IErrorHandler errors, final Multimap<URI, URI> dependencyGraph) {
 		final HashMap<URI, String> builder = new HashMap<>();
 		
 		final Deque<URI> addrs = new LinkedList<>();		
@@ -145,6 +161,10 @@ public class Includer {
 									return false;
 								}
 							
+								if (dependencyGraph != null) {
+									dependencyGraph.put(seq.getLocation().name, addr);
+								}
+								
 								if (builder.containsKey(addr)) {
 								} else {
 									addrs.push(addr);
