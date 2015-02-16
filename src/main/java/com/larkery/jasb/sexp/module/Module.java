@@ -2,6 +2,7 @@ package com.larkery.jasb.sexp.module;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -39,7 +40,40 @@ public class Module implements IMacro {
 	 * a warnable thing, if the URI is different
 	 */
 	private final Map<String, Location> firstDefinitions = new HashMap<>();
+	protected final List<String> initTemplates = new LinkedList<>();
 
+	public final IMacro getInitializerMacro() {
+		return new IMacro() {
+			@Override
+			public ISExpression transform(Seq input, IMacroExpander expander, IErrorHandler errors) {
+				final ImmutableList.Builder<Seq> result = ImmutableList.builder();
+				// this will produce an init statement for each module that has one.
+				// they come out in the order they were defined.
+				for (final String t : initTemplates) {
+					result.add(Seq.builder(input.getLocation(), Delim.Paren)
+							.add(t)
+							.build(input.getEndLocation()));
+				}
+				return expander.expand(SExpressions.inOrder(result.build()));
+			}
+			
+			@Override
+			public String getName() {
+				return "~init-modules";
+			}
+			
+			@Override
+			public MacroModel getModel() {
+				return MacroModel.builder().build();
+			}
+			
+			@Override
+			public Optional<Node> getDefiningNode() {
+				return Optional.absent();
+			}
+		};
+	}
+	
 	@Override
 	public String getName() {
 		return NAME;
@@ -118,6 +152,13 @@ public class Module implements IMacro {
 				final Seq s = (Seq) n;
 				final List<Node> children = s.exceptComments();
 				final Atom name = (Atom) children.get(1);
+				
+				if (name.getValue().equals("init")) {
+					final Node args = children.get(2);
+					if (args instanceof Seq && ((Seq) args).isEmpty()) {
+						initTemplates.add(moduleName +"/init");
+					}
+				}
 				
 				final Seq.Builder b = Seq.builder(s.getLocation(), s.getDelimeter());
 				

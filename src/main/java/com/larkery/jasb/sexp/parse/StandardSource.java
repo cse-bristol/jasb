@@ -45,9 +45,11 @@ public class StandardSource implements ISExpressionSource {
 		
 		final ImmutableList.Builder<IMacro> macros = ImmutableList.builder();
 		
+		final Module module = new Module();
 		if (expandTemplates) {
 			// rewrite modules
-			source = Module.transform(source, errors);
+			
+			source = MacroExpander.expand(ImmutableList.<IMacro>of(module), source, errors);
 			
 			final NodeBuilder output = NodeBuilder.create();
 			
@@ -59,8 +61,10 @@ public class StandardSource implements ISExpressionSource {
 				errors.handle(e.getError());
 			}
 			
-			macros.addAll(templates);
+			macros.addAll(templates);			
 		}
+		
+		macros.add(module.getInitializerMacro());
 		
 		macros.addAll(extraMacros);
 		

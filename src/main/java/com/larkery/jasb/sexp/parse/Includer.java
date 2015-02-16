@@ -158,6 +158,8 @@ public class Includer {
 								try {
 									addr = resolver.convert(seq, errors);
 								} catch (final ResolutionException e) {
+                                    errors.handle(BasicError.at(seq,
+                                                                e.getMessage()));
 									return false;
 								}
 							
@@ -209,7 +211,7 @@ public class Includer {
 		
 		return ImmutableMap.copyOf(builder);
 	}
-	
+    
 	/**
 	 * Given a resolver and a root address, make an S-Expression by following all the includes.
 	 * @param resolver
