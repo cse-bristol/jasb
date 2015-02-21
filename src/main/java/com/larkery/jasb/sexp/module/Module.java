@@ -2,6 +2,7 @@ package com.larkery.jasb.sexp.module;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -113,6 +114,8 @@ public class Module implements IMacro {
 		
 		final ImmutableList.Builder<IMacro> templateNames = ImmutableList.builder(); 
 		
+		final HashSet<String> existingNames = new HashSet<>();
+		
 		// next we process each thing inside the module
 		for (final Node n : parts.subList(2, parts.size())) {
 			if (n instanceof Seq) {
@@ -140,7 +143,10 @@ public class Module implements IMacro {
 				
 				final String name = ((Atom) children.get(1)).getValue();
 				
-				templateNames.add(new Renamer(name, moduleName + "/" + name));
+				if (!existingNames.contains(name)) {
+					templateNames.add(new Renamer(name, moduleName + "/" + name));
+					existingNames.add(name);
+				}
 			} else {
 				errors.error(n, NOT_A_TEMPLATE);
 				return SExpressions.empty();
