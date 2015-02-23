@@ -81,6 +81,15 @@ public class Seq extends Node implements Iterable<Node> {
 		return nodes.get(0);
 	}
 	
+	public Optional<Atom> firstAtom() {
+		for (final Node n : nodes) {
+			if (n instanceof Atom) {
+				return Optional.of((Atom)n);
+			}
+		}
+		return Optional.absent();
+	}
+	
 	@Override
 	public void accept(final ISExpressionVisitor visitor) {
 		super.accept(visitor);

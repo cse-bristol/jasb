@@ -64,11 +64,13 @@ class Reader implements IReader {
 	private static class Result<T> implements IResult<T> {
 		private final Node node;
 		private final Optional<T> value;
+		private final Map<String, Object> crossReferences;
 		
-		public Result(final Node node, final Optional<T> value) {
+		public Result(final Node node, final Optional<T> value, final Map<String, Object> crossReferences) {
 			super();
 			this.node = node;
 			this.value = value;
+			this.crossReferences = crossReferences;
 		}
 
 		@Override
@@ -79,6 +81,11 @@ class Reader implements IReader {
 		@Override
 		public Optional<T> getValue() {
 			return value;
+		}
+		
+		@Override
+		public Map<String, Object> getCrossReferences() {
+			return crossReferences;
 		}
 	}
 	
@@ -92,11 +99,13 @@ class Reader implements IReader {
 			node = Node.copyStructure(input);
 		} catch (final UnfinishedExpressionException e) {
 		}
-		return new Result<T>(node, readNode(output, node, errors));
+		
+		final Map<String, Object> xrefs = new HashMap<String, Object>();
+		final Optional<T> readNode = readNode(output, node, errors, xrefs);
+		return new Result<T>(node, readNode, xrefs);
 	}
 	
-	@Override
-	public <T> Optional<T> readNode(final Class<T> output, final Node input, final IErrorHandler errors) {
+	public <T> Optional<T> readNode(final Class<T> output, final Node input, final IErrorHandler errors, final Map<String, Object> crossReferences) {
 		if (input == null) return Optional.absent();
 		
 		final Context context = new Context(errors);
@@ -110,6 +119,10 @@ class Reader implements IReader {
                                                   error.getKey().getValue()));
 		}
 		
+		if (crossReferences != null) {
+			crossReferences.putAll(context.resolver.getDefinitions());
+		}
+		
 		if (read.isDone()) {
 			try {
 				return Optional.fromNullable(read.get());
@@ -119,6 +132,11 @@ class Reader implements IReader {
 		} else {
 			return Optional.absent();
 		}
+	}
+	
+	@Override
+	public <T> Optional<T> readNode(final Class<T> output, final Node input, final IErrorHandler errors) {
+		return readNode(output, input, errors, null);
 	}
 	
 	@SuppressWarnings({ "rawtypes", "unchecked" })

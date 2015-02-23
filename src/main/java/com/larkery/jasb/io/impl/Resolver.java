@@ -7,6 +7,7 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Multimap;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -53,7 +54,7 @@ class Resolver  {
 	public void define(final String result, final Object o) {
 		if (futures.containsKey(result)) {
 			if (futures.get(result).isDone()) {
-				throw new IllegalArgumentException("The name " + result + " was used for two different entities. Names must be unique.");
+				throw new IllegalArgumentException("The name " + result + " was used for two different entities Names must be unique.");
 			} else {
 				for (final Class<?> clazz : futureClasses.get(result)) {
 					if (!clazz.isInstance(o)) {
@@ -70,5 +71,18 @@ class Resolver  {
 			futureClasses.put(result, o.getClass());
 			((SettableFuture) futures.get(result)).set(o);
 		}
+	}
+
+	public Map<String, Object> getDefinitions() {
+		final ImmutableMap.Builder<String, Object> b = ImmutableMap.builder();
+		for (final Map.Entry<String, SettableFuture<?>> e : futures.entrySet()) {
+			if (e.getValue().isDone()) {
+				try {
+					b.put(e.getKey(), e.getValue().get());
+				} catch (final Exception e1) {
+				}
+			}
+		}
+		return b.build();
 	}
 }

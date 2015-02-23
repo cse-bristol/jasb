@@ -1,5 +1,7 @@
 package com.larkery.jasb.io;
 
+import java.util.Map;
+
 import com.google.common.base.Optional;
 import com.larkery.jasb.sexp.ISExpression;
 import com.larkery.jasb.sexp.Node;
@@ -9,6 +11,7 @@ public interface IReader {
 	public interface IResult<T> {
 		public Optional<T> getValue();
 		public Node getNode();
+		public Map<String, Object> getCrossReferences();
 	}
 	
 	public abstract <T> IResult<T> read(Class<T> output, ISExpression input,
