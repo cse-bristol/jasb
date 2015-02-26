@@ -21,18 +21,19 @@ public class Model implements IModel {
 		final ImmutableSet.Builder<IAtomModel> atomModels = ImmutableSet.builder();
 		final ImmutableSet.Builder<IInvocationModel> invocations = ImmutableSet.builder();
 		
-		final Set<Class<?>> atomTypes = new HashSet<>();
+		final Set<String> atomTypes = new HashSet<>();
 		for (final Class<?> clazz : classes) {
 			final InvocationModel inv = new InvocationModel(clazz);
 			elements.add(inv);
 			invocations.add(inv);
-			for (final IArgument a : inv.getArguments()) {
-				if (atomTypes.contains(a.getJavaType())) continue;
-				atomTypes.add(a.getJavaType());
+			args: for (final IArgument a : inv.getArguments()) {
 				for (final IAtomReader r : atoms) {
 					if (r.canReadTo(a.getJavaType())) {
+						final String displayName = r.getDisplayName(a.getJavaType());
+						if (atomTypes.contains(displayName)) continue args;
+						atomTypes.add(displayName);
 						final AtomModel am = new AtomModel(
-								r.getDisplayName(a.getJavaType()),
+								displayName,
 								a.getJavaType(),
 								r.getLegalValues(a.getJavaType())
 								);
