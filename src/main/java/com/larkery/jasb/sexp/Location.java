@@ -40,7 +40,7 @@ public class Location implements ILocated, Iterable<Location> {
 	@JsonProperty public final int line;
 	@JsonProperty public final int column;
 	@JsonProperty public final Optional<Via> via;
-	@JsonProperty public final Location sourceLocation;
+	@JsonIgnore public final Location sourceLocation;
 	
 	@JsonCreator
 	public Location(
@@ -60,6 +60,7 @@ public class Location implements ILocated, Iterable<Location> {
 		}
 	}
 
+	@JsonIgnore
 	@Override
 	public Location getLocation() {
 		return this;
