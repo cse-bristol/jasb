@@ -5,6 +5,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -25,7 +26,7 @@ public class DateAtomIOTest {
 	@Test
 	public void correctDates() throws Exception {
 		correctDates(ImmutableMap.of(
-				"01/01/2013", new DateTime(2013, 01, 01, 0, 0)
+				"01/01/2013", new DateTime(2013, 01, 01, 0, 0, DateTimeZone.UTC)
 				));
 	}
 	
