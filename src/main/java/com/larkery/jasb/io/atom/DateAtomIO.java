@@ -11,8 +11,8 @@ import com.google.common.collect.ImmutableSet;
 import com.larkery.jasb.io.IAtomIO;
 
 public class DateAtomIO implements IAtomIO {
-	 private final DateTimeFormatter df =  DateTimeFormat.forPattern("dd/MM/yyyy");
-
+	private final DateTimeFormatter df =  DateTimeFormat.forPattern("dd/MM/yyyy").withZoneUTC();
+	
 	@Override
 	public boolean canWrite(final Object object) {
 		return object instanceof DateTime;
